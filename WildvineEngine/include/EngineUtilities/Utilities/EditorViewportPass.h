@@ -16,11 +16,20 @@ public:
 	HRESULT init(Device& device, unsigned int width, unsigned int height);
 	HRESULT resize(Device& device, unsigned int width, unsigned int height);
 
-	void begin(DeviceContext& deviceContext, const float clearColor[4]);
-	void swap(EditorViewportPass& other);
-	void clearDepth(DeviceContext& deviceContext);
-	void setViewport(DeviceContext& deviceContext);
-	void destroy();
+	void
+	begin(DeviceContext& deviceContext, const float clearColor[4]);
+
+	void 
+	swap(EditorViewportPass& other);
+
+	void 
+	clearDepth(DeviceContext& deviceContext);
+
+	void 
+	setViewport(DeviceContext& deviceContext);
+
+	void 
+	destroy();
 
 	ID3D11ShaderResourceView* getSRV() const { return m_colorSRV.m_textureFromImg; }
 

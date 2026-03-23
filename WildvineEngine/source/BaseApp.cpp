@@ -87,7 +87,7 @@ BaseApp::init() {
 		DXGI_FORMAT_D24_UNORM_S8_UINT,
 		D3D11_BIND_DEPTH_STENCIL,
 		4,
-		0);
+		16);
 
 	if (FAILED(hr)) {
 		ERROR("Main", "InitDevice",
@@ -475,7 +475,7 @@ void BaseApp::onResize(UINT newW, UINT newH)
 	if (FAILED(hr)) return;
 
 	// 7) Re-crea Depth/DSV (tu init actual lo hace con m_window.m_width/m_height)
-	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 0);
+	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 16);
 	if (FAILED(hr)) return;
 
 	hr = m_depthStencilView.init(m_device, m_depthStencil, DXGI_FORMAT_D24_UNORM_S8_UINT);

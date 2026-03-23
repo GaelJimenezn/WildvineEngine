@@ -17,13 +17,14 @@ class Camera;
 class 
 GUI {
 public:
-	GUI()  = default;
-	~GUI() = default;
+  GUI()  = default;
+  ~GUI() = default;
 
+  // --- Ciclo de Vida ---
   void 
   awake();
 
-	void 
+  void 
   init(Window& window, Device& device, DeviceContext& deviceContext);
 
   void 
@@ -35,62 +36,68 @@ public:
   void 
   destroy();
 
+  // --- Acciones y Popups ---
   void 
   ToolBar();
 
-  
   void 
   closeApp();
 
-  void
+  void 
   toolTipData();
 
+  // --- Estilos Visuales ---
   void
-  appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
+  appleLiquidStyle(float opacity, ImVec4 accent);
 
-  void
+  // --- Controles de Usuario ---
+  void 
   vec3Control(const std::string& label,
-              float* values,
-              float resetValues = 0.0f,
-              float columnWidth = 100.0f);
+                   float* values,
+                   float resetValues = 0.0f,
+                   float columnWidth = 100.0f);
 
-  void
+  // --- Paneles del Editor ---
+  void 
   inspectorGeneral(EU::TSharedPointer<Actor> actor);
 
-  void
+  void 
   inspectorContainer(EU::TSharedPointer<Actor> actor);
 
-  void
+  void 
   outliner(const std::vector<EU::TSharedPointer<Actor>>& actors);
 
   void 
-  editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor);
+  drawStudioTopRibbon();
+
+  void 
+  drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
+
+  void 
+  drawEditorDockspace();
+
+  // --- Transformacion y Gizmos ---
+  void 
+  editTransform(Camera& cam, Window& window, 
+                     EU::TSharedPointer<Actor> actor);
 
   void 
   drawGizmoToolbar();
 
-  // Crea una función auxiliar para convertir XMMATRIX a lo que ImGuizmo quiere
-  void ToFloatArray(const XMMATRIX& mat, float* dest) {
+  void
+  ToFloatArray(const XMMATRIX& mat, float* dest) {
     XMFLOAT4X4 temp;
     XMStoreFloat4x4(&temp, mat);
     memcpy(dest, &temp, sizeof(float) * 16);
   }
 
-  void
-  drawStudioTopRibbon();
-
-  void drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
-
-  void drawEditorDockspace();
-
 private:
-
   bool checkboxValue = true;
   bool checkboxValue2 = false;
   std::vector<const char*> m_objectsNames;
   std::vector<const char*> m_tooltips;
 
-  bool show_exit_popup = false; // Variable de estado para el popup
+  bool show_exit_popup = false;
   ImDrawList* m_viewportDrawList = nullptr;
   bool m_viewportActive = false;
 
