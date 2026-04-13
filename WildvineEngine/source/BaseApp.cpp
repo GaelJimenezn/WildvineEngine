@@ -87,7 +87,7 @@ BaseApp::init() {
 		DXGI_FORMAT_D24_UNORM_S8_UINT,
 		D3D11_BIND_DEPTH_STENCIL,
 		4,
-		16);
+		0);
 
 	if (FAILED(hr)) {
 		ERROR("Main", "InitDevice",
@@ -133,35 +133,35 @@ BaseApp::init() {
 	if (!m_cyberGun.isNull()) {
 		// Crear vertex buffer y index buffer para el pistol
 		std::vector<MeshComponent> cyberGunMeshes;
-		m_model = new Model3D("Assets/Models/CyberGun.fbx", ModelType::FBX);
+		m_model = new Model3D("CyberGun.fbx", ModelType::FBX);
 		cyberGunMeshes = m_model->GetMeshes();
 
 		std::vector<Texture> cyberGunTextures;
-		hr = m_AlbedoSRV.init(m_device, "Assets/Textures/CyberGun/base.tga", PNG);
+		hr = m_AlbedoSRV.init(m_device, "Textures/CyberGun/base.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_MetallicSRV.init(m_device, "Assets/Textures/CyberGun/metallic.tga", PNG);
+		hr = m_MetallicSRV.init(m_device, "Textures/CyberGun/metallic.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_RoughnessSRV.init(m_device, "Assets/Textures/CyberGun/roughness.tga", PNG);
+		hr = m_RoughnessSRV.init(m_device, "Textures/CyberGun/roughness.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_AOSRV.init(m_device, "Assets/Textures/CyberGun/ao.tga", PNG);
+		hr = m_AOSRV.init(m_device, "Textures/CyberGun/ao.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_NormalSRV.init(m_device, "Assets/Textures/CyberGun/normal.tga", PNG);
+		hr = m_NormalSRV.init(m_device, "Textures/CyberGun/normal.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
@@ -421,8 +421,8 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 		// Evita recrear cuando está minimizada
 		if (wParam == SIZE_MINIMIZED) return 0;
 
-		UINT newW = LOWORD(lParam);
-		UINT newH = HIWORD(lParam);
+		unsigned int newW = LOWORD(lParam);
+		unsigned int newH = HIWORD(lParam);
 		if (newW == 0 || newH == 0) return 0;
 
 		// Recupera tu instancia BaseApp (lo más común es guardarla en GWLP_USERDATA en WM_CREATE)
@@ -437,7 +437,7 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void BaseApp::onResize(UINT newW, UINT newH)
+void BaseApp::onResize(unsigned int newW, unsigned int newH)
 {
 	// 1) Actualiza window size (tu init lo calcula con GetClientRect solo una vez) :contentReference[oaicite:6]{index=6}
 	if (!m_d3dReady) {
@@ -475,7 +475,7 @@ void BaseApp::onResize(UINT newW, UINT newH)
 	if (FAILED(hr)) return;
 
 	// 7) Re-crea Depth/DSV (tu init actual lo hace con m_window.m_width/m_height)
-	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 16);
+	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 0);
 	if (FAILED(hr)) return;
 
 	hr = m_depthStencilView.init(m_device, m_depthStencil, DXGI_FORMAT_D24_UNORM_S8_UINT);

@@ -46,8 +46,7 @@ ShaderProgram::init(Device& device,
 }
 
 HRESULT 
-ShaderProgram::CreateInputLayout(Device& device, 
-	LayoutBuilder layoutBuilder) {
+ShaderProgram::CreateInputLayout(Device& device, LayoutBuilder layoutBuilder) {
 	if (!m_vertexShaderData) {
 		ERROR("ShaderProgram", "CreateInputLayout", "Vertex shader data is null.");
 		return E_POINTER;

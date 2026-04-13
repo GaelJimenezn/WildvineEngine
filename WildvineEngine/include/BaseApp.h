@@ -48,7 +48,7 @@ public:
 	destroy();
 
 	void 
-	onResize(UINT newW, UINT newH);
+	onResize(unsigned int newW, unsigned int newH);
 
 	void handleEditorViewportResize();
 private:
