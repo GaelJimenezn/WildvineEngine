@@ -13,21 +13,37 @@ public:
 	EditorViewportPass() = default;
 	~EditorViewportPass() = default;
 
-	HRESULT init(Device& device, unsigned int width, unsigned int height);
-	HRESULT resize(Device& device, unsigned int width, unsigned int height);
+	HRESULT 
+	init(Device& device, unsigned int width, unsigned int height);
 
-	void begin(DeviceContext& deviceContext, const float clearColor[4]);
-	void swap(EditorViewportPass& other);
-	void clearDepth(DeviceContext& deviceContext);
-	void setViewport(DeviceContext& deviceContext);
-	void destroy();
+	HRESULT 
+	resize(Device& device, unsigned int width, unsigned int height);
 
-	ID3D11ShaderResourceView* getSRV() const { return m_colorSRV.m_textureFromImg; }
+	void 
+	begin(DeviceContext& deviceContext, const float clearColor[4]);
 
-	unsigned int getWidth() const { return m_width; }
-	unsigned int getHeight() const { return m_height; }
+	void 
+	swap(EditorViewportPass& other);
 
-	bool isValid() const
+	void 
+	clearDepth(DeviceContext& deviceContext);
+
+	void 
+	setViewport(DeviceContext& deviceContext);
+
+	void 
+	destroy();
+
+	ID3D11ShaderResourceView* 
+	getSRV() const { return m_colorSRV.m_textureFromImg; }
+
+	unsigned int 
+	getWidth() const { return m_width; }
+	unsigned int 
+	getHeight() const { return m_height; }
+
+	bool 
+	isValid() const
 	{
 		return m_colorTexture.m_texture != nullptr &&
 			m_colorSRV.m_textureFromImg != nullptr &&
@@ -35,7 +51,8 @@ public:
 	}
 
 private:
-	HRESULT createResources(Device& device, unsigned int width, unsigned int height);
+	HRESULT 
+	createResources(Device& device, unsigned int width, unsigned int height);
 
 private:
 	Texture           m_colorTexture;
