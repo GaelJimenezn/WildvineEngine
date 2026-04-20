@@ -1,4 +1,4 @@
-#include "BaseApp.h"
+ï»¿#include "BaseApp.h"
 #include "ResourceManager.h"
 
 HRESULT
@@ -86,8 +86,8 @@ BaseApp::init() {
 		m_window.m_height,
 		DXGI_FORMAT_D24_UNORM_S8_UINT,
 		D3D11_BIND_DEPTH_STENCIL,
-		16,
-		0);
+		4,
+		16);
 
 	if (FAILED(hr)) {
 		ERROR("Main", "InitDevice",
@@ -133,35 +133,35 @@ BaseApp::init() {
 	if (!m_cyberGun.isNull()) {
 		// Crear vertex buffer y index buffer para el pistol
 		std::vector<MeshComponent> cyberGunMeshes;
-		m_model = new Model3D("CyberGun.fbx", ModelType::FBX);
+		m_model = new Model3D("Assets/Models/CyberGun.fbx", ModelType::FBX);
 		cyberGunMeshes = m_model->GetMeshes();
 
 		std::vector<Texture> cyberGunTextures;
-		hr = m_AlbedoSRV.init(m_device, "Textures/CyberGun/base.tga", PNG);
+		hr = m_AlbedoSRV.init(m_device, "Assets/Textures/CyberGun/base.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_MetallicSRV.init(m_device, "Textures/CyberGun/metallic.tga", PNG);
+		hr = m_MetallicSRV.init(m_device, "Assets/Textures/CyberGun/metallic.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_RoughnessSRV.init(m_device, "Textures/CyberGun/roughness.tga", PNG);
+		hr = m_RoughnessSRV.init(m_device, "Assets/Textures/CyberGun/roughness.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_AOSRV.init(m_device, "Textures/CyberGun/ao.tga", PNG);
+		hr = m_AOSRV.init(m_device, "Assets/Textures/CyberGun/ao.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		hr = m_NormalSRV.init(m_device, "Textures/CyberGun/normal.tga", PNG);
+		hr = m_NormalSRV.init(m_device, "Assets/Textures/CyberGun/normal.tga", PNG);
 		if (FAILED(hr)) {
 			ERROR("Main", "InitDevice",
 				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
@@ -222,7 +222,7 @@ BaseApp::init() {
 	m_constantBufferStruct.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
 	m_constantBufferStruct.LightDir = EU::Vector3(-0.20f, -1.0f, 1.0f);
 
-	// Initialize the Skybox pass -> Carga de textura + creación de buffers/ shaders específicos para el skybox
+	// Initialize the Skybox pass -> Carga de textura + creaciï¿½n de buffers/ shaders especï¿½ficos para el skybox
 	m_skybox.init(m_device, &m_deviceContext, m_skyboxTex);
 
 	// Initialize default states (Rasterizer, DepthStencil)
@@ -238,6 +238,7 @@ BaseApp::init() {
 			("Failed to initialize default DepthStencilState. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
+
 
 	hr = m_editorViewportPass.init(m_device, 1280, 720);
 	if (FAILED(hr)) {
@@ -282,7 +283,7 @@ BaseApp::update(float deltaTime) {
 	if (desiredW < kMinViewportSize) desiredW = kMinViewportSize;
 	if (desiredH < kMinViewportSize) desiredH = kMinViewportSize;
 
-	// Si cambió el tamaño solicitado, reinicia estabilidad
+	// Si cambiï¿½ el tamaï¿½o solicitado, reinicia estabilidad
 	if (desiredW != m_lastRequestedViewportWidth || desiredH != m_lastRequestedViewportHeight)
 	{
 		m_lastRequestedViewportWidth = desiredW;
@@ -291,11 +292,11 @@ BaseApp::update(float deltaTime) {
 	}
 	else
 	{
-		// El tamaño ya no cambió este frame
+		// El tamaï¿½o ya no cambiï¿½ este frame
 		m_viewportResizeStableFrames++;
 	}
 
-	// Solo marcar resize cuando el tamaño se haya mantenido estable
+	// Solo marcar resize cuando el tamaï¿½o se haya mantenido estable
 	const int kStableFramesRequired = 2;
 
 	if (m_viewportResizeStableFrames >= kStableFramesRequired)
@@ -309,7 +310,7 @@ BaseApp::update(float deltaTime) {
 		}
 	}
 
-	// Actualizar la matriz de proyección y vista
+	// Actualizar la matriz de proyecciï¿½n y vista
 	m_camera.updateViewMatrix();
 
 	XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
@@ -320,7 +321,7 @@ BaseApp::update(float deltaTime) {
 	m_gui.vec3Control("Light Direction", &m_constantBufferStruct.LightDir.x, 0.1f);
 	m_gui.vec3Control("Light Color", &m_constantBufferStruct.LightColor.x, 0.1f);
 
-	// Update Skybox Pass -> Solo necesita la vista sin traslación + proyección para funcionar correctamente (ver método update de Skybox)
+	// Update Skybox Pass -> Solo necesita la vista sin traslaciï¿½n + proyecciï¿½n para funcionar correctamente (ver mï¿½todo update de Skybox)
 	m_skybox.update(m_deviceContext, m_camera);
 
 	// Update constant buffer for Scene Pass
@@ -418,14 +419,14 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	return 0;
 	case WM_SIZE:
 	{
-		// Evita recrear cuando está minimizada
+		// Evita recrear cuando estï¿½ minimizada
 		if (wParam == SIZE_MINIMIZED) return 0;
 
-		unsigned int newW = LOWORD(lParam);
-		unsigned int newH = HIWORD(lParam);
+		UINT newW = LOWORD(lParam);
+		UINT newH = HIWORD(lParam);
 		if (newW == 0 || newH == 0) return 0;
 
-		// Recupera tu instancia BaseApp (lo más común es guardarla en GWLP_USERDATA en WM_CREATE)
+		// Recupera tu instancia BaseApp (lo mï¿½s comï¿½n es guardarla en GWLP_USERDATA en WM_CREATE)
 		BaseApp* app = reinterpret_cast<BaseApp*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 		if (app) app->onResize(newW, newH);
 		return 0;
@@ -437,11 +438,12 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void BaseApp::onResize(unsigned int newW, unsigned int newH)
+void 
+BaseApp::onResize(UINT newW, UINT newH)
 {
 	// 1) Actualiza window size (tu init lo calcula con GetClientRect solo una vez) :contentReference[oaicite:6]{index=6}
 	if (!m_d3dReady) {
-		// Aun así puedes actualizar el tamaño lógico de la ventana
+		// Aun asï¿½ puedes actualizar el tamaï¿½o lï¿½gico de la ventana
 		m_window.m_width = (int)newW;
 		m_window.m_height = (int)newH;
 		return;
@@ -456,7 +458,7 @@ void BaseApp::onResize(unsigned int newW, unsigned int newH)
 	ID3D11RenderTargetView* nullRTV = nullptr;
 	m_deviceContext.m_deviceContext->OMSetRenderTargets(1, &nullRTV, nullptr);
 
-	// 3) Libera recursos dependientes del tamaño (RTV/DSV/Depth/BackBuffer)
+	// 3) Libera recursos dependientes del tamaï¿½o (RTV/DSV/Depth/BackBuffer)
 	m_renderTargetView.destroy();
 	m_depthStencilView.destroy();
 	m_depthStencil.destroy();
@@ -466,7 +468,7 @@ void BaseApp::onResize(unsigned int newW, unsigned int newH)
 	HRESULT hr = m_swapChain.resizeBuffers(newW, newH);
 	if (FAILED(hr)) return;
 
-	// 5) Re-obtén backbuffer
+	// 5) Re-obtï¿½n backbuffer
 	hr = m_swapChain.getBackBuffer(m_backBuffer);
 	if (FAILED(hr)) return;
 
@@ -475,7 +477,7 @@ void BaseApp::onResize(unsigned int newW, unsigned int newH)
 	if (FAILED(hr)) return;
 
 	// 7) Re-crea Depth/DSV (tu init actual lo hace con m_window.m_width/m_height)
-	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 16, 0);
+	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 16);
 	if (FAILED(hr)) return;
 
 	hr = m_depthStencilView.init(m_device, m_depthStencil, DXGI_FORMAT_D24_UNORM_S8_UINT);
@@ -484,7 +486,7 @@ void BaseApp::onResize(unsigned int newW, unsigned int newH)
 	// 8) Viewport
 	m_viewport.init(m_window);
 
-	// 9) Cámara (aspect ratio) (tu cámara lo calcula a partir de m_window) 
+	// 9) Cï¿½mara (aspect ratio) (tu cï¿½mara lo calcula a partir de m_window) 
 	m_camera.setLens(XM_PIDIV4, newW / (float)newH, 0.01f, 100.0f);
 }
 
