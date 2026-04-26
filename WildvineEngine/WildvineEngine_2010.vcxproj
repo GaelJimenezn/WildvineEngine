@@ -443,6 +443,7 @@
     <ClCompile Include="source\InputLayout.cpp" />
     <ClCompile Include="source\Model3D.cpp" />
     <ClCompile Include="source\RasterizerState.cpp" />
+    <ClCompile Include="source\Rendering\ForwardRenderer.cpp" />
     <ClCompile Include="source\RenderTargetView.cpp" />
     <ClCompile Include="source\SamplerState.cpp" />
     <ClCompile Include="source\SceneGraph\SceneGraph.cpp" />

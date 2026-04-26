@@ -54,6 +54,9 @@
     <Filter Include="include\Rendering">
       <UniqueIdentifier>{e6e89dc5-91a0-44b4-82b5-9a0fa9493d04}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\Rendering">
+      <UniqueIdentifier>{af1fc9b5-dd3d-43cc-a6a5-77944881a9fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WildvineEngine.cpp">
@@ -148,6 +151,9 @@
     </ClCompile>
     <ClCompile Include="source\EditorViewportPass.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\ForwardRenderer.cpp">
+      <Filter>source\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
