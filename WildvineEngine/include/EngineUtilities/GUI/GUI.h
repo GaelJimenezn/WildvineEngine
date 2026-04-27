@@ -14,8 +14,7 @@ class DeviceContext;
 class Actor;
 class Camera;
 
-class 
-GUI {
+class GUI {
 public:
 	GUI()  = default;
 	~GUI() = default;
@@ -37,7 +36,6 @@ public:
 
   void 
   ToolBar();
-
   
   void 
   closeApp();
@@ -47,6 +45,10 @@ public:
 
   void
   appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
+
+  // NUESTRO NUEVO ESTILO:
+  void
+  unrealDarkStyle();
 
   void
   vec3Control(const std::string& label,

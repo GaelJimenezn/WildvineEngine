@@ -120,7 +120,7 @@ private:
 	 * @return Puntero al ID3D11BlendState pre-configurado para el modo que solicita el material.
 	 */
 		ID3D11BlendState* resolveBlendState(const Material* material) 
-			const { return nullptr;}
+		const { return nullptr;}
 
 private:
     Buffer m_perFrameBuffer;                              /**< Buffer constante para datos compartidos globalmente en el frame (Matrices y Luz). */

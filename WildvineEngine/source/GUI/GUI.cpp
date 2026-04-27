@@ -7,7 +7,84 @@
 #include "ECS\Actor.h"
 #include "EngineUtilities\Utilities\Camera.h"
 //#include "imgui_internal.h"
+
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
+
+// --- IMPLEMENTACIÓN DE NUESTRO NUEVO ESTILO ---
+void GUI::unrealDarkStyle() {
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImVec4* colors = style.Colors;
+
+	// Geometría más cuadrada, estilo motor profesional
+	style.WindowRounding = 4.0f;
+	style.ChildRounding = 4.0f;
+	style.FrameRounding = 2.0f;
+	style.PopupRounding = 4.0f;
+	style.ScrollbarRounding = 2.0f;
+	style.TabRounding = 4.0f;
+	style.WindowBorderSize = 1.0f;
+	style.FrameBorderSize = 1.0f; 
+
+	style.WindowPadding = ImVec2(8, 8);
+	style.FramePadding = ImVec2(6, 4);
+	style.ItemSpacing = ImVec2(8, 4);
+
+	// Colores base oscuros tipo UE / Motor AAA
+	ImVec4 bgDark = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
+	ImVec4 panelColor = ImVec4(0.11f, 0.11f, 0.11f, 1.0f);
+	ImVec4 headerColor = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+	ImVec4 accentColor = ImVec4(0.0f, 0.45f, 0.85f, 1.0f); // Azul técnico
+	ImVec4 textLight = ImVec4(0.90f, 0.90f, 0.90f, 1.0f);
+
+	colors[ImGuiCol_Text] = textLight;
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.0f);
+	
+	colors[ImGuiCol_WindowBg] = bgDark;
+	colors[ImGuiCol_ChildBg] = panelColor;
+	colors[ImGuiCol_PopupBg] = panelColor;
+	colors[ImGuiCol_Border] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	colors[ImGuiCol_FrameBg] = bgDark;
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.20f, 0.20f, 1.0f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
+
+	colors[ImGuiCol_TitleBg] = panelColor;
+	colors[ImGuiCol_TitleBgActive] = panelColor;
+	colors[ImGuiCol_TitleBgCollapsed] = bgDark;
+
+	colors[ImGuiCol_MenuBarBg] = panelColor;
+
+	colors[ImGuiCol_ScrollbarBg] = bgDark;
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.35f, 0.35f, 0.35f, 1.0f);
+	colors[ImGuiCol_ScrollbarGrabActive] = accentColor;
+
+	colors[ImGuiCol_CheckMark] = accentColor;
+	colors[ImGuiCol_SliderGrab] = accentColor;
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.0f, 0.55f, 0.95f, 1.0f);
+
+	colors[ImGuiCol_Button] = headerColor;
+	colors[ImGuiCol_ButtonHovered] = accentColor;
+	colors[ImGuiCol_ButtonActive] = ImVec4(0.0f, 0.35f, 0.75f, 1.0f);
+
+	colors[ImGuiCol_Header] = headerColor;
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
+	colors[ImGuiCol_HeaderActive] = accentColor;
+
+	colors[ImGuiCol_Separator] = ImVec4(0.20f, 0.20f, 0.20f, 1.0f);
+	colors[ImGuiCol_SeparatorHovered] = accentColor;
+	colors[ImGuiCol_SeparatorActive] = ImVec4(0.0f, 0.55f, 0.95f, 1.0f);
+
+	colors[ImGuiCol_Tab] = bgDark;
+	colors[ImGuiCol_TabHovered] = headerColor;
+	colors[ImGuiCol_TabActive] = panelColor;
+	colors[ImGuiCol_TabUnfocused] = bgDark;
+	colors[ImGuiCol_TabUnfocusedActive] = panelColor;
+	
+	colors[ImGuiCol_DockingPreview] = ImVec4(accentColor.x, accentColor.y, accentColor.z, 0.35f);
+}
+
 void 
 GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 	// Setup Dear ImGui context
@@ -16,7 +93,8 @@ GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	// Setup Dear ImGui style
+	
+    // Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
 	// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
@@ -27,7 +105,9 @@ GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 
-	appleLiquidStyle(0.72f, ImVec4(0.0f, 0.515f, 1.0f, 1.0f));
+	// Comentamos el del profe y metemos el nuestro:
+	// appleLiquidStyle(0.72f, ImVec4(0.0f, 0.515f, 1.0f, 1.0f));
+    unrealDarkStyle();
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(window.m_hWnd);
@@ -496,7 +576,9 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 		transform->setRotation(EU::Vector3(newRot[0], newRot[1], newRot[2]));
 		transform->setScale(EU::Vector3(newSca[0], newSca[1], newSca[2]));
 	}
-}void GUI::drawGizmoToolbar()
+}
+
+void GUI::drawGizmoToolbar()
 {
 	//ImGui::SetNextWindowPos(ImVec2(300, 150), ImGuiCond_Always);
 	ImGui::SetNextWindowBgAlpha(0.0f); // 0 = transparente total
@@ -644,7 +726,7 @@ void GUI::drawStudioTopRibbon()
 	ImGui::PopStyleVar(2);
 
 	// -----------------------------
-	// 2) RIBBON PRINCIPAL
+	// 2) RIBBON PRINCIPAL (CON NUEVOS COLORES)
 	// -----------------------------
 	ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, ribbonHeight), ImGuiCond_Always);
@@ -659,10 +741,10 @@ void GUI::drawStudioTopRibbon()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.09f, 0.12f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.15f, 0.19f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.22f, 0.28f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.24f, 0.26f, 0.34f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.08f, 0.08f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.12f, 0.12f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.45f, 0.85f, 1.0f));
 
 	if (ImGui::Begin("##StudioRibbon", nullptr, ribbonFlags))
 	{
@@ -810,7 +892,6 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 	ImGuiWindowFlags flags =
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoScrollWithMouse | 
-
 		ImGuiWindowFlags_NoCollapse;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -845,7 +926,7 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 			);
 		}
 
-		// IMPORTANTE: el hover/active del item imagen
+
 		m_viewportHovered = ImGui::IsItemHovered();
 		m_viewportActive = ImGui::IsItemActive();
 		m_viewportFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
@@ -858,8 +939,6 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 void GUI::drawEditorDockspace()
 {
 	ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-
-	// Debe coincidir con la altura total que ocupa tu ribbon superior
 	const float topOffset = 96.0f; // 24 menu + 72 ribbon
 
 	ImVec2 dockPos = ImVec2(mainViewport->Pos.x, mainViewport->Pos.y + topOffset);
