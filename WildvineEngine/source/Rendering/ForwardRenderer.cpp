@@ -1,4 +1,4 @@
-#include "Rendering/ForwardRenderer.h"
+﻿#include "Rendering/ForwardRenderer.h"
 #include <algorithm>
 #include "Device.h"
 #include "DeviceContext.h"
@@ -44,6 +44,13 @@ ForwardRenderer::init(Device& device) {
 }
 
 void
+ForwardRenderer::resize(Device& device, unsigned int width, unsigned int height) {
+	(void)device;
+	(void)width;
+	(void)height;
+}
+
+void
 ForwardRenderer::updatePerFrame(const Camera& camera,
 	const RenderScene& scene,
 	DeviceContext& deviceContext) {
@@ -78,6 +85,20 @@ ForwardRenderer::render(DeviceContext& deviceContext,
 	renderSkyboxPass(deviceContext, scene);
 	renderOpaquePass(deviceContext);
 	renderTransparentPass(deviceContext);
+}
+
+void
+ForwardRenderer::destroy() {
+	m_opaqueQueue.clear();
+	m_transparentQueue.clear();
+	SAFE_RELEASE(m_alphaBlendState);
+	SAFE_RELEASE(m_opaqueBlendState);
+	SAFE_RELEASE(m_additiveBlendState);
+	SAFE_RELEASE(m_premultipliedBlendState);
+	m_transparentDepthStencil.destroy();
+	m_perMaterialBuffer.destroy();
+	m_perObjectBuffer.destroy();
+	m_perFrameBuffer.destroy();
 }
 
 void
@@ -278,3 +299,28 @@ ForwardRenderer::createBlendStates(Device& device) {
 
 	return device.m_device->CreateBlendState(&blendDesc, &m_premultipliedBlendState);
 }
+
+ID3D11BlendState*
+ForwardRenderer::resolveBlendState(const Material* material) const {
+	if (!material) {
+		return m_opaqueBlendState;
+	}
+
+	if (material->getDomain() != MaterialDomain::Transparent) {
+		return m_opaqueBlendState;
+	}
+
+	switch (material->getBlendMode()) {
+	case BlendMode::Additive:
+		return m_additiveBlendState ? m_additiveBlendState : m_alphaBlendState;
+	case BlendMode::PremultipliedAlpha:
+		return m_premultipliedBlendState ? m_premultipliedBlendState : m_alphaBlendState;
+	case BlendMode::Alpha:
+	case BlendMode::Opaque:
+	default:
+		return m_alphaBlendState ? m_alphaBlendState : m_opaqueBlendState;
+	}
+}
+
+
+

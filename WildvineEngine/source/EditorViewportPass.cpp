@@ -84,6 +84,17 @@ void EditorViewportPass::begin(DeviceContext& deviceContext, const float clearCo
 	m_rtv.render(deviceContext, m_dsv, 1, clearColor);
 }
 
+void EditorViewportPass::swap(EditorViewportPass& other)
+{
+	std::swap(m_colorTexture, other.m_colorTexture);
+	std::swap(m_colorSRV, other.m_colorSRV);
+	std::swap(m_rtv, other.m_rtv);
+	std::swap(m_depthTexture, other.m_depthTexture);
+	std::swap(m_dsv, other.m_dsv);
+	std::swap(m_width, other.m_width);
+	std::swap(m_height, other.m_height);
+}
+
 void EditorViewportPass::clearDepth(DeviceContext& deviceContext)
 {
 	m_dsv.render(deviceContext);
@@ -100,4 +111,16 @@ void EditorViewportPass::setViewport(DeviceContext& deviceContext)
 	vp.MaxDepth = 1.0f;
 
 	deviceContext.m_deviceContext->RSSetViewports(1, &vp);
+}
+
+void EditorViewportPass::destroy()
+{
+	m_dsv.destroy();
+	m_depthTexture.destroy();
+	m_colorSRV.destroy();
+	m_rtv.destroy();
+	m_colorTexture.destroy();
+
+	m_width = 1;
+	m_height = 1;
 }

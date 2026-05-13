@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns:atg="http://atg.xbox.com" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Resource Files">
@@ -52,10 +52,10 @@
       <UniqueIdentifier>{06b326ef-b6ff-47b3-99e4-ce6542eb8955}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\Rendering">
-      <UniqueIdentifier>{e6e89dc5-91a0-44b4-82b5-9a0fa9493d04}</UniqueIdentifier>
+      <UniqueIdentifier>{f2f67de8-3f16-4ed8-9a11-a1be28b12210}</UniqueIdentifier>
     </Filter>
     <Filter Include="source\Rendering">
-      <UniqueIdentifier>{af1fc9b5-dd3d-43cc-a6a5-77944881a9fa}</UniqueIdentifier>
+      <UniqueIdentifier>{8fffa7c6-e8ff-4f2e-9f93-f8176baf9f5f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -110,6 +110,15 @@
     <ClCompile Include="source\GUI\GUI.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\Rendering\ForwardRenderer.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\MaterialInstance.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\RenderScene.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui.cpp">
       <Filter>imgui\source</Filter>
     </ClCompile>
@@ -152,12 +161,12 @@
     <ClCompile Include="source\EditorViewportPass.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\Rendering\ForwardRenderer.cpp">
-      <Filter>source\Rendering</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="WildvineEngine.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\Skybox.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -214,6 +223,12 @@
       <Filter>include\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="include\ECS\Component.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\LightComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\MeshRendererComponent.h">
       <Filter>include\ECS</Filter>
     </ClInclude>
     <ClInclude Include="include\ECS\Entity.h">
@@ -318,12 +333,6 @@
     <ClInclude Include="include\Rendering\ForwardRenderer.h">
       <Filter>include\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="include\Rendering\RenderScene.h">
-      <Filter>include\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Rendering\RenderTypes.h">
-      <Filter>include\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="include\Rendering\Material.h">
       <Filter>include\Rendering</Filter>
     </ClInclude>
@@ -331,6 +340,12 @@
       <Filter>include\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="include\Rendering\Mesh.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\RenderScene.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\RenderTypes.h">
       <Filter>include\Rendering</Filter>
     </ClInclude>
   </ItemGroup>

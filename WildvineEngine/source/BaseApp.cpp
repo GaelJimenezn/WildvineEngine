@@ -1,5 +1,9 @@
-﻿#include "BaseApp.h"
+#include "BaseApp.h"
 #include "ResourceManager.h"
+#include <algorithm>
+#include <cctype>
+#include <fstream>
+#include <iomanip>
 
 HRESULT
 BaseApp::awake() {
@@ -32,6 +36,7 @@ BaseApp::run(HINSTANCE hInst, int nCmdShow) {
 	}
 	// 4) Initialize GUI
 	m_gui.init(m_window, m_device, m_deviceContext);
+	m_guiInitialized = true;
 
 	// Main message loop
 	MSG msg = {};
@@ -116,7 +121,7 @@ BaseApp::init() {
 	}
 	m_d3dReady = true;
 
-	// Load Resources -> Modelos, Texturas e Interfaz de usuario
+	// Load Resources -> Skybox
 	std::array<std::string, 6> faces = {
 		"Skybox/cubemap_0.png", 
 		"Skybox/cubemap_1.png",
@@ -131,50 +136,43 @@ BaseApp::init() {
 	m_cyberGun = EU::MakeShared<Actor>(m_device);
 
 	if (!m_cyberGun.isNull()) {
-		// Crear vertex buffer y index buffer para el pistol
-		std::vector<MeshComponent> cyberGunMeshes;
 		m_model = new Model3D("Assets/Models/CyberGun.fbx", ModelType::FBX);
-		cyberGunMeshes = m_model->GetMeshes();
+		if (!m_model || !m_model->load("Assets/Models/CyberGun.fbx")) {
+			ERROR("Main", "InitDevice", "Failed to load CyberGun model.");
+			return E_FAIL;
+		}
 
-		std::vector<Texture> cyberGunTextures;
+		// Cargando texturas desde Assets/Textures/CyberGun/
 		hr = m_AlbedoSRV.init(m_device, "Assets/Textures/CyberGun/base.tga", PNG);
 		if (FAILED(hr)) {
-			ERROR("Main", "InitDevice",
-				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun Albedo. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
 		hr = m_MetallicSRV.init(m_device, "Assets/Textures/CyberGun/metallic.tga", PNG);
 		if (FAILED(hr)) {
-			ERROR("Main", "InitDevice",
-				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun Metallic. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
 		hr = m_RoughnessSRV.init(m_device, "Assets/Textures/CyberGun/roughness.tga", PNG);
 		if (FAILED(hr)) {
-			ERROR("Main", "InitDevice",
-				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun Roughness. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
 		hr = m_AOSRV.init(m_device, "Assets/Textures/CyberGun/ao.tga", PNG);
 		if (FAILED(hr)) {
-			ERROR("Main", "InitDevice",
-				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun AO. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
 		hr = m_NormalSRV.init(m_device, "Assets/Textures/CyberGun/normal.tga", PNG);
 		if (FAILED(hr)) {
-			ERROR("Main", "InitDevice",
-				("Failed to initialize DrakePistol Texture. HRESULT: " + std::to_string(hr)).c_str());
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun Normal. HRESULT: " + std::to_string(hr)).c_str());
 			return hr;
 		}
-		cyberGunTextures.push_back(m_AlbedoSRV);
-		cyberGunTextures.push_back(m_NormalSRV);
-		cyberGunTextures.push_back(m_MetallicSRV);
-		cyberGunTextures.push_back(m_RoughnessSRV);
-		cyberGunTextures.push_back(m_AOSRV);
+		HRESULT emissiveHr = m_EmissiveSRV.init(m_device, "Assets/Textures/CyberGun/Emissive.tga", PNG);
+		if (FAILED(emissiveHr)) {
+			MESSAGE("Main", "InitDevice", "CyberGun emissive texture not found. Continuing without emissive map.");
+		}
 
-		m_cyberGun->setMesh(m_device, cyberGunMeshes);
-		m_cyberGun->setTextures(cyberGunTextures);
 		m_cyberGun->setName("CyberGun");
 		m_actors.push_back(m_cyberGun);
 
@@ -193,7 +191,6 @@ BaseApp::init() {
 	}
 
 	LayoutBuilder builder;
-
 	builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
 				 .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
 				 .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
@@ -203,16 +200,14 @@ BaseApp::init() {
 	// Create the Shader Program
 	hr = m_shaderProgram.init(m_device, "PBRShader.hlsl", builder);
 	if (FAILED(hr)) {
-		ERROR("Main", "InitDevice",
-			("Failed to initialize ShaderProgram. HRESULT: " + std::to_string(hr)).c_str());
+		ERROR("Main", "InitDevice", ("Failed to initialize ShaderProgram. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
 
 	// Create the constant buffers
 	hr = m_constantBuffer.init(m_device, sizeof(CBMain));
 	if (FAILED(hr)) {
-		ERROR("Main", "InitDevice",
-			("Failed to initialize m_constantBuffer Buffer. HRESULT: " + std::to_string(hr)).c_str());
+		ERROR("Main", "InitDevice", ("Failed to initialize m_constantBuffer Buffer. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
 	
@@ -222,37 +217,114 @@ BaseApp::init() {
 	m_constantBufferStruct.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
 	m_constantBufferStruct.LightDir = EU::Vector3(-0.20f, -1.0f, 1.0f);
 
-	// Initialize the Skybox pass -> Carga de textura + creaci�n de buffers/ shaders espec�ficos para el skybox
+	// Initialize the Skybox pass
 	m_skybox.init(m_device, &m_deviceContext, m_skyboxTex);
 
-	// Initialize default states (Rasterizer, DepthStencil)
+	// Initialize default states
 	hr = m_defaultRasterizer.init(m_device, D3D11_FILL_SOLID, D3D11_CULL_BACK, false, true);
 	if (FAILED(hr)) {
-		ERROR("Main", "InitDevice",
-			("Failed to initialize default Rasterizer. HRESULT: " + std::to_string(hr)).c_str());
+		ERROR("Main", "InitDevice", ("Failed to initialize default Rasterizer. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
 	hr = m_defaultDepthStencil.init(m_device, true, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_LESS);
 	if (FAILED(hr)) {
-		ERROR("Main", "InitDevice",
-			("Failed to initialize default DepthStencilState. HRESULT: " + std::to_string(hr)).c_str());
+		ERROR("Main", "InitDevice", ("Failed to initialize default DepthStencilState. HRESULT: " + std::to_string(hr)).c_str());
+		return hr;
+	}
+	hr = m_defaultSampler.init(m_device);
+	if (FAILED(hr)) {
+		ERROR("Main", "InitDevice", ("Failed to initialize default SamplerState. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
 
+	m_pbrMaterial.setShader(&m_shaderProgram);
+	m_pbrMaterial.setRasterizerState(&m_defaultRasterizer);
+	m_pbrMaterial.setDepthStencilState(&m_defaultDepthStencil);
+	m_pbrMaterial.setSamplerState(&m_defaultSampler);
+	m_pbrMaterial.setDomain(MaterialDomain::Opaque);
+	m_pbrMaterial.setBlendMode(BlendMode::Opaque);
+
+	m_cyberGunMaterial.setMaterial(&m_pbrMaterial);
+	m_cyberGunMaterial.setAlbedo(&m_AlbedoSRV);
+	m_cyberGunMaterial.setNormal(&m_NormalSRV);
+	m_cyberGunMaterial.setMetallic(&m_MetallicSRV);
+	m_cyberGunMaterial.setRoughness(&m_RoughnessSRV);
+	m_cyberGunMaterial.setAO(&m_AOSRV);
+	if (m_EmissiveSRV.m_textureFromImg) {
+		m_cyberGunMaterial.setEmissive(&m_EmissiveSRV);
+	}
+	m_cyberGunMaterial.getParams().baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_cyberGunMaterial.getParams().metallic = 1.0f;
+	m_cyberGunMaterial.getParams().roughness = 1.0f;
+	m_cyberGunMaterial.getParams().ao = 1.0f;
+	m_cyberGunMaterial.getParams().normalScale = 1.0f;
+	m_cyberGunMaterial.getParams().emissiveStrength = 1.0f;
+	m_cyberGunMaterial.getParams().alphaCutoff = 0.5f;
+
+	m_cyberGunRenderMesh.destroy();
+	for (const MeshComponent& meshComponent : m_model->GetMeshes()) {
+		Submesh submesh{};
+		hr = submesh.vertexBuffer.init(m_device, meshComponent, D3D11_BIND_VERTEX_BUFFER);
+		if (FAILED(hr)) {
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun vertex buffer. HRESULT: " + std::to_string(hr)).c_str());
+			return hr;
+		}
+
+		hr = submesh.indexBuffer.init(m_device, meshComponent, D3D11_BIND_INDEX_BUFFER);
+		if (FAILED(hr)) {
+			ERROR("Main", "InitDevice", ("Failed to initialize CyberGun index buffer. HRESULT: " + std::to_string(hr)).c_str());
+			return hr;
+		}
+
+		submesh.indexCount = meshComponent.m_numIndex;
+		submesh.materialSlot = 0;
+		m_cyberGunRenderMesh.getSubmeshes().push_back(std::move(submesh));
+	}
+
+	EU::TSharedPointer<MeshRendererComponent> meshRenderer = m_cyberGun->getComponent<MeshRendererComponent>();
+	if (!meshRenderer) {
+		meshRenderer = EU::MakeShared<MeshRendererComponent>();
+		m_cyberGun->addComponent(meshRenderer);
+	}
+	meshRenderer->setMesh(&m_cyberGunRenderMesh);
+	meshRenderer->setMaterialInstance(&m_cyberGunMaterial);
+	meshRenderer->setVisible(true);
+	meshRenderer->setCastShadow(true);
+
+	m_directionalLightActor = EU::MakeShared<Actor>(m_device);
+	if (!m_directionalLightActor.isNull()) {
+		m_directionalLightActor->setName("DirectionalLight");
+		EU::TSharedPointer<LightComponent> lightComponent = m_directionalLightActor->getComponent<LightComponent>();
+		if (!lightComponent) {
+			lightComponent = EU::MakeShared<LightComponent>();
+			m_directionalLightActor->addComponent(lightComponent);
+		}
+		lightComponent->getLightData().type = LightType::Directional;
+		lightComponent->getLightData().direction = m_constantBufferStruct.LightDir;
+		lightComponent->getLightData().color = m_constantBufferStruct.LightColor;
+		lightComponent->getLightData().intensity = 1.0f;
+		lightComponent->setCastShadow(false);
+		m_sceneGraph.addEntity(m_directionalLightActor.get());
+	}
+
+	loadScene(getDefaultScenePath());
 
 	hr = m_editorViewportPass.init(m_device, 1280, 720);
 	if (FAILED(hr)) {
-		ERROR("Main", "InitDevice",
-			("Failed to initialize EditorViewportPass. HRESULT: " + std::to_string(hr)).c_str());
+		ERROR("Main", "InitDevice", ("Failed to initialize EditorViewportPass. HRESULT: " + std::to_string(hr)).c_str());
+		return hr;
+	}
+
+	hr = m_forwardRenderer.init(m_device);
+	if (FAILED(hr)) {
+		ERROR("Main", "InitDevice", ("Failed to initialize ForwardRenderer. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
 
 	return S_OK;
 }
 
-void 
-BaseApp::update(float deltaTime) {
-	// Update our time
+void BaseApp::update(float deltaTime) {
 	static float t = 0.0f;
 	if (m_swapChain.m_driverType == D3D_DRIVER_TYPE_REFERENCE)
 	{
@@ -262,28 +334,33 @@ BaseApp::update(float deltaTime) {
 	{
 		static DWORD dwTimeStart = 0;
 		DWORD dwTimeCur = GetTickCount();
-		if (dwTimeStart == 0)
-			dwTimeStart = dwTimeCur;
+		if (dwTimeStart == 0) dwTimeStart = dwTimeCur;
 		t = (dwTimeCur - dwTimeStart) / 1000.0f;
 	}
-	// Update User Interface
+	
 	m_gui.update(m_viewport, m_window);
-	bool show_demo_window = true;
-	//ImGui::ShowDemoWindow(&show_demo_window);
 	m_gui.drawViewportPanel(m_editorViewportPass.getSRV());
-	m_gui.inspectorGeneral(m_actors[m_gui.selectedActorIndex]);
 	m_gui.outliner(m_actors);
-	m_gui.editTransform(m_camera, m_window, m_actors[m_gui.selectedActorIndex]);
+	
+	EU::TSharedPointer<Actor> selectedActor;
+	if (m_gui.selectedActorIndex >= 0 && m_gui.selectedActorIndex < static_cast<int>(m_actors.size())) {
+		selectedActor = m_actors[m_gui.selectedActorIndex];
+	}
+	
+	m_gui.inspectorGeneral(selectedActor);
+	m_gui.editTransform(m_camera, m_window, selectedActor);
+	
+	if (m_gui.consumeSaveSceneRequest()) {
+		saveScene(getDefaultScenePath());
+	}
 
 	unsigned int desiredW = static_cast<unsigned int>(m_gui.m_viewportSize.x);
 	unsigned int desiredH = static_cast<unsigned int>(m_gui.m_viewportSize.y);
-
 	const unsigned int kMinViewportSize = 64;
 
 	if (desiredW < kMinViewportSize) desiredW = kMinViewportSize;
 	if (desiredH < kMinViewportSize) desiredH = kMinViewportSize;
 
-	// Si cambi� el tama�o solicitado, reinicia estabilidad
 	if (desiredW != m_lastRequestedViewportWidth || desiredH != m_lastRequestedViewportHeight)
 	{
 		m_lastRequestedViewportWidth = desiredW;
@@ -292,17 +369,12 @@ BaseApp::update(float deltaTime) {
 	}
 	else
 	{
-		// El tama�o ya no cambi� este frame
 		m_viewportResizeStableFrames++;
 	}
 
-	// Solo marcar resize cuando el tama�o se haya mantenido estable
-	const int kStableFramesRequired = 2;
-
-	if (m_viewportResizeStableFrames >= kStableFramesRequired)
+	if (m_viewportResizeStableFrames >= 2)
 	{
-		if (desiredW != m_editorViewportPass.getWidth() ||
-			desiredH != m_editorViewportPass.getHeight())
+		if (desiredW != m_editorViewportPass.getWidth() || desiredH != m_editorViewportPass.getHeight())
 		{
 			m_editorViewportResizePending = true;
 			m_pendingViewportWidth = desiredW;
@@ -310,103 +382,78 @@ BaseApp::update(float deltaTime) {
 		}
 	}
 
-	// Actualizar la matriz de proyecci�n y vista
 	m_camera.updateViewMatrix();
-
 	XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
 	XMStoreFloat4x4(&m_constantBufferStruct.Projection, XMMatrixTranspose(m_camera.getProj()));
 	m_constantBufferStruct.CameraPos = m_camera.getPosition();
 	
-	// Luz blanca fuerte
 	m_gui.vec3Control("Light Direction", &m_constantBufferStruct.LightDir.x, 0.1f);
 	m_gui.vec3Control("Light Color", &m_constantBufferStruct.LightColor.x, 0.1f);
+	
+	if (!m_directionalLightActor.isNull()) {
+		EU::TSharedPointer<LightComponent> lightComponent = m_directionalLightActor->getComponent<LightComponent>();
+		if (lightComponent) {
+			lightComponent->getLightData().direction = m_constantBufferStruct.LightDir;
+			lightComponent->getLightData().color = m_constantBufferStruct.LightColor;
+		}
+	}
 
-	// Update Skybox Pass -> Solo necesita la vista sin traslaci�n + proyecci�n para funcionar correctamente (ver m�todo update de Skybox)
 	m_skybox.update(m_deviceContext, m_camera);
-
-	// Update constant buffer for Scene Pass
-	m_constantBuffer.update(m_deviceContext, nullptr, 0, nullptr, &m_constantBufferStruct, 0, 0);
-
-	// Update Actors
 	m_sceneGraph.update(deltaTime, m_deviceContext);
-
 }
 
-void 
-BaseApp::render() {
+void BaseApp::render() {
 	handleEditorViewportResize();
-
 	float ClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	const float viewportClear[4] = { 0.10f, 0.10f, 0.10f, 1.0f };
-	m_editorViewportPass.begin(m_deviceContext, viewportClear);
-	m_editorViewportPass.setViewport(m_deviceContext);
-	m_editorViewportPass.clearDepth(m_deviceContext);
 
-	// 1) SKYBOX PASS
-	m_skybox.render(m_deviceContext);
+	m_renderScene.clear();
+	m_sceneGraph.gatherRenderScene(m_renderScene, m_camera);
+	m_renderScene.skybox = &m_skybox;
+	m_forwardRenderer.render(m_deviceContext, m_camera, m_renderScene, m_editorViewportPass);
 
-	// 2) RESTAURAR ESTADOS + PIPELINE DE ESCENA
-	m_defaultRasterizer.render(m_deviceContext);
-	m_defaultDepthStencil.render(m_deviceContext, 0, false);
-
-	// limpia SRVs por seguridad
-	//ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
-	//m_deviceContext.m_deviceContext->PSSetShaderResources(10, 1, nullSRV);
-	//m_deviceContext.m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
-
-	// Re-bindea shader/layout de escena
-	m_shaderProgram.render(m_deviceContext);
-
-	// CBs para VS (view/proj)
-	m_constantBuffer.render(m_deviceContext, 0, 1, true);
-
-	// 3) SCENE PASS
-	m_sceneGraph.render(m_deviceContext);
-
-	// 2) Volver al backbuffer principal
 	m_renderTargetView.render(m_deviceContext, m_depthStencilView, 1, ClearColor);
 	m_viewport.render(m_deviceContext);
 	m_depthStencilView.render(m_deviceContext);
 
-	// 4) GUI
 	m_gui.render();
-
 	m_swapChain.present();
 }
 
-void
-BaseApp::destroy() {
+void BaseApp::destroy() {
 	if (m_deviceContext.m_deviceContext) m_deviceContext.m_deviceContext->ClearState();
 	m_sceneGraph.destroy();
 	m_editorViewportPass.destroy();
+	m_forwardRenderer.destroy();
+	m_cyberGunRenderMesh.destroy();
 	m_AlbedoSRV.destroy();
 	m_MetallicSRV.destroy();
 	m_NormalSRV.destroy();
 	m_RoughnessSRV.destroy();
 	m_AOSRV.destroy();
+	m_EmissiveSRV.destroy();
 	m_defaultRasterizer.destroy();
 	m_defaultDepthStencil.destroy();
-	//m_cbNeverChanges.destroy();
-	//m_cbChangeOnResize.destroy();
+	m_defaultSampler.destroy();
 	m_shaderProgram.destroy();
 	m_depthStencil.destroy();
 	m_depthStencilView.destroy();
 	m_renderTargetView.destroy();
 	m_swapChain.destroy();
 	m_backBuffer.destroy();
-	m_gui.destroy();
+	if (m_guiInitialized) {
+		m_gui.destroy();
+		m_guiInitialized = false;
+	}
+	delete m_model;
+	m_model = nullptr;
 	m_deviceContext.destroy();
 	m_device.destroy();
 }
 
-LRESULT
-BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam)) {
-		return true;
-	}
-
+LRESULT BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam)) return true;
 	switch (message) {
-	case WM_CREATE:	{
+	case WM_CREATE: {
 		CREATESTRUCT* pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pCreate->lpCreateParams);
 	}
@@ -417,16 +464,11 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 		EndPaint(hWnd, &ps);
 	}
 	return 0;
-	case WM_SIZE:
-	{
-		// Evita recrear cuando est� minimizada
+	case WM_SIZE: {
 		if (wParam == SIZE_MINIMIZED) return 0;
-
-		UINT newW = LOWORD(lParam);
-		UINT newH = HIWORD(lParam);
+		unsigned int newW = LOWORD(lParam);
+		unsigned int newH = HIWORD(lParam);
 		if (newW == 0 || newH == 0) return 0;
-
-		// Recupera tu instancia BaseApp (lo m�s com�n es guardarla en GWLP_USERDATA en WM_CREATE)
 		BaseApp* app = reinterpret_cast<BaseApp*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 		if (app) app->onResize(newW, newH);
 		return 0;
@@ -438,85 +480,103 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void 
-BaseApp::onResize(UINT newW, UINT newH)
-{
-	// 1) Actualiza window size (tu init lo calcula con GetClientRect solo una vez) :contentReference[oaicite:6]{index=6}
+void BaseApp::onResize(unsigned int newW, unsigned int newH) {
 	if (!m_d3dReady) {
-		// Aun as� puedes actualizar el tama�o l�gico de la ventana
 		m_window.m_width = (int)newW;
 		m_window.m_height = (int)newH;
 		return;
 	}
-
 	if (!m_deviceContext.m_deviceContext || !m_swapChain.m_swapChain) return;
-	if (newW == 0 || newH == 0) return;
-
 	m_window.m_width = (int)newW;
 	m_window.m_height = (int)newH;
-	// 2) Desbindea targets actuales (clave antes de destruir)
 	ID3D11RenderTargetView* nullRTV = nullptr;
 	m_deviceContext.m_deviceContext->OMSetRenderTargets(1, &nullRTV, nullptr);
-
-	// 3) Libera recursos dependientes del tama�o (RTV/DSV/Depth/BackBuffer)
 	m_renderTargetView.destroy();
 	m_depthStencilView.destroy();
 	m_depthStencil.destroy();
 	m_backBuffer.destroy();
-
-	// 4) Resize swapchain
-	HRESULT hr = m_swapChain.resizeBuffers(newW, newH);
-	if (FAILED(hr)) return;
-
-	// 5) Re-obt�n backbuffer
-	hr = m_swapChain.getBackBuffer(m_backBuffer);
-	if (FAILED(hr)) return;
-
-	// 6) Re-crea RTV
-	hr = m_renderTargetView.init(m_device, m_backBuffer, DXGI_FORMAT_R8G8B8A8_UNORM);
-	if (FAILED(hr)) return;
-
-	// 7) Re-crea Depth/DSV (tu init actual lo hace con m_window.m_width/m_height)
-	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 16);
-	if (FAILED(hr)) return;
-
-	hr = m_depthStencilView.init(m_device, m_depthStencil, DXGI_FORMAT_D24_UNORM_S8_UINT);
-	if (FAILED(hr)) return;
-
-	// 8) Viewport
+	m_swapChain.resizeBuffers(newW, newH);
+	m_swapChain.getBackBuffer(m_backBuffer);
+	m_renderTargetView.init(m_device, m_backBuffer, DXGI_FORMAT_R8G8B8A8_UNORM);
+	m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 16);
+	m_depthStencilView.init(m_device, m_depthStencil, DXGI_FORMAT_D24_UNORM_S8_UINT);
 	m_viewport.init(m_window);
-
-	// 9) C�mara (aspect ratio) (tu c�mara lo calcula a partir de m_window) 
 	m_camera.setLens(XM_PIDIV4, newW / (float)newH, 0.01f, 100.0f);
 }
 
-void BaseApp::handleEditorViewportResize()
-{
-	if (!m_editorViewportResizePending)
-		return;
-
-	// Desbindear antes de tocar recursos
+void BaseApp::handleEditorViewportResize() {
+	if (!m_editorViewportResizePending) return;
 	m_deviceContext.m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-
 	ID3D11ShaderResourceView* nullSRVs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] = {};
-	m_deviceContext.m_deviceContext->PSSetShaderResources(
-		0,
-		D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
-		nullSRVs
-	);
-
-	// Crear pass temporal nuevo
+	m_deviceContext.m_deviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullSRVs);
 	EditorViewportPass newPass;
-	HRESULT hr = newPass.init(m_device, m_pendingViewportWidth, m_pendingViewportHeight);
-	if (FAILED(hr))
-	{
-		// Si falla, conserva el pass actual
-		m_editorViewportResizePending = false;
-		return;
+	if (SUCCEEDED(newPass.init(m_device, m_pendingViewportWidth, m_pendingViewportHeight))) {
+		m_editorViewportPass.swap(newPass);
 	}
-
-	// Intercambio seguro: el pass viejo queda en newPass y se destruye al salir
-	m_editorViewportPass.swap(newPass);
-
 	m_editorViewportResizePending = false;
+}
+
+std::string BaseApp::getDefaultScenePath() const {
+	CreateDirectoryA("Saved", nullptr);
+	return "Saved/DefaultScene.wvscene";
+}
+
+bool BaseApp::saveScene(const std::string& path) {
+	std::ofstream stream(path, std::ios::trunc);
+	if (!stream.is_open()) return false;
+	stream << "WVSCENE 1\nACTOR_COUNT " << m_actors.size() << "\n";
+	for (size_t i = 0; i < m_actors.size(); ++i) {
+		const auto& actor = m_actors[i];
+		if (actor.isNull()) continue;
+		stream << "ACTOR " << i << " " << std::quoted(actor->getName()) << "\n";
+		auto transform = actor->getComponent<Transform>();
+		if (transform) {
+			auto pos = transform->getPosition(); auto rot = transform->getRotation(); auto scl = transform->getScale();
+			stream << "POSITION " << pos.x << " " << pos.y << " " << pos.z << "\n";
+			stream << "ROTATION " << rot.x << " " << rot.y << " " << rot.z << "\n";
+			stream << "SCALE " << scl.x << " " << scl.y << " " << scl.z << "\n";
+		}
+		auto meshRenderer = actor->getComponent<MeshRendererComponent>();
+		if (meshRenderer) {
+			stream << "VISIBLE " << (meshRenderer->isVisible() ? 1 : 0) << "\nCAST_SHADOW " << (meshRenderer->canCastShadow() ? 1 : 0) << "\n";
+			const auto& materials = meshRenderer->getMaterialInstances();
+			stream << "MATERIAL_COUNT " << materials.size() << "\n";
+			for (size_t j = 0; j < materials.size(); ++j) {
+				if (!materials[j]) { stream << "MATERIAL " << j << " 0 0 1 1 1 1 0 1 1 1 0.5\n"; continue; }
+				auto mat = materials[j]->getMaterial(); auto& p = materials[j]->getParams();
+				stream << "MATERIAL " << j << " " << (mat ? (int)mat->getDomain() : 0) << " " << (mat ? (int)mat->getBlendMode() : 0) << " " 
+					   << p.baseColor.x << " " << p.baseColor.y << " " << p.baseColor.z << " " << p.baseColor.w << " " 
+					   << p.metallic << " " << p.roughness << " " << p.ao << " " << p.normalScale << " " << p.alphaCutoff << "\n";
+			}
+		}
+		stream << "END_ACTOR\n";
+	}
+	stream << "LIGHT " << m_constantBufferStruct.LightDir.x << " " << m_constantBufferStruct.LightDir.y << " " << m_constantBufferStruct.LightDir.z << " "
+		   << m_constantBufferStruct.LightColor.x << " " << m_constantBufferStruct.LightColor.y << " " << m_constantBufferStruct.LightColor.z << "\nEND_SCENE\n";
+	return true;
+}
+
+bool BaseApp::loadScene(const std::string& path) {
+	std::ifstream stream(path);
+	if (!stream.is_open()) return false;
+	std::string token; int version;
+	stream >> token >> version;
+	if (token != "WVSCENE" || version != 1) return false;
+	EU::TSharedPointer<Actor> currentActor;
+	while (stream >> token) {
+		if (token == "ACTOR") {
+			size_t idx; std::string name; stream >> idx >> std::quoted(name);
+			currentActor = (idx < m_actors.size()) ? m_actors[idx] : EU::TSharedPointer<Actor>();
+			if (!currentActor.isNull()) currentActor->setName(name);
+		}
+		else if (token == "POSITION" && !currentActor.isNull()) { float x, y, z; stream >> x >> y >> z; auto t = currentActor->getComponent<Transform>(); if (t) t->setPosition({x,y,z}); }
+		else if (token == "ROTATION" && !currentActor.isNull()) { float x, y, z; stream >> x >> y >> z; auto t = currentActor->getComponent<Transform>(); if (t) t->setRotation({x,y,z}); }
+		else if (token == "SCALE" && !currentActor.isNull()) { float x, y, z; stream >> x >> y >> z; auto t = currentActor->getComponent<Transform>(); if (t) t->setScale({x,y,z}); }
+		else if (token == "LIGHT") { 
+			stream >> m_constantBufferStruct.LightDir.x >> m_constantBufferStruct.LightDir.y >> m_constantBufferStruct.LightDir.z 
+				   >> m_constantBufferStruct.LightColor.x >> m_constantBufferStruct.LightColor.y >> m_constantBufferStruct.LightColor.z;
+		}
+		else if (token == "END_SCENE") break;
+	}
+	return true;
 }

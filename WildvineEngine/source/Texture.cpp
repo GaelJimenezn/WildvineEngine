@@ -1,8 +1,177 @@
-#define STB_IMAGE_IMPLEMENTATION
+ï»¿#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "Texture.h"
 #include "Device.h"
 #include "DeviceContext.h"
+#include <cstdint>
+#include <fstream>
+
+namespace {
+constexpr uint32_t kTextureCacheMagic = 0x58545657; // WVTX
+constexpr uint32_t kTextureCacheVersion = 1;
+
+struct CachedTextureData {
+  int width = 0;
+  int height = 0;
+  std::vector<unsigned char> rgba;
+};
+
+bool GetFileWriteTime(const std::string& path, ULONGLONG& outWriteTime) {
+  WIN32_FILE_ATTRIBUTE_DATA attributes{};
+  if (!GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attributes)) {
+    return false;
+  }
+
+  ULARGE_INTEGER fileTime{};
+  fileTime.LowPart = attributes.ftLastWriteTime.dwLowDateTime;
+  fileTime.HighPart = attributes.ftLastWriteTime.dwHighDateTime;
+  outWriteTime = fileTime.QuadPart;
+  return true;
+}
+
+std::string GetTextureCachePath(const std::string& sourcePath) {
+  return sourcePath + ".wvtx";
+}
+
+bool IsTextureCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) {
+  ULONGLONG sourceWriteTime = 0;
+  ULONGLONG cacheWriteTime = 0;
+  if (!GetFileWriteTime(sourcePath, sourceWriteTime)) {
+    return false;
+  }
+  if (!GetFileWriteTime(cachePath, cacheWriteTime)) {
+    return false;
+  }
+  return cacheWriteTime >= sourceWriteTime;
+}
+
+bool SaveTextureCache(const std::string& cachePath, int width, int height, const unsigned char* data) {
+  std::ofstream stream(cachePath, std::ios::binary | std::ios::trunc);
+  if (!stream.is_open()) {
+    return false;
+  }
+
+  const uint32_t dataSize = static_cast<uint32_t>(width * height * 4);
+  stream.write(reinterpret_cast<const char*>(&kTextureCacheMagic), sizeof(kTextureCacheMagic));
+  stream.write(reinterpret_cast<const char*>(&kTextureCacheVersion), sizeof(kTextureCacheVersion));
+  stream.write(reinterpret_cast<const char*>(&width), sizeof(width));
+  stream.write(reinterpret_cast<const char*>(&height), sizeof(height));
+  stream.write(reinterpret_cast<const char*>(&dataSize), sizeof(dataSize));
+  stream.write(reinterpret_cast<const char*>(data), dataSize);
+  return stream.good();
+}
+
+bool LoadTextureCache(const std::string& cachePath, CachedTextureData& outTexture) {
+  std::ifstream stream(cachePath, std::ios::binary);
+  if (!stream.is_open()) {
+    return false;
+  }
+
+  uint32_t magic = 0;
+  uint32_t version = 0;
+  uint32_t dataSize = 0;
+  stream.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+  stream.read(reinterpret_cast<char*>(&version), sizeof(version));
+  stream.read(reinterpret_cast<char*>(&outTexture.width), sizeof(outTexture.width));
+  stream.read(reinterpret_cast<char*>(&outTexture.height), sizeof(outTexture.height));
+  stream.read(reinterpret_cast<char*>(&dataSize), sizeof(dataSize));
+
+  if (!stream.good() ||
+      magic != kTextureCacheMagic ||
+      version != kTextureCacheVersion ||
+      outTexture.width <= 0 ||
+      outTexture.height <= 0 ||
+      dataSize != static_cast<uint32_t>(outTexture.width * outTexture.height * 4)) {
+    return false;
+  }
+
+  outTexture.rgba.resize(dataSize);
+  stream.read(reinterpret_cast<char*>(outTexture.rgba.data()), dataSize);
+  return stream.good();
+}
+
+HRESULT CreateTextureFromRGBA(Device& device,
+                              int width,
+                              int height,
+                              const unsigned char* data,
+                              ID3D11Texture2D** outTexture,
+                              ID3D11ShaderResourceView** outSRV) {
+  D3D11_TEXTURE2D_DESC textureDesc = {};
+  textureDesc.Width = width;
+  textureDesc.Height = height;
+  textureDesc.MipLevels = 1;
+  textureDesc.ArraySize = 1;
+  textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  textureDesc.SampleDesc.Count = 1;
+  textureDesc.Usage = D3D11_USAGE_DEFAULT;
+  textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+  D3D11_SUBRESOURCE_DATA initData = {};
+  initData.pSysMem = data;
+  initData.SysMemPitch = width * 4;
+
+  HRESULT hr = device.CreateTexture2D(&textureDesc, &initData, outTexture);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+  srvDesc.Format = textureDesc.Format;
+  srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+  srvDesc.Texture2D.MipLevels = 1;
+
+  hr = device.m_device->CreateShaderResourceView(*outTexture, &srvDesc, outSRV);
+  if (FAILED(hr)) {
+    if (*outTexture != nullptr) {
+      (*outTexture)->Release();
+      *outTexture = nullptr;
+    }
+  }
+  return hr;
+}
+
+HRESULT InitTextureFromImage(Device& device, const std::string& fullPath, Texture& texture) {
+  CachedTextureData cachedTexture;
+  const std::string cachePath = GetTextureCachePath(fullPath);
+
+  int width = 0;
+  int height = 0;
+  int channels = 0;
+  unsigned char* decodedData = nullptr;
+  const unsigned char* uploadData = nullptr;
+
+  if (IsTextureCacheUpToDate(fullPath, cachePath) && LoadTextureCache(cachePath, cachedTexture)) {
+    width = cachedTexture.width;
+    height = cachedTexture.height;
+    uploadData = cachedTexture.rgba.data();
+  }
+  else {
+    decodedData = stbi_load(fullPath.c_str(), &width, &height, &channels, 4);
+    if (!decodedData) {
+      ERROR("Texture", "init",
+        ("Failed to load texture: " + std::string(stbi_failure_reason())).c_str());
+      return E_FAIL;
+    }
+    uploadData = decodedData;
+    SaveTextureCache(cachePath, width, height, decodedData);
+  }
+
+  HRESULT hr = CreateTextureFromRGBA(device, width, height, uploadData, &texture.m_texture, &texture.m_textureFromImg);
+  if (decodedData) {
+    stbi_image_free(decodedData);
+  }
+
+  if (FAILED(hr)) {
+    SAFE_RELEASE(texture.m_texture);
+    SAFE_RELEASE(texture.m_textureFromImg);
+    ERROR("Texture", "init", "Failed to create shader resource view for cached image texture");
+    return hr;
+  }
+
+  SAFE_RELEASE(texture.m_texture);
+  return S_OK;
+}
+}
 
 HRESULT 
 Texture::init(Device& device, 
@@ -23,7 +192,6 @@ Texture::init(Device& device,
 	case DDS: {
 		m_textureName = textureName + ".dds";
 
-		// Cargar textura DDS
 		hr = D3DX11CreateShaderResourceViewFromFile(
 			device.m_device,
 			m_textureName.c_str(),
@@ -43,100 +211,12 @@ Texture::init(Device& device,
 
 	case PNG: {
     m_textureName = textureName + ".png";
-    int width, height, channels;
-    unsigned char* data = stbi_load(m_textureName.c_str(), &width, &height, &channels, 4); // 4 bytes por pixel (RGBA)
-    if (!data) {
-      ERROR("Texture", "init",
-        ("Failed to load PNG texture: " + std::string(stbi_failure_reason())).c_str());
-      return E_FAIL;
-    }
-
-    // Crear descripción de textura
-    D3D11_TEXTURE2D_DESC textureDesc = {};
-    textureDesc.Width = width;
-    textureDesc.Height = height;
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-    // Crear datos de subrecarga
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem = data;
-    initData.SysMemPitch = width * 4;
-
-    hr = device.CreateTexture2D(&textureDesc, &initData, &m_texture);
-    stbi_image_free(data); // Liberar los datos de imagen inmediatamente
-		
-    if (FAILED(hr)) {
-      ERROR("Texture", "init", "Failed to create texture from PNG data");
-      return hr;
-    }
-
-    // Crear vista del recurso de la textura
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = textureDesc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-
-    hr = device.m_device->CreateShaderResourceView(m_texture, &srvDesc, &m_textureFromImg);
-    SAFE_RELEASE(m_texture); // Liberar textura intermedia
-
-    if (FAILED(hr)) {
-      ERROR("Texture", "init", "Failed to create shader resource view for PNG texture");
-      return hr;
-    }
+    hr = InitTextureFromImage(device, m_textureName, *this);
 		break;
 	}
 	case JPG: {
     m_textureName = textureName + ".jpg";
-    int width, height, channels;
-    unsigned char* data = stbi_load(m_textureName.c_str(), &width, &height, &channels, 4); // 4 bytes por pixel (RGBA)
-    if (!data) {
-      ERROR("Texture", "init",
-        ("Failed to load JPG texture: " + std::string(stbi_failure_reason())).c_str());
-      return E_FAIL;
-    }
-
-    // Crear descripción de textura
-    D3D11_TEXTURE2D_DESC textureDesc = {};
-    textureDesc.Width = width;
-    textureDesc.Height = height;
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-    // Crear datos de subrecarga
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem = data;
-    initData.SysMemPitch = width * 4;
-
-    hr = device.CreateTexture2D(&textureDesc, &initData, &m_texture);
-    stbi_image_free(data); // Liberar los datos de imagen inmediatamente
-
-    if (FAILED(hr)) {
-      ERROR("Texture", "init", "Failed to create texture from PNG data");
-      return hr;
-    }
-
-    // Crear vista del recurso de la textura
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = textureDesc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-
-    hr = device.m_device->CreateShaderResourceView(m_texture, &srvDesc, &m_textureFromImg);
-    SAFE_RELEASE(m_texture); // Liberar textura intermedia
-
-    if (FAILED(hr)) {
-      ERROR("Texture", "init", "Failed to create shader resource view for JPG texture");
-      return hr;
-    }
+    hr = InitTextureFromImage(device, m_textureName, *this);
 		break;
 	}
 	default:
@@ -161,10 +241,9 @@ Texture::init(Device& device,
   }
   if (width == 0 || height == 0) {
     ERROR("Texture", "init", "Width and height must be greater than 0");
-    E_INVALIDARG;
+    return E_INVALIDARG;
   }
 
-  // Config the texture
   D3D11_TEXTURE2D_DESC desc;
   memset(&desc, 0, sizeof(desc));
   desc.Width = width;
@@ -200,7 +279,7 @@ Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
     ERROR("Texture", "init", "Texture is null.");
     return E_POINTER;
   }
-  // Create Shader Resource View
+
   D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.Format = format;
   srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -254,10 +333,8 @@ Texture::CreateCubemap(Device& device,
                        DeviceContext& deviceContext, 
                        const std::array<std::string, 6>& facePaths, 
                        bool generateMips) {
-  // 0) Limpieza si ya había recursos
   destroy();
 
-  // 1) Cargar caras con stb_image (forzar RGBA)
   stbi_set_flip_vertically_on_load(false);
 
   int width = 0, height = 0, channels = 0;
@@ -268,34 +345,29 @@ Texture::CreateCubemap(Device& device,
 		int w = 0, h = 0, c = 0;
     facePixels[i] = stbi_load(facePaths[i].c_str(), &w, &h, &c, 4);
     if (!facePixels[i]) {
-      // liberar lo ya cargado
       for (int k = 0; k < i; ++k) {
         if (facePixels[k]) {
           stbi_image_free(facePixels[k]);
-					return E_FAIL;
         }
       }
+      return E_FAIL;
     }
 
     if (i == 0) {
       width = w;
       height = h;
     }
-    else {
-      if (w != width || h != height) {
-        ERROR("Texture", "CreateCubemap", "All cubemap faces must have the same dimensions.");
-        // liberar lo ya cargado
-        for (int k = 0; k <= i; ++k) {
-          if (facePixels[k]) {
-            stbi_image_free(facePixels[k]);
-            return E_FAIL;
-          }
+    else if (w != width || h != height) {
+      ERROR("Texture", "CreateCubemap", "All cubemap faces must have the same dimensions.");
+      for (int k = 0; k <= i; ++k) {
+        if (facePixels[k]) {
+          stbi_image_free(facePixels[k]);
         }
       }
+      return E_FAIL;
 		}
   }
 
-  // 2) Crear Texture2D array (6 slices) y marcarla como cubemap
   D3D11_TEXTURE2D_DESC texDesc{};
   texDesc.Width = static_cast<unsigned int>(width);
   texDesc.Height = static_cast<unsigned int>(height);
@@ -326,12 +398,11 @@ Texture::CreateCubemap(Device& device,
         if (p) {
           stbi_image_free(p);
         }
-      } 
+      }
       return hr;
     }
   }
   else {
-    // crear vacío y subir mip 0 por cara
     hr = device.CreateTexture2D(&texDesc, nullptr, &m_texture);
     if (FAILED(hr)) {
       for (auto* p : facePixels) {
@@ -357,10 +428,8 @@ Texture::CreateCubemap(Device& device,
         0
       );
     }
-	deviceContext.m_deviceContext->GenerateMips(m_textureFromImg);
   }
 
-  // 3) Crear SRV dimension TEXTURECUBE
   D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
   srvDesc.Format = texDesc.Format;
   srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
@@ -379,20 +448,17 @@ Texture::CreateCubemap(Device& device,
 		return hr;
   }
 
-  // 4) Generar mips si aplica
   if (generateMips)
   {
     deviceContext.m_deviceContext->GenerateMips(m_textureFromImg);
   }
 
-  // 5) Liberar CPU pixels
   for (auto* p : facePixels) {
     if (p) {
       stbi_image_free(p);
     }
   }
 
-  // 6) Guarda nombre (opcional)
   m_textureName = "Cubemap";
 
   return S_OK;

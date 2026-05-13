@@ -1,90 +1,189 @@
-#include "EngineUtilities\GUI\GUI.h"
+Ôªø#include "EngineUtilities\GUI\GUI.h"
 #include "Viewport.h"
 #include "Window.h"
 #include "Device.h"
 #include "DeviceContext.h"
 #include "MeshComponent.h"
 #include "ECS\Actor.h"
+#include "ECS\LightComponent.h"
+#include "ECS\MeshRendererComponent.h"
+#include "Rendering\Mesh.h"
+#include "Rendering\Material.h"
+#include "Rendering\MaterialInstance.h"
 #include "EngineUtilities\Utilities\Camera.h"
 //#include "imgui_internal.h"
-
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
+static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
 
-// --- IMPLEMENTACI”N DE NUESTRO NUEVO ESTILO ---
-void GUI::unrealDarkStyle() {
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImVec4* colors = style.Colors;
+namespace {
+const char* GetLightTypeLabel(LightType type);
 
-	// GeometrÌa m·s cuadrada, estilo motor profesional
-	style.WindowRounding = 4.0f;
-	style.ChildRounding = 4.0f;
-	style.FrameRounding = 2.0f;
-	style.PopupRounding = 4.0f;
-	style.ScrollbarRounding = 2.0f;
-	style.TabRounding = 4.0f;
-	style.WindowBorderSize = 1.0f;
-	style.FrameBorderSize = 1.0f; 
-
-	style.WindowPadding = ImVec2(8, 8);
-	style.FramePadding = ImVec2(6, 4);
-	style.ItemSpacing = ImVec2(8, 4);
-
-	// Colores base oscuros tipo UE / Motor AAA
-	ImVec4 bgDark = ImVec4(0.05f, 0.05f, 0.05f, 1.0f);
-	ImVec4 panelColor = ImVec4(0.11f, 0.11f, 0.11f, 1.0f);
-	ImVec4 headerColor = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
-	ImVec4 accentColor = ImVec4(0.0f, 0.45f, 0.85f, 1.0f); // Azul tÈcnico
-	ImVec4 textLight = ImVec4(0.90f, 0.90f, 0.90f, 1.0f);
-
-	colors[ImGuiCol_Text] = textLight;
-	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.0f);
-	
-	colors[ImGuiCol_WindowBg] = bgDark;
-	colors[ImGuiCol_ChildBg] = panelColor;
-	colors[ImGuiCol_PopupBg] = panelColor;
-	colors[ImGuiCol_Border] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
-	colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-
-	colors[ImGuiCol_FrameBg] = bgDark;
-	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.20f, 0.20f, 1.0f);
-	colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
-
-	colors[ImGuiCol_TitleBg] = panelColor;
-	colors[ImGuiCol_TitleBgActive] = panelColor;
-	colors[ImGuiCol_TitleBgCollapsed] = bgDark;
-
-	colors[ImGuiCol_MenuBarBg] = panelColor;
-
-	colors[ImGuiCol_ScrollbarBg] = bgDark;
-	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
-	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.35f, 0.35f, 0.35f, 1.0f);
-	colors[ImGuiCol_ScrollbarGrabActive] = accentColor;
-
-	colors[ImGuiCol_CheckMark] = accentColor;
-	colors[ImGuiCol_SliderGrab] = accentColor;
-	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.0f, 0.55f, 0.95f, 1.0f);
-
-	colors[ImGuiCol_Button] = headerColor;
-	colors[ImGuiCol_ButtonHovered] = accentColor;
-	colors[ImGuiCol_ButtonActive] = ImVec4(0.0f, 0.35f, 0.75f, 1.0f);
-
-	colors[ImGuiCol_Header] = headerColor;
-	colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
-	colors[ImGuiCol_HeaderActive] = accentColor;
-
-	colors[ImGuiCol_Separator] = ImVec4(0.20f, 0.20f, 0.20f, 1.0f);
-	colors[ImGuiCol_SeparatorHovered] = accentColor;
-	colors[ImGuiCol_SeparatorActive] = ImVec4(0.0f, 0.55f, 0.95f, 1.0f);
-
-	colors[ImGuiCol_Tab] = bgDark;
-	colors[ImGuiCol_TabHovered] = headerColor;
-	colors[ImGuiCol_TabActive] = panelColor;
-	colors[ImGuiCol_TabUnfocused] = bgDark;
-	colors[ImGuiCol_TabUnfocusedActive] = panelColor;
-	
-	colors[ImGuiCol_DockingPreview] = ImVec4(accentColor.x, accentColor.y, accentColor.z, 0.35f);
+ImU32 AccentU32(const ImVec4& color) {
+	return ImGui::ColorConvertFloat4ToU32(color);
 }
 
+float RadToDeg(float radians) {
+	return XMConvertToDegrees(radians);
+}
+
+float DegToRad(float degrees) {
+	return XMConvertToRadians(degrees);
+}
+
+void DrawInspectorPill(const char* text, const ImVec4& color) {
+	ImGui::PushStyleColor(ImGuiCol_Button, color);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 4.0f));
+	ImGui::Button(text);
+	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor(3);
+}
+
+bool BeginInspectorSection(const char* label, bool defaultOpen = true) {
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
+	if (defaultOpen) {
+		flags |= ImGuiTreeNodeFlags_DefaultOpen;
+	}
+
+	ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.16f, 0.18f, 0.22f, 0.95f));
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.20f, 0.23f, 0.28f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.22f, 0.26f, 0.32f, 1.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 8.0f));
+	const bool open = ImGui::CollapsingHeader(label, flags);
+	ImGui::PopStyleVar();
+	ImGui::PopStyleColor(3);
+	return open;
+}
+
+bool BeginInspectorPropertyTable(const char* id, float firstColumnWidth = 132.0f) {
+	if (!ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV)) {
+		return false;
+	}
+
+	ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, firstColumnWidth);
+	ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+	return true;
+}
+
+void DrawPropertyLabel(const char* label) {
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label);
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN);
+}
+
+void DrawPropertyValueText(const char* label, const char* value) {
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label);
+	ImGui::TableSetColumnIndex(1);
+	ImGui::TextUnformatted(value);
+}
+
+void DrawPropertyValueBool(const char* label, bool value) {
+	DrawPropertyValueText(label, value ? "Yes" : "No");
+}
+
+void DrawPropertyToggle(const char* label, const char* id, bool* value) {
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label);
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+	ImGui::Checkbox(id, value);
+	ImGui::PopStyleVar();
+}
+
+const char* GetActorTypeLabel(EU::TSharedPointer<Actor> actor) {
+	if (actor.isNull()) {
+		return "Actor";
+	}
+
+	auto lightComponent = actor->getComponent<LightComponent>();
+	if (!lightComponent.isNull()) {
+		return GetLightTypeLabel(lightComponent->getLightData().type);
+	}
+
+	if (!actor->getComponent<MeshRendererComponent>().isNull()) {
+		return "Static Mesh Actor";
+	}
+
+	if (!actor->getComponent<Transform>().isNull()) {
+		return "Empty Actor";
+	}
+
+	return "Actor";
+}
+
+ImVec4 GetActorTypeColor(EU::TSharedPointer<Actor> actor) {
+	if (actor.isNull()) {
+		return ImVec4(0.45f, 0.47f, 0.52f, 1.0f);
+	}
+
+	auto lightComponent = actor->getComponent<LightComponent>();
+	if (!lightComponent.isNull()) {
+		return ImVec4(0.92f, 0.68f, 0.22f, 1.0f);
+	}
+
+	if (!actor->getComponent<MeshRendererComponent>().isNull()) {
+		return ImVec4(0.24f, 0.50f, 0.92f, 1.0f);
+	}
+
+	return ImVec4(0.36f, 0.72f, 0.46f, 1.0f);
+}
+
+void DrawInspectorComponentChips(bool hasTransform, bool hasMeshRenderer, bool hasLight) {
+	if (hasTransform) {
+		DrawInspectorPill("Transform", ImVec4(0.18f, 0.50f, 0.28f, 1.0f));
+	}
+	if (hasMeshRenderer) {
+		if (hasTransform) {
+			ImGui::SameLine();
+		}
+		DrawInspectorPill("Renderer", ImVec4(0.22f, 0.42f, 0.76f, 1.0f));
+	}
+	if (hasLight) {
+		if (hasTransform || hasMeshRenderer) {
+			ImGui::SameLine();
+		}
+		DrawInspectorPill("Light", ImVec4(0.62f, 0.46f, 0.14f, 1.0f));
+	}
+}
+
+const char* GetLightTypeLabel(LightType type) {
+	switch (type) {
+	case LightType::Directional: return "Directional";
+	case LightType::Point: return "Point";
+	case LightType::Spot: return "Spot";
+	default: return "Unknown";
+	}
+}
+
+const char* GetMaterialDomainLabel(MaterialDomain domain) {
+	switch (domain) {
+	case MaterialDomain::Opaque: return "Opaque";
+	case MaterialDomain::Masked: return "Masked";
+	case MaterialDomain::Transparent: return "Transparent";
+	default: return "Unknown";
+	}
+}
+
+const char* GetBlendModeLabel(BlendMode blendMode) {
+	switch (blendMode) {
+	case BlendMode::Opaque: return "Opaque";
+	case BlendMode::Alpha: return "Alpha";
+	case BlendMode::Additive: return "Additive";
+	case BlendMode::PremultipliedAlpha: return "Premultiplied";
+	default: return "Unknown";
+	}
+}
+}
 void 
 GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 	// Setup Dear ImGui context
@@ -93,8 +192,7 @@ GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	
-    // Setup Dear ImGui style
+	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
 	// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
@@ -105,9 +203,7 @@ GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 
-	// Comentamos el del profe y metemos el nuestro:
-	// appleLiquidStyle(0.72f, ImVec4(0.0f, 0.515f, 1.0f, 1.0f));
-    unrealDarkStyle();
+	appleLiquidStyle(0.72f, ImVec4(0.0f, 0.515f, 1.0f, 1.0f));
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(window.m_hWnd);
@@ -128,6 +224,9 @@ GUI::update(Viewport& viewport, Window& window) {
 
 	ImGuizmo::BeginFrame();
 	ImGuiIO& io = ImGui::GetIO();
+	if (io.KeyCtrl && ImGui::IsKeyPressed('S', false)) {
+		m_requestSaveScene = true;
+	}
 	ImGuizmo::SetOrthographic(false);
 	//ImGuizmo::SetRect(0, 0, (float)window.m_width, (float)window.m_height);
 
@@ -160,63 +259,98 @@ GUI::destroy() {
 }
 
 void 
-GUI::vec3Control(const std::string& label, float* values, float resetValue, float columnWidth) {
+GUI::vec3Control(const std::string& label, float* values, float resetValue, float columnWidth, bool displayAsDegrees) {
 	ImGuiIO& io = ImGui::GetIO();
 	auto boldFont = io.Fonts->Fonts[0];
+	float displayValues[3] = { values[0], values[1], values[2] };
+	if (displayAsDegrees) {
+		displayValues[0] = RadToDeg(values[0]);
+		displayValues[1] = RadToDeg(values[1]);
+		displayValues[2] = RadToDeg(values[2]);
+	}
 
 	ImGui::PushID(label.c_str());
+	if (!ImGui::BeginTable(("##Vec3Table" + label).c_str(), 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV)) {
+		ImGui::PopID();
+		return;
+	}
 
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, columnWidth);
-	ImGui::Text(label.c_str());
-	ImGui::NextColumn();
+	ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, columnWidth);
+	ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label.c_str());
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushItemWidth(-1.0f);
 
-	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 3.0f, 4.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
 	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+	ImVec2 buttonSize = { lineHeight, lineHeight };
+	const float spacing = ImGui::GetStyle().ItemSpacing.x;
+	const float availableWidth = ImGui::GetContentRegionAvail().x;
+	const float dragWidth = (availableWidth - (buttonSize.x * 3.0f) - (spacing * 5.0f)) / 3.0f;
+	const float safeDragWidth = dragWidth > 24.0f ? dragWidth : 24.0f;
+	const float dragSpeed = displayAsDegrees ? 1.0f : 0.1f;
+	const char* dragFormat = displayAsDegrees ? "%.1f deg" : "%.2f";
 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
 	ImGui::PushFont(boldFont);
-	if (ImGui::Button("X", buttonSize)) values[0] = resetValue;
+	if (ImGui::Button("X", buttonSize)) {
+		values[0] = resetValue;
+		displayValues[0] = displayAsDegrees ? RadToDeg(resetValue) : resetValue;
+	}
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##X", &values[0], 0.1f, 0.0f, 0.0f, "%.2f");
-	ImGui::PopItemWidth();
+	ImGui::SetNextItemWidth(safeDragWidth);
+	if (ImGui::DragFloat("##X", &displayValues[0], dragSpeed, 0.0f, 0.0f, dragFormat)) {
+		values[0] = displayAsDegrees ? DegToRad(displayValues[0]) : displayValues[0];
+	}
 	ImGui::SameLine();
 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 	ImGui::PushFont(boldFont);
-	if (ImGui::Button("Y", buttonSize)) values[1] = resetValue;
+	if (ImGui::Button("Y", buttonSize)) {
+		values[1] = resetValue;
+		displayValues[1] = displayAsDegrees ? RadToDeg(resetValue) : resetValue;
+	}
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##Y", &values[1], 0.1f, 0.0f, 0.0f, "%.2f");
-	ImGui::PopItemWidth();
+	ImGui::SetNextItemWidth(safeDragWidth);
+	if (ImGui::DragFloat("##Y", &displayValues[1], dragSpeed, 0.0f, 0.0f, dragFormat)) {
+		values[1] = displayAsDegrees ? DegToRad(displayValues[1]) : displayValues[1];
+	}
 	ImGui::SameLine();
 
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 	ImGui::PushFont(boldFont);
-	if (ImGui::Button("Z", buttonSize)) values[2] = resetValue;
+	if (ImGui::Button("Z", buttonSize)) {
+		values[2] = resetValue;
+		displayValues[2] = displayAsDegrees ? RadToDeg(resetValue) : resetValue;
+	}
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##Z", &values[2], 0.1f, 0.0f, 0.0f, "%.2f");
-	ImGui::PopItemWidth();
+	ImGui::SetNextItemWidth(safeDragWidth);
+	if (ImGui::DragFloat("##Z", &displayValues[2], dragSpeed, 0.0f, 0.0f, dragFormat)) {
+		values[2] = displayAsDegrees ? DegToRad(displayValues[2]) : displayValues[2];
+	}
 
-	ImGui::PopStyleVar();
-	ImGui::Columns(1);
+	ImGui::PopStyleVar(2);
+	ImGui::PopItemWidth();
+	ImGui::EndTable();
 
 	ImGui::PopID();
 }
@@ -230,7 +364,7 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImVec4* colors = style.Colors;
 
-	// GeometrÌa suave tipo macOS
+	// Geometr√≠a suave tipo macOS
 	style.WindowRounding = 14.0f;
 	style.ChildRounding = 14.0f;
 	style.PopupRounding = 14.0f;
@@ -249,13 +383,13 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
 	style.ItemSpacing = ImVec2(8, 8);
 	style.ItemInnerSpacing = ImVec2(8, 6);
 
-	const float o = opacity;                 // opacidad del ìcristalî
+	const float o = opacity;                 // opacidad del ‚Äúcristal‚Äù
 	const ImVec4 txt = ImVec4(1, 1, 1, 0.95f);     // texto claro
-	const ImVec4 pane = ImVec4(0.16f, 0.16f, 0.18f, o); // panel ìvidriosoî oscuro
+	const ImVec4 pane = ImVec4(0.16f, 0.16f, 0.18f, o); // panel ‚Äúvidrioso‚Äù oscuro
 	const ImVec4 paneHi = ImVec4(0.20f, 0.20f, 0.22f, o);
 	const ImVec4 paneLo = ImVec4(0.13f, 0.13f, 0.15f, o * 0.85f);
 
-	// Colores base ìglassî
+	// Colores base ‚Äúglass‚Äù
 	colors[ImGuiCol_Text] = txt;
 	colors[ImGuiCol_TextDisabled] = ImVec4(1, 1, 1, 0.45f);
 	colors[ImGuiCol_WindowBg] = pane;     // importante: con alpha
@@ -324,16 +458,16 @@ GUI::ToolBar() {
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("New")) {
-				// AcciÛn para "New"
+				// Acci√≥n para "New"
 			}
 			if (ImGui::MenuItem("Open")) {
-				// AcciÛn para "Open"
+				// Acci√≥n para "Open"
 			}
 			if (ImGui::MenuItem("Save")) {
-				// AcciÛn para "Save"
+				// Acci√≥n para "Save"
 			}
 			if (ImGui::MenuItem("Exit")) {
-				// AcciÛn para "Exit"
+				// Acci√≥n para "Exit"
 				show_exit_popup = true;
 				ImGui::OpenPopup("Exit?");
 				//closeApp();
@@ -342,28 +476,28 @@ GUI::ToolBar() {
 		}
 		if (ImGui::BeginMenu("Edit")) {
 			if (ImGui::MenuItem("Undo")) {
-				// AcciÛn para "Undo"
+				// Acci√≥n para "Undo"
 			}
 			if (ImGui::MenuItem("Redo")) {
-				// AcciÛn para "Redo"
+				// Acci√≥n para "Redo"
 			}
 			if (ImGui::MenuItem("Cut")) {
-				// AcciÛn para "Cut"
+				// Acci√≥n para "Cut"
 			}
 			if (ImGui::MenuItem("Copy")) {
-				// AcciÛn para "Copy"
+				// Acci√≥n para "Copy"
 			}
 			if (ImGui::MenuItem("Paste")) {
-				// AcciÛn para "Paste"
+				// Acci√≥n para "Paste"
 			}
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Tools")) {
 			if (ImGui::MenuItem("Options")) {
-				// AcciÛn para "Options"
+				// Acci√≥n para "Options"
 			}
 			if (ImGui::MenuItem("Settings")) {
-				// AcciÛn para "Settings"
+				// Acci√≥n para "Settings"
 			}
 			ImGui::EndMenu();
 		}
@@ -386,7 +520,7 @@ GUI::closeApp() {
 		ImGui::Separator();
 
 		if (ImGui::Button("OK", ImVec2(120, 0))) {
-			exit(0); // Salir de la aplicaciÛn
+			exit(0); // Salir de la aplicaci√≥n
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SetItemDefaultFocus();
@@ -401,41 +535,180 @@ GUI::closeApp() {
 void
 GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
 	ImGui::Begin("Inspector");
-	// Checkbox para Static
-	bool isStatic = false;
-	ImGui::Checkbox("##Static", &isStatic);
-	ImGui::SameLine();
-
-	// Input text para el nombre del objeto
-	char objectName[128] = "Cube";
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() * 0.6f);
-	ImGui::InputText("##ObjectName", &actor->getName()[0], IM_ARRAYSIZE(objectName));
-	ImGui::SameLine();
-
-	// Icono (este puede ser una imagen, aquÌ solo como ejemplo de botÛn)
-	if (ImGui::Button("Icon")) {
-		// LÛgica del botÛn de icono aquÌ
+	if (actor.isNull()) {
+		ImGui::Dummy(ImVec2(0.0f, 12.0f));
+		ImGui::TextDisabled("No actor selected");
+		ImGui::TextWrapped("Select an actor in the Hierarchy to inspect transforms, materials, lights and renderer data.");
+		ImGui::End();
+		return;
 	}
 
-	// Separador horizontal
-	ImGui::Separator();
+	static char objectName[128] = {};
+	static Actor* cachedActor = nullptr;
+	if (cachedActor != actor.get()) {
+		cachedActor = actor.get();
+		strncpy_s(objectName, actor->getName().c_str(), _TRUNCATE);
+	}
 
-	// Dropdown para Tag
-	const char* tags[] = { "Untagged", "Player", "Enemy", "Environment" };
-	static int currentTag = 0;
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() * 0.5f);
-	ImGui::Combo("Tag", &currentTag, tags, IM_ARRAYSIZE(tags));
+	auto meshRenderer = actor->getComponent<MeshRendererComponent>();
+	auto lightComponent = actor->getComponent<LightComponent>();
+	auto transform = actor->getComponent<Transform>();
+	const bool hasMeshRenderer = !meshRenderer.isNull();
+	const bool hasLightComponent = !lightComponent.isNull();
+	const bool hasTransform = !transform.isNull();
+	const ImVec4 accentColor = GetActorTypeColor(actor);
+	const char* actorTypeLabel = GetActorTypeLabel(actor);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.0f);
+	ImGui::BeginChild("##InspectorHeader", ImVec2(0.0f, 104.0f), true);
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+	ImVec2 headerMin = ImGui::GetWindowPos();
+	ImVec2 headerMax = ImVec2(headerMin.x + ImGui::GetWindowSize().x, headerMin.y + ImGui::GetWindowSize().y);
+	drawList->AddRectFilled(headerMin, ImVec2(headerMax.x, headerMin.y + 4.0f), AccentU32(accentColor), 6.0f, ImDrawFlags_RoundCornersTop);
+
+	ImGui::TextDisabled("Details");
+	ImGui::Text("Selected Actor");
 	ImGui::SameLine();
+	ImGui::TextDisabled("| %s", actorTypeLabel);
+	ImGui::SetNextItemWidth(-1.0f);
+	if (ImGui::InputText("##ObjectName", objectName, IM_ARRAYSIZE(objectName))) {
+		actor->setName(objectName);
+	}
+	ImGui::Spacing();
+	DrawInspectorComponentChips(hasTransform, hasMeshRenderer, hasLightComponent);
+	ImGui::Spacing();
+	ImGui::TextDisabled("Component details, rendering data and editable properties");
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
 
-	// Dropdown para Layer
-	const char* layers[] = { "Default", "TransparentFX", "Ignore Raycast", "Water", "UI" };
-	static int currentLayer = 0;
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() * 0.5f);
-	ImGui::Combo("Layer", &currentLayer, layers, IM_ARRAYSIZE(layers));
+	ImGui::Spacing();
+	if (BeginInspectorSection("Identity")) {
+		if (BeginInspectorPropertyTable("##IdentityProperties")) {
+			DrawPropertyValueText("Name", actor->getName().c_str());
+			DrawPropertyValueText("Type", actorTypeLabel);
+			DrawPropertyValueBool("Transform", hasTransform);
+			DrawPropertyValueBool("Renderer", hasMeshRenderer);
+			DrawPropertyValueBool("Light", hasLightComponent);
+			ImGui::EndTable();
+		}
+	}
 
-	ImGui::Separator();
-	if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+	ImGui::Spacing();
+	if (hasTransform && BeginInspectorSection("Transform")) {
 		inspectorContainer(actor);
+	}
+
+	if (hasMeshRenderer) {
+		const std::vector<MaterialInstance*>& materialInstances = meshRenderer->getMaterialInstances();
+		Mesh* mesh = meshRenderer->getMesh();
+
+		if (BeginInspectorSection("Renderer")) {
+			const int submeshCount = mesh ? static_cast<int>(mesh->getSubmeshes().size()) : 0;
+			const int materialCount = static_cast<int>(materialInstances.size());
+			if (BeginInspectorPropertyTable("##RendererProperties")) {
+				bool isVisible = meshRenderer->isVisible();
+				DrawPropertyToggle("Visible", "##RendererVisible", &isVisible);
+				meshRenderer->setVisible(isVisible);
+
+				bool castShadow = meshRenderer->canCastShadow();
+				DrawPropertyToggle("Cast Shadow", "##RendererCastShadow", &castShadow);
+				meshRenderer->setCastShadow(castShadow);
+
+				char countBuffer[32] = {};
+				sprintf_s(countBuffer, "%d", submeshCount);
+				DrawPropertyValueText("Submeshes", countBuffer);
+
+				sprintf_s(countBuffer, "%d", materialCount);
+				DrawPropertyValueText("Material Slots", countBuffer);
+				ImGui::EndTable();
+			}
+		}
+
+		if (!materialInstances.empty() && BeginInspectorSection("Materials")) {
+			for (size_t i = 0; i < materialInstances.size(); ++i) {
+				MaterialInstance* materialInstance = materialInstances[i];
+				if (!materialInstance) {
+					continue;
+				}
+
+				MaterialParams& params = materialInstance->getParams();
+				Material* material = materialInstance->getMaterial();
+				std::string header = "Material Slot " + std::to_string(i);
+				if (ImGui::TreeNodeEx(header.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth)) {
+					if (material) {
+						if (BeginInspectorPropertyTable(("##MaterialMeta" + std::to_string(i)).c_str())) {
+							DrawPropertyValueText("Domain", GetMaterialDomainLabel(material->getDomain()));
+							if (material->getDomain() == MaterialDomain::Transparent) {
+								DrawPropertyValueText("Blend", GetBlendModeLabel(material->getBlendMode()));
+							}
+							ImGui::EndTable();
+						}
+
+						static const char* kMaterialDomains[] = { "Opaque", "Masked", "Transparent" };
+						int currentDomain = static_cast<int>(material->getDomain());
+						if (BeginInspectorPropertyTable(("##MaterialEditor" + std::to_string(i)).c_str())) {
+							DrawPropertyLabel("Domain");
+							if (ImGui::Combo(("##Domain" + std::to_string(i)).c_str(), &currentDomain, kMaterialDomains, IM_ARRAYSIZE(kMaterialDomains))) {
+								material->setDomain(static_cast<MaterialDomain>(currentDomain));
+							}
+
+							if (material->getDomain() == MaterialDomain::Transparent) {
+								static const char* kBlendModes[] = { "Opaque", "Alpha", "Additive", "Premultiplied" };
+								int currentBlendMode = static_cast<int>(material->getBlendMode());
+								DrawPropertyLabel("Blend Mode");
+								if (ImGui::Combo(("##BlendMode" + std::to_string(i)).c_str(), &currentBlendMode, kBlendModes, IM_ARRAYSIZE(kBlendModes))) {
+									material->setBlendMode(static_cast<BlendMode>(currentBlendMode));
+								}
+							}
+
+							DrawPropertyLabel("Base Color");
+							ImGui::ColorEdit4(("##BaseColor" + std::to_string(i)).c_str(), &params.baseColor.x);
+							DrawPropertyLabel("Metallic");
+							ImGui::SliderFloat(("##Metallic" + std::to_string(i)).c_str(), &params.metallic, 0.0f, 1.0f);
+							DrawPropertyLabel("Roughness");
+							ImGui::SliderFloat(("##Roughness" + std::to_string(i)).c_str(), &params.roughness, 0.0f, 1.0f);
+							DrawPropertyLabel("Ambient Occlusion");
+							ImGui::SliderFloat(("##AO" + std::to_string(i)).c_str(), &params.ao, 0.0f, 1.0f);
+							DrawPropertyLabel("Normal Scale");
+							ImGui::SliderFloat(("##NormalScale" + std::to_string(i)).c_str(), &params.normalScale, 0.0f, 2.0f);
+							if (materialInstance->getEmissive()) {
+								DrawPropertyLabel("Emissive Strength");
+								ImGui::SliderFloat(("##EmissiveStrength" + std::to_string(i)).c_str(), &params.emissiveStrength, 0.0f, 8.0f);
+							}
+							if (material->getDomain() == MaterialDomain::Masked) {
+								DrawPropertyLabel("Alpha Cutoff");
+								ImGui::SliderFloat(("##AlphaCutoff" + std::to_string(i)).c_str(), &params.alphaCutoff, 0.0f, 1.0f);
+							}
+							ImGui::EndTable();
+						}
+					}
+					ImGui::TreePop();
+				}
+			}
+		}
+	}
+
+	if (hasLightComponent && BeginInspectorSection("Light")) {
+		LightData& light = lightComponent->getLightData();
+		if (BeginInspectorPropertyTable("##LightProperties")) {
+			DrawPropertyValueText("Type", GetLightTypeLabel(light.type));
+			bool castShadow = lightComponent->canCastShadow();
+			DrawPropertyToggle("Cast Shadow", "##LightCastShadow", &castShadow);
+			lightComponent->setCastShadow(castShadow);
+			DrawPropertyLabel("Color");
+			ImGui::ColorEdit3("##LightColor", &light.color.x);
+			DrawPropertyLabel("Intensity");
+			ImGui::SliderFloat("##LightIntensity", &light.intensity, 0.0f, 10.0f);
+			if (light.type == LightType::Directional || light.type == LightType::Spot) {
+				DrawPropertyLabel("Direction");
+				ImGui::SliderFloat3("##LightDirection", &light.direction.x, -1.0f, 1.0f);
+			}
+			if (light.type == LightType::Point || light.type == LightType::Spot) {
+				DrawPropertyLabel("Range");
+				ImGui::SliderFloat("##LightRange", &light.range, 0.0f, 100.0f);
+			}
+			ImGui::EndTable();
+		}
 	}
 	ImGui::End();
 }
@@ -444,9 +717,9 @@ void
 GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
 	//ImGui::Begin("Transform");
 	// Draw the structure
-	vec3Control("Position", const_cast<float*>(actor->getComponent<Transform>()->getPosition().data()));
-	vec3Control("Rotation", const_cast<float*>(actor->getComponent<Transform>()->getRotation().data()));
-	vec3Control("Scale", const_cast<float*>(actor->getComponent<Transform>()->getScale().data()));
+	vec3Control("Position", const_cast<float*>(actor->getComponent<Transform>()->getPosition().data()), 0.0f, 78.0f, false);
+	vec3Control("Rotation", const_cast<float*>(actor->getComponent<Transform>()->getRotation().data()), 0.0f, 78.0f, true);
+	vec3Control("Scale", const_cast<float*>(actor->getComponent<Transform>()->getScale().data()), 1.0f, 78.0f, false);
 
 	//ImGui::End();
 }
@@ -455,46 +728,65 @@ void
 GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
 	ImGui::Begin("Hierarchy");
 
-	// Barra de b˙squeda
+	ImGui::TextDisabled("Scene");
 	static ImGuiTextFilter filter;
-	filter.Draw("Search...", 180.0f); // Barra de b˙squeda con ancho ajustable
+	filter.Draw("Search...", -1.0f);
 
 	ImGui::Separator();
 
-	// Recorrer y mostrar cada actor que pase el filtro de b˙squeda
-	for (int i = 0; i < actors.size(); ++i) {
+	if (selectedActorIndex >= static_cast<int>(actors.size())) {
+		selectedActorIndex = actors.empty() ? -1 : static_cast<int>(actors.size()) - 1;
+	}
+
+	for (int i = 0; i < static_cast<int>(actors.size()); ++i) {
 		const auto& actor = actors[i];
-
-		// Obtener el nombre del actor o asignar un nombre genÈrico
 		std::string actorName = actor ? actor->getName() : "Actor";
-
-		// Verificar si el actor pasa el filtro de b˙squeda
-		if (!filter.PassFilter(actorName.c_str())) {
-			continue; // Saltar actores que no coincidan con el filtro
+		const char* actorTypeLabel = GetActorTypeLabel(actor);
+		ImVec4 actorTypeColor = GetActorTypeColor(actor);
+		std::string filterLabel = actorName + " " + actorTypeLabel;
+		if (!filter.PassFilter(filterLabel.c_str())) {
+			continue;
 		}
 
-		// Si el actor es seleccionable
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-		if (selectedActorIndex == i)
-			flags |= ImGuiTreeNodeFlags_Selected;
+		auto meshRenderer = actor ? actor->getComponent<MeshRendererComponent>() : EU::TSharedPointer<MeshRendererComponent>();
+		auto lightComponent = actor ? actor->getComponent<LightComponent>() : EU::TSharedPointer<LightComponent>();
+		const bool hasMeshRenderer = !meshRenderer.isNull();
+		const bool hasLightComponent = !lightComponent.isNull();
 
-		// Crear un nodo de ·rbol para cada actor
-		bool nodeOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, flags, "%s", actorName.c_str());
+		ImGui::PushID(i);
+		const bool isSelected = (selectedActorIndex == i);
+		if (isSelected) {
+			ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.18f, 0.32f, 0.58f, 0.70f));
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.22f, 0.38f, 0.66f, 0.85f));
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.24f, 0.42f, 0.72f, 0.95f));
+		}
 
-		// SelecciÛn de actor
-		if (ImGui::IsItemClicked()) {
+		ImVec2 rowSize(ImGui::GetContentRegionAvail().x, 42.0f);
+		if (ImGui::Selectable("##actorRow", isSelected, ImGuiSelectableFlags_SpanAvailWidth, rowSize)) {
 			selectedActorIndex = i;
-			// AquÌ puedes llamar a alguna funciÛn para mostrar los detalles del actor en otra ventana
 		}
 
-		// Mostrar nodos hijos si el nodo est· abierto
-		if (nodeOpen) {
-			ImGui::Text("Position: %.2f, %.2f, %.2f", 
-				actor->getComponent<Transform>().get()->getPosition().x, 
-				actor->getComponent<Transform>().get()->getPosition().y, 
-				actor->getComponent<Transform>().get()->getPosition().z);
-			ImGui::TreePop();
+		ImVec2 min = ImGui::GetItemRectMin();
+		ImVec2 max = ImGui::GetItemRectMax();
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddText(ImVec2(min.x + 12.0f, min.y + 6.0f), ImGui::GetColorU32(ImGuiCol_Text), actorName.c_str());
+		drawList->AddText(ImVec2(min.x + 12.0f, min.y + 23.0f), AccentU32(actorTypeColor), actorTypeLabel);
+
+		float badgeX = max.x - 84.0f;
+		if (hasMeshRenderer) {
+			drawList->AddRectFilled(ImVec2(badgeX, min.y + 12.0f), ImVec2(badgeX + 28.0f, min.y + 30.0f), IM_COL32(68, 118, 180, 180), 6.0f);
+			drawList->AddText(ImVec2(badgeX + 9.0f, min.y + 14.0f), IM_COL32(240, 244, 255, 255), "M");
+			badgeX += 40.0f;
 		}
+		if (hasLightComponent) {
+			drawList->AddRectFilled(ImVec2(badgeX, min.y + 12.0f), ImVec2(badgeX + 28.0f, min.y + 30.0f), IM_COL32(180, 142, 52, 180), 6.0f);
+			drawList->AddText(ImVec2(badgeX + 9.0f, min.y + 14.0f), IM_COL32(255, 248, 232, 255), "L");
+		}
+
+		if (isSelected) {
+			ImGui::PopStyleColor(3);
+		}
+		ImGui::PopID();
 	}
 
 	ImGui::End();
@@ -502,11 +794,9 @@ GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
 
 void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor)
 {
-	if (!actor) return;
-
-	static ImGuizmo::MODE mCurrentGizmoMode = ImGuizmo::WORLD;
+	if (actor.isNull()) return;
 	auto transform = actor->getComponent<Transform>();
-	if (!transform) return;
+	if (transform.isNull()) return;
 
 	float rectX = m_viewportPos.x;
 	float rectY = m_viewportPos.y;
@@ -522,9 +812,14 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 	float* pos = const_cast<float*>(transform->getPosition().data());
 	float* rot = const_cast<float*>(transform->getRotation().data());
 	float* sca = const_cast<float*>(transform->getScale().data());
+	float gizmoRotation[3] = {
+		RadToDeg(rot[0]),
+		RadToDeg(rot[1]),
+		RadToDeg(rot[2])
+	};
 
 	float mArr[16];
-	ImGuizmo::RecomposeMatrixFromComponents(pos, rot, sca, mArr);
+	ImGuizmo::RecomposeMatrixFromComponents(pos, gizmoRotation, sca, mArr);
 
 	float vArr[16], pArr[16];
 	ToFloatArray(cam.getView(), vArr);
@@ -539,31 +834,30 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 		ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList());
 
 	ImGuizmo::SetID(0);
-	ImGuizmo::SetGizmoSizeClipSpace(0.15f);
-	ImGuizmo::AllowAxisFlip(false);
+	ImGuizmo::SetGizmoSizeClipSpace(0.12f);
+	ImGuizmo::AllowAxisFlip(true);
 	ImGuizmo::SetRect(rectX, rectY, rectW, rectH);
 
 	float snapValue = 25.0f;
-	if (mCurrentGizmoOperation == ImGuizmo::ROTATE)    snapValue = 5.0f;
+	if (mCurrentGizmoOperation == ImGuizmo::ROTATE)    snapValue = 1.0f;
 	if (mCurrentGizmoOperation == ImGuizmo::TRANSLATE) snapValue = 0.5f;
 
 	float snap[3] = { snapValue, snapValue, snapValue };
 	bool useSnap = ImGui::GetIO().KeyCtrl;
-
-	bool canManipulate = m_viewportHovered || m_viewportActive || m_isUsingGizmo;
-
-	if (canManipulate)
-	{
-		ImGuizmo::Manipulate(
-			vArr,
-			pArr,
-			mCurrentGizmoOperation,
-			mCurrentGizmoMode,
-			mArr,
-			nullptr,
-			useSnap ? snap : nullptr
-		);
+	ImGuizmo::MODE activeGizmoMode = mCurrentGizmoMode;
+	if (mCurrentGizmoOperation == ImGuizmo::SCALE) {
+		activeGizmoMode = ImGuizmo::LOCAL;
 	}
+
+	ImGuizmo::Manipulate(
+		vArr,
+		pArr,
+		mCurrentGizmoOperation,
+		activeGizmoMode,
+		mArr,
+		nullptr,
+		useSnap ? snap : nullptr
+	);
 
 	m_isUsingGizmo = ImGuizmo::IsUsing();
 
@@ -573,7 +867,7 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 		ImGuizmo::DecomposeMatrixToComponents(mArr, newPos, newRot, newSca);
 
 		transform->setPosition(EU::Vector3(newPos[0], newPos[1], newPos[2]));
-		transform->setRotation(EU::Vector3(newRot[0], newRot[1], newRot[2]));
+		transform->setRotation(EU::Vector3(DegToRad(newRot[0]), DegToRad(newRot[1]), DegToRad(newRot[2])));
 		transform->setScale(EU::Vector3(newSca[0], newSca[1], newSca[2]));
 	}
 }
@@ -615,9 +909,20 @@ void GUI::drawGizmoToolbar()
 		buttonMode("R", ImGuizmo::ROTATE, "E");
 		buttonMode("S", ImGuizmo::SCALE, "R");
 
-		static ImGuizmo::MODE mCurrentGizmoMode = ImGuizmo::WORLD;
+		const bool worldLocalSupported = (mCurrentGizmoOperation != ImGuizmo::SCALE);
+		if (!worldLocalSupported) {
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
 		if (ImGui::Button(mCurrentGizmoMode == ImGuizmo::WORLD ? "Global" : "Local"))
 			mCurrentGizmoMode = (mCurrentGizmoMode == ImGuizmo::WORLD) ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+		if (!worldLocalSupported) {
+			ImGui::PopStyleVar();
+			ImGui::PopItemFlag();
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Scale uses local orientation. World/Local affects Move and Rotate.");
+			}
+		}
 	}
 	ImGui::End();
 
@@ -661,7 +966,10 @@ void GUI::drawStudioTopRibbon()
 			{
 				ImGui::MenuItem("New Place");
 				ImGui::MenuItem("Open Place");
-				ImGui::MenuItem("Save");
+				if (ImGui::MenuItem("Save", "Ctrl+S"))
+				{
+					m_requestSaveScene = true;
+				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Exit"))
 				{
@@ -726,7 +1034,7 @@ void GUI::drawStudioTopRibbon()
 	ImGui::PopStyleVar(2);
 
 	// -----------------------------
-	// 2) RIBBON PRINCIPAL (CON NUEVOS COLORES)
+	// 2) RIBBON PRINCIPAL
 	// -----------------------------
 	ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, ribbonHeight), ImGuiCond_Always);
@@ -741,10 +1049,10 @@ void GUI::drawStudioTopRibbon()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.08f, 0.08f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.12f, 0.12f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.45f, 0.85f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.09f, 0.12f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.15f, 0.19f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.22f, 0.28f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.24f, 0.26f, 0.34f, 1.0f));
 
 	if (ImGui::Begin("##StudioRibbon", nullptr, ribbonFlags))
 	{
@@ -892,6 +1200,7 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 	ImGuiWindowFlags flags =
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoScrollWithMouse | 
+
 		ImGuiWindowFlags_NoCollapse;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -906,27 +1215,31 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 		if (panelSize.x < 1.0f) panelSize.x = 1.0f;
 		if (panelSize.y < 1.0f) panelSize.y = 1.0f;
 
-		m_viewportPos = panelMin;
-		m_viewportSize = panelSize;
-
 		if (viewportSRV)
 		{
 			ImGui::Image((ImTextureID)viewportSRV, panelSize);
 		}
 		else
 		{
+			ImGui::InvisibleButton("##ViewportSurface", panelSize);
+			ImVec2 itemMin = ImGui::GetItemRectMin();
+			ImVec2 itemMax = ImGui::GetItemRectMax();
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			ImVec2 panelMax(panelMin.x + panelSize.x, panelMin.y + panelSize.y);
 
-			drawList->AddRectFilled(panelMin, panelMax, IM_COL32(20, 20, 25, 255));
+			drawList->AddRectFilled(itemMin, itemMax, IM_COL32(20, 20, 25, 255));
 			drawList->AddText(
-				ImVec2(panelMin.x + 12.0f, panelMin.y + 12.0f),
+				ImVec2(itemMin.x + 12.0f, itemMin.y + 12.0f),
 				IM_COL32(220, 220, 220, 255),
 				"Viewport sin textura"
 			);
 		}
 
+		ImVec2 itemMin = ImGui::GetItemRectMin();
+		ImVec2 itemMax = ImGui::GetItemRectMax();
+		m_viewportPos = itemMin;
+		m_viewportSize = ImVec2(itemMax.x - itemMin.x, itemMax.y - itemMin.y);
 
+		// IMPORTANTE: el hover/active del item imagen
 		m_viewportHovered = ImGui::IsItemHovered();
 		m_viewportActive = ImGui::IsItemActive();
 		m_viewportFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
@@ -939,6 +1252,8 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 void GUI::drawEditorDockspace()
 {
 	ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+
+	// Debe coincidir con la altura total que ocupa tu ribbon superior
 	const float topOffset = 96.0f; // 24 menu + 72 ribbon
 
 	ImVec2 dockPos = ImVec2(mainViewport->Pos.x, mainViewport->Pos.y + topOffset);
@@ -977,3 +1292,5 @@ void GUI::drawEditorDockspace()
 
 	ImGui::PopStyleVar(3);
 }
+
+
