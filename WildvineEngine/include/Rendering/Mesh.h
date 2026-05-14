@@ -3,7 +3,7 @@
 #include "Buffer.h"
 
 struct
-Submesh {
+	Submesh {
 	Buffer vertexBuffer;
 	Buffer indexBuffer;
 	unsigned int indexCount = 0;
@@ -12,13 +12,13 @@ Submesh {
 };
 
 class
-Mesh {
+	Mesh {
 public:
 	std::vector<Submesh>& getSubmeshes() { return m_submeshes; }
 	const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
 
 	void
-	destroy() {
+		destroy() {
 		for (Submesh& submesh : m_submeshes) {
 			submesh.vertexBuffer.destroy();
 			submesh.indexBuffer.destroy();

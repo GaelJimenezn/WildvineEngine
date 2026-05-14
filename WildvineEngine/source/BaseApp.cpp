@@ -1,4 +1,4 @@
-ï»¿#include "BaseApp.h"
+#include "BaseApp.h"
 #include "ResourceManager.h"
 
 HRESULT
@@ -178,10 +178,10 @@ BaseApp::init() {
 		m_cyberGun->setName("CyberGun");
 		m_actors.push_back(m_cyberGun);
 
-		// El orden es: setTransform(Posiciï¿½n, Rotaciï¿½n, Escala)
+		// El orden es: setTransform(Posición, Rotación, Escala)
 		m_cyberGun->getComponent<Transform>()->setTransform(
-			EU::Vector3(0.05f, 2.92f, 5.60f),   // Nueva posiciï¿½n centrada
-			EU::Vector3(-1.80f, 2.00f, -0.20f), // Rotaciï¿½n actual
+			EU::Vector3(0.05f, 2.92f, 5.60f),   // Nueva posición centrada
+			EU::Vector3(-1.80f, 2.00f, -0.20f), // Rotación actual
 			EU::Vector3(1.0f, 1.0f, 1.0f)       // Escala actual
 		);
 	}
@@ -225,7 +225,7 @@ BaseApp::init() {
 	m_constantBufferStruct.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
 	m_constantBufferStruct.LightDir = EU::Vector3(-0.20f, -1.0f, 1.0f);
 
-	// Initialize the Skybox pass -> Carga de textura + creaciï¿½n de buffers/ shaders especï¿½ficos para el skybox
+	// Initialize the Skybox pass -> Carga de textura + creación de buffers/ shaders específicos para el skybox
 	m_skybox.init(m_device, &m_deviceContext, m_skyboxTex);
 
 	// Initialize default states (Rasterizer, DepthStencil)
@@ -285,7 +285,7 @@ BaseApp::update(float deltaTime) {
 	if (desiredW < kMinViewportSize) desiredW = kMinViewportSize;
 	if (desiredH < kMinViewportSize) desiredH = kMinViewportSize;
 
-	// Si cambiï¿½ el tamaï¿½o solicitado, reinicia estabilidad
+	// Si cambió el tamaño solicitado, reinicia estabilidad
 	if (desiredW != m_lastRequestedViewportWidth || desiredH != m_lastRequestedViewportHeight)
 	{
 		m_lastRequestedViewportWidth = desiredW;
@@ -294,11 +294,11 @@ BaseApp::update(float deltaTime) {
 	}
 	else
 	{
-		// El tamaï¿½o ya no cambiï¿½ este frame
+		// El tamaño ya no cambió este frame
 		m_viewportResizeStableFrames++;
 	}
 
-	// Solo marcar resize cuando el tamaï¿½o se haya mantenido estable
+	// Solo marcar resize cuando el tamaño se haya mantenido estable
 	const int kStableFramesRequired = 2;
 
 	if (m_viewportResizeStableFrames >= kStableFramesRequired)
@@ -312,7 +312,7 @@ BaseApp::update(float deltaTime) {
 		}
 	}
 
-	// Actualizar la matriz de proyecciï¿½n y vista
+	// Actualizar la matriz de proyección y vista
 	m_camera.updateViewMatrix();
 
 	XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
@@ -323,7 +323,7 @@ BaseApp::update(float deltaTime) {
 	m_gui.vec3Control("Light Direction", &m_constantBufferStruct.LightDir.x, 0.1f);
 	m_gui.vec3Control("Light Color", &m_constantBufferStruct.LightColor.x, 0.1f);
 
-	// Update Skybox Pass -> Solo necesita la vista sin traslaciï¿½n + proyecciï¿½n para funcionar correctamente (ver mï¿½todo update de Skybox)
+	// Update Skybox Pass -> Solo necesita la vista sin traslación + proyección para funcionar correctamente (ver método update de Skybox)
 	m_skybox.update(m_deviceContext, m_camera);
 
 	// Update constant buffer for Scene Pass
@@ -421,14 +421,14 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 				 return 0;
 	case WM_SIZE:
 	{
-		// Evita recrear cuando estï¿½ minimizada
+		// Evita recrear cuando está minimizada
 		if (wParam == SIZE_MINIMIZED) return 0;
 
 		UINT newW = LOWORD(lParam);
 		UINT newH = HIWORD(lParam);
 		if (newW == 0 || newH == 0) return 0;
 
-		// Recupera tu instancia BaseApp (lo mï¿½s comï¿½n es guardarla en GWLP_USERDATA en WM_CREATE)
+		// Recupera tu instancia BaseApp (lo más común es guardarla en GWLP_USERDATA en WM_CREATE)
 		BaseApp* app = reinterpret_cast<BaseApp*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 		if (app) app->onResize(newW, newH);
 		return 0;
@@ -440,11 +440,12 @@ BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void BaseApp::onResize(UINT newW, UINT newH)
+void 
+BaseApp::onResize(UINT newW, UINT newH)
 {
 	// 1) Actualiza window size (tu init lo calcula con GetClientRect solo una vez) :contentReference[oaicite:6]{index=6}
 	if (!m_d3dReady) {
-		// Aun asï¿½ puedes actualizar el tamaï¿½o lï¿½gico de la ventana
+		// Aun así puedes actualizar el tamaño lógico de la ventana
 		m_window.m_width = (int)newW;
 		m_window.m_height = (int)newH;
 		return;
@@ -459,7 +460,7 @@ void BaseApp::onResize(UINT newW, UINT newH)
 	ID3D11RenderTargetView* nullRTV = nullptr;
 	m_deviceContext.m_deviceContext->OMSetRenderTargets(1, &nullRTV, nullptr);
 
-	// 3) Libera recursos dependientes del tamaï¿½o (RTV/DSV/Depth/BackBuffer)
+	// 3) Libera recursos dependientes del tamaño (RTV/DSV/Depth/BackBuffer)
 	m_renderTargetView.destroy();
 	m_depthStencilView.destroy();
 	m_depthStencil.destroy();
@@ -469,7 +470,7 @@ void BaseApp::onResize(UINT newW, UINT newH)
 	HRESULT hr = m_swapChain.resizeBuffers(newW, newH);
 	if (FAILED(hr)) return;
 
-	// 5) Re-obtï¿½n backbuffer
+	// 5) Re-obtén backbuffer
 	hr = m_swapChain.getBackBuffer(m_backBuffer);
 	if (FAILED(hr)) return;
 
@@ -487,11 +488,12 @@ void BaseApp::onResize(UINT newW, UINT newH)
 	// 8) Viewport
 	m_viewport.init(m_window);
 
-	// 9) Cï¿½mara (aspect ratio) (tu cï¿½mara lo calcula a partir de m_window) 
+	// 9) Cámara (aspect ratio) (tu cámara lo calcula a partir de m_window) 
 	m_camera.setLens(XM_PIDIV4, newW / (float)newH, 0.01f, 100.0f);
 }
 
-void BaseApp::handleEditorViewportResize()
+void
+BaseApp::handleEditorViewportResize()
 {
 	if (!m_editorViewportResizePending)
 		return;

@@ -5,11 +5,11 @@ Camera::Camera() {
 	XMStoreFloat4x4(&m_proj, XMMatrixIdentity());
 }
 
-void 
-Camera::setLens(float fovYRadians, 
-								float aspectRatio, 
-								float nearPlane, 
-								float farPlane) {
+void
+Camera::setLens(float fovYRadians,
+	float aspectRatio,
+	float nearPlane,
+	float farPlane) {
 	m_fovY = fovYRadians;
 	m_aspectRatio = aspectRatio;
 	m_nearPlane = nearPlane;
@@ -19,19 +19,19 @@ Camera::setLens(float fovYRadians,
 	XMStoreFloat4x4(&m_proj, proj);
 }
 
-void 
+void
 Camera::setPosition(float x, float y, float z) {
 	m_position = EU::Vector3(x, y, z);
 	m_viewDirty = true;
 }
 
-void 
+void
 Camera::setPosition(const EU::Vector3& pos) {
 	m_position = pos;
 	m_viewDirty = true;
 }
 
-void 
+void
 Camera::lookAt(const EU::Vector3& pos, const EU::Vector3& target, const EU::Vector3& up) {
 	m_position = pos;
 	XMVECTOR P = XMVectorSet(m_position.x, m_position.y, m_position.z, 1.0f);
@@ -47,7 +47,7 @@ Camera::lookAt(const EU::Vector3& pos, const EU::Vector3& target, const EU::Vect
 	m_up = FromXM(Up);
 }
 
-void 
+void
 Camera::walk(float d) {
 	XMVECTOR F = XMVectorSet(m_forward.x, m_forward.y, m_forward.z, 0.0f);
 	XMVECTOR P = XMVectorSet(m_position.x, m_position.y, m_position.z, 1.0f);
@@ -57,7 +57,7 @@ Camera::walk(float d) {
 	m_viewDirty = true;
 }
 
-void 
+void
 Camera::strafe(float d) {
 	XMVECTOR R = XMVectorSet(m_right.x, m_right.y, m_right.z, 0.0f);
 	XMVECTOR P = XMVectorSet(m_position.x, m_position.y, m_position.z, 1.0f);
@@ -67,7 +67,7 @@ Camera::strafe(float d) {
 	m_viewDirty = true;
 }
 
-void 
+void
 Camera::yaw(float radians) {
 	// Rotación alrededor del eje Y global
 	XMMATRIX rot = XMMatrixRotationY(radians);
@@ -87,7 +87,7 @@ Camera::yaw(float radians) {
 	m_viewDirty = true;
 }
 
-void 
+void
 Camera::pitch(float radians) {
 	// Rotación alrededor del eje Right local
 	XMVECTOR R = XMVectorSet(m_right.x, m_right.y, m_right.z, 0.0f);
@@ -105,13 +105,13 @@ Camera::pitch(float radians) {
 	m_viewDirty = true;
 }
 
-void 
+void
 Camera::updateViewMatrix() {
 	if (!m_viewDirty) return;
-	XMVECTOR R = XMVectorSet(m_right.x,			m_right.y,		m_right.z, 0.0f);
-	XMVECTOR U = XMVectorSet(m_up.x,				m_up.y,				m_up.z, 0.0f);
-	XMVECTOR F = XMVectorSet(m_forward.x,		m_forward.y,	m_forward.z, 0.0f);
-	XMVECTOR P = XMVectorSet(m_position.x,	m_position.y, m_position.z, 1.0f);
+	XMVECTOR R = XMVectorSet(m_right.x, m_right.y, m_right.z, 0.0f);
+	XMVECTOR U = XMVectorSet(m_up.x, m_up.y, m_up.z, 0.0f);
+	XMVECTOR F = XMVectorSet(m_forward.x, m_forward.y, m_forward.z, 0.0f);
+	XMVECTOR P = XMVectorSet(m_position.x, m_position.y, m_position.z, 1.0f);
 
 	// Re-ortonormalizar (para evitar drift por floats)
 	F = XMVector3Normalize(F);

@@ -53,76 +53,76 @@
 //--------------------------------------------------------------------------------------
 struct SimpleVertex
 {
-  EU::Vector3 Position;
-  EU::Vector3 Normal;
-  EU::Vector3 Tangent;
-  EU::Vector3 Bitangent;
-  EU::Vector2 TextureCoordinate;
+    EU::Vector3 Position;
+    EU::Vector3 Normal;
+    EU::Vector3 Tangent;
+    EU::Vector3 Bitangent;
+    EU::Vector2 TextureCoordinate;
 };
 
-struct 
-SkyboxVertex {
-	float x,y,z;
+struct
+    SkyboxVertex {
+    float x, y, z;
 };
 
 
 struct CBNeverChanges
 {
-  XMMATRIX mView;
+    XMMATRIX mView;
 };
 
 struct CBSkybox
 {
-  XMMATRIX mviewProj;
+    XMMATRIX mviewProj;
 };
 
 struct CBChangeOnResize
 {
-  XMMATRIX mProjection;
+    XMMATRIX mProjection;
 };
 
 // Constant buffer used in the vertex and pixel shaders.  Align to
 // 16?bytes as required by Direct3D constant buffers.
 struct CBMain
 {
-  //XMFLOAT4X4 World;
-  XMFLOAT4X4 View;
-  XMFLOAT4X4 Projection;
-  EU::Vector3 CameraPos;
-  float pad0;
-  EU::Vector3 LightDir;
-  float pad1;
-  EU::Vector3 LightColor;
-  float pad2;
+    //XMFLOAT4X4 World;
+    XMFLOAT4X4 View;
+    XMFLOAT4X4 Projection;
+    EU::Vector3 CameraPos;
+    float pad0;
+    EU::Vector3 LightDir;
+    float pad1;
+    EU::Vector3 LightColor;
+    float pad2;
 };
 
 struct CBChangesEveryFrame
 {
-  XMMATRIX mWorld;
-  XMFLOAT4 vMeshColor;
+    XMMATRIX mWorld;
+    XMFLOAT4 vMeshColor;
 };
 
 enum ExtensionType {
-  DDS = 0,
-  PNG = 1,
-  JPG = 2
+    DDS = 0,
+    PNG = 1,
+    JPG = 2
 };
 
 enum ShaderType {
-  VERTEX_SHADER = 0,
-  PIXEL_SHADER = 1
+    VERTEX_SHADER = 0,
+    PIXEL_SHADER = 1
 };
 
 /**
  * @enum ComponentType
  * @brief Tipos de componentes disponibles en el juego.
  */
-enum 
-ComponentType {
-  NONE = 0,     ///< Tipo de componente no especificado.
-  TRANSFORM = 1,///< Componente de transformación.
-  MESH = 2,     ///< Componente de malla.
-  MATERIAL = 3,  ///< Componente de material.
-	HIERARCHY = 4 ///< Componente de jerarquía.
+enum
+    ComponentType {
+    NONE = 0,     ///< Tipo de componente no especificado.
+    TRANSFORM = 1,///< Componente de transformaciÃ³n.
+    MESH = 2,     ///< Componente de malla.
+    MATERIAL = 3,  ///< Componente de material.
+    HIERARCHY = 4 ///< Componente de jerarquÃ­a.
 };
 

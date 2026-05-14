@@ -8,7 +8,7 @@ class DepthStencilState;
 class SamplerState;
 
 class
-Material {
+	Material {
 public:
 	void setShader(ShaderProgram* shader) { m_shader = shader; }
 	void setRasterizerState(RasterizerState* state) { m_rasterizerState = state; }

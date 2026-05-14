@@ -1,4 +1,4 @@
-﻿#include "Rendering/RenderScene.h"
+#include "Rendering/RenderScene.h"
 
 void
 RenderScene::clear() {

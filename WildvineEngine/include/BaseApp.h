@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "Window.h"
 #include "Device.h"
@@ -14,7 +14,7 @@
 #include "SamplerState.h"
 #include "Model3D.h"
 #include "ECS/Actor.h"
-#include "EngineUtilities/GUI/GUI.h"
+#include "GUI/GUI.h"
 #include "SceneGraph\SceneGraph.h"
 #include "EngineUtilities\Utilities\Camera.h"
 #include "EngineUtilities\Utilities\Skybox.h"

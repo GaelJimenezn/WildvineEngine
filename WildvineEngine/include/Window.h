@@ -3,23 +3,23 @@
 
 
 class BaseApp;
-class 
-Window {
+class
+	Window {
 public:
-	Window()  = default;
+	Window() = default;
 	~Window() = default;
 
-	HRESULT 
-	init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc, BaseApp* app);
+	HRESULT
+		init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc, BaseApp* app);
 
-	void 
-	update();
-	
-	void 
-	render();
-	
-	void 
-	destroy();
+	void
+		update();
+
+	void
+		render();
+
+	void
+		destroy();
 
 public:
 	HWND m_hWnd = nullptr;

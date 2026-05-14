@@ -90,8 +90,8 @@ Skybox::init(Device& device, DeviceContext* deviceContext, Texture& cubemap) {
 
 	// Init DepthStencilState
 	hr = m_depthStencilState.init(device, true,
-															  D3D11_DEPTH_WRITE_MASK_ZERO,
-															  D3D11_COMPARISON_LESS_EQUAL);
+		D3D11_DEPTH_WRITE_MASK_ZERO,
+		D3D11_COMPARISON_LESS_EQUAL);
 	if (FAILED(hr)) {
 		ERROR("Skybox", "init", "Failed to create new DepthStencilState");
 	}

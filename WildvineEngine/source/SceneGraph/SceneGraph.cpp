@@ -1,4 +1,9 @@
-ï»¿#include "SceneGraph\SceneGraph.h"
+/**
+ * @file SceneGraph.cpp
+ * @brief Implementa la logica de SceneGraph dentro del subsistema SceneGraph.
+ * @ingroup scenegraph
+ */
+#include "SceneGraph\SceneGraph.h"
 #include "SceneGraph\HierarchyComponent.h"
 #include "ECS\Entity.h"
 #include "ECS\Transform.h"
@@ -29,7 +34,7 @@ void SceneGraph::destroy() {
 	m_entities.clear();
 }
 
-void 
+void
 SceneGraph::addEntity(Entity* e) {
 	if (!e) {
 		return;
@@ -51,7 +56,7 @@ SceneGraph::addEntity(Entity* e) {
 	m_entities.push_back(e);
 }
 
-void 
+void
 SceneGraph::removeEntity(Entity* e) {
 	if (!e) return;
 	if (!isRegistered(e)) return;
@@ -89,7 +94,7 @@ SceneGraph::removeEntity(Entity* e) {
 	m_entities.erase(std::remove(m_entities.begin(), m_entities.end(), e), m_entities.end());
 }
 
-bool 
+bool
 SceneGraph::isAncestor(Entity* possibleAncestor, Entity* node) const {
 	// Recorre hacia arriba desde node: si encuentra possibleAncestor, hay ciclo
 	if (!possibleAncestor || !node) return false;
@@ -109,24 +114,24 @@ SceneGraph::isAncestor(Entity* possibleAncestor, Entity* node) const {
 
 bool
 SceneGraph::isRoot(Entity* e) const {
-	
+
 	if (!e) return false;
 	auto h = e->getComponent<HierarchyComponent>();
 	return (!h || h->m_parent == nullptr);
 }
 
-bool 
+bool
 SceneGraph::isRegistered(Entity* e) const {
 	return std::find(m_entities.begin(), m_entities.end(), e) != m_entities.end();
 }
 
-bool 
+bool
 SceneGraph::attach(Entity* child, Entity* parent)
 {
 	if (!child || !parent) return false;
 	if (child == parent) return false;
 
-	// Registro automÃ¡tico
+	// Registro automático
 	addEntity(child);
 	addEntity(parent);
 
@@ -147,7 +152,7 @@ SceneGraph::attach(Entity* child, Entity* parent)
 	return true;
 }
 
-bool 
+bool
 SceneGraph::detach(Entity* child) {
 	if (!child) return false;
 
@@ -175,7 +180,7 @@ SceneGraph::update(float deltaTime, DeviceContext& deviceContext) {
 		e->update(deltaTime, deviceContext);
 	}
 
-	// 2) PropagaciÃ³n World: procesa roots
+	// 2) Propagación World: procesa roots
 	for (Entity* e : m_entities)
 	{
 		if (!e) continue;
@@ -186,7 +191,7 @@ SceneGraph::update(float deltaTime, DeviceContext& deviceContext) {
 	}
 }
 
-void 
+void
 SceneGraph::updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld) {
 	auto t = node->getComponent<Transform>();
 	// Dirty Matrix?
@@ -201,7 +206,7 @@ SceneGraph::updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld) {
 	t->worldMatrix = worldMatrix;
 
 	for (Entity* c : h->m_children) {
-			updateWorldRecursive(c, worldMatrix);
+		updateWorldRecursive(c, worldMatrix);
 	}
 }
 
@@ -264,4 +269,3 @@ SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
 		}
 	}
 }
-

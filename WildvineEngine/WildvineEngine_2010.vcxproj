@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -29,7 +29,7 @@
   <PropertyGroup Label="Globals">
     <ProjectName>WildvineEngine</ProjectName>
     <ProjectGuid>{D29C6982-A589-4081-89B1-91E78D7C41E2}</ProjectGuid>
-    <RootNamespace>WildvineEngine</RootNamespace>
+    <RootNamespace>MinerEngine</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -161,7 +161,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;./Imgui/imgui-docking-znly-docking/backends/;./Imgui/imgui-docking-znly-docking/;./Imgui/ImGuizmo/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;FBXSDK_SHARED;_DEBUG;DEBUG;PROFILE;_WINDOWS;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -181,7 +181,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(SolutionDir)lib/fbxlibs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget)\;$(SolutionDir)lib\fbxlibs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)/lib/$(PlatformTarget)/$(TargetName).lib</ImportLibrary>
     </Link>
     <Manifest>
@@ -224,7 +224,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(SolutionDir)lib/fbxlibs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget)\;$(SolutionDir)lib\fbxlibs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)/lib/$(PlatformTarget)/$(TargetName).lib</ImportLibrary>
     </Link>
     <Manifest>
@@ -250,7 +250,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;./Imgui/imgui-docking-znly-docking/backends/;./Imgui/imgui-docking-znly-docking/;./Imgui/ImGuizmo/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;FBXSDK_SHARED;NDEBUG;_WINDOWS;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -270,7 +270,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(SolutionDir)lib/fbxlibs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget)\;$(SolutionDir)lib\fbxlibs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)/lib/$(PlatformTarget)/$(TargetName).lib</ImportLibrary>
     </Link>
     <Manifest>
@@ -295,7 +295,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;./Imgui/imgui-docking-znly-docking/backends/;./Imgui/imgui-docking-znly-docking/;./Imgui/ImGuizmo/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;FBXSDK_SHARED;NDEBUG;_WINDOWS;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -315,7 +315,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(SolutionDir)lib/fbxlibs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget)\;$(SolutionDir)lib\fbxlibs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)/lib/$(PlatformTarget)/$(TargetName).lib</ImportLibrary>
     </Link>
     <Manifest>
@@ -341,7 +341,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;./Imgui/imgui-docking-znly-docking/backends/;./Imgui/imgui-docking-znly-docking/;./Imgui/ImGuizmo/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;FBXSDK_SHARED;NDEBUG;PROFILE;_WINDOWS;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -361,7 +361,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(SolutionDir)lib/fbxlibs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget)\;$(SolutionDir)lib\fbxlibs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)/lib/$(PlatformTarget)/$(TargetName).lib</ImportLibrary>
     </Link>
     <Manifest>
@@ -386,7 +386,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;./Imgui/imgui-docking-znly-docking/backends/;./Imgui/imgui-docking-znly-docking/;./Imgui/ImGuizmo/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;DXUT\Core;DXUT\Optional;./include/fbx/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;FBXSDK_SHARED;NDEBUG;PROFILE;_WINDOWS;D3DXFX_LARGEADDRESS_HANDLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -406,7 +406,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(SolutionDir)lib/fbxlibs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(PlatformTarget)\;$(SolutionDir)lib\fbxlibs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(SolutionDir)/lib/$(PlatformTarget)/$(TargetName).lib</ImportLibrary>
     </Link>
     <Manifest>
@@ -422,9 +422,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="bin\Skybox.hlsl">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="bin\Skybox.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Imgui\imgui-docking-znly-docking\backends\imgui_impl_dx11.cpp" />
@@ -435,35 +433,35 @@
     <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_tables.cpp" />
     <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_widgets.cpp" />
     <ClCompile Include="Imgui\ImGuizmo\ImGuizmo.cpp" />
-    <ClCompile Include="source\BaseApp.cpp" />
-    <ClCompile Include="source\Buffer.cpp" />
-    <ClCompile Include="source\Camera.cpp" />
-    <ClCompile Include="source\DepthStencilState.cpp" />
-    <ClCompile Include="source\DepthStencilView.cpp" />
-    <ClCompile Include="source\Device.cpp" />
-    <ClCompile Include="source\DeviceContext.cpp" />
-    <ClCompile Include="source\ECS\Actor.cpp" />
-    <ClCompile Include="source\EditorViewportPass.cpp" />
-    <ClCompile Include="source\GUI\GUI.cpp" />
-    <ClCompile Include="source\Rendering\ForwardRenderer.cpp" />
-    <ClCompile Include="source\Rendering\MaterialInstance.cpp" />
-    <ClCompile Include="source\Rendering\RenderScene.cpp" />
-    <ClCompile Include="source\InputLayout.cpp" />
-    <ClCompile Include="source\Model3D.cpp" />
-    <ClCompile Include="source\RasterizerState.cpp" />
-    <ClCompile Include="source\RenderTargetView.cpp" />
-    <ClCompile Include="source\SamplerState.cpp" />
-    <ClCompile Include="source\SceneGraph\SceneGraph.cpp" />
-    <ClCompile Include="source\ShaderProgram.cpp" />
-    <ClCompile Include="source\Skybox.cpp" />
-    <ClCompile Include="source\SwapChain.cpp" />
-    <ClCompile Include="source\Texture.cpp" />
-    <ClCompile Include="source\Viewport.cpp" />
-    <ClCompile Include="source\Window.cpp" />
+    <ClCompile Include="Include\SamplerState.cpp" />
     <ClCompile Include="WildvineEngine.cpp" />
+    <ClCompile Include="Source\BaseApp.cpp" />
+    <ClCompile Include="Source\Buffer.cpp" />
+    <ClCompile Include="Source\Camera.cpp" />
+    <ClCompile Include="Source\DepthStencilState.cpp" />
+    <ClCompile Include="Source\DepthStencilView.cpp" />
+    <ClCompile Include="Source\Device.cpp" />
+    <ClCompile Include="Source\DeviceContext.cpp" />
+    <ClCompile Include="Source\ECS\Actor.cpp" />
+    <ClCompile Include="Source\EditorViewportPass.cpp" />
+    <ClCompile Include="Source\GUI\GUI.cpp" />
+    <ClCompile Include="Source\InputLayout.cpp" />
+    <ClCompile Include="Source\Model3D.cpp" />
+    <ClCompile Include="Source\RasterizerState.cpp" />
+    <ClCompile Include="Source\Rendering\ForwardRenderer.cpp" />
+    <ClCompile Include="Source\Rendering\MaterialInstance.cpp" />
+    <ClCompile Include="Source\Rendering\RenderScene.cpp" />
+    <ClCompile Include="Source\RenderTargetView.cpp" />
+    <ClCompile Include="Source\SceneGraph\SceneGraph.cpp" />
+    <ClCompile Include="Source\ShaderProgram.cpp" />
+    <ClCompile Include="Source\Skybox.cpp" />
+    <ClCompile Include="Source\SwapChain.cpp" />
+    <ClCompile Include="Source\Texture.cpp" />
+    <ClCompile Include="Source\Viewport.cpp" />
+    <ClCompile Include="Source\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="WildvineEngine.fx" />
+    <None Include="MinerEngine.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Imgui\imgui-docking-znly-docking\backends\imgui_impl_dx11.h" />
@@ -475,58 +473,61 @@
     <ClInclude Include="Imgui\imgui-docking-znly-docking\imstb_textedit.h" />
     <ClInclude Include="Imgui\imgui-docking-znly-docking\imstb_truetype.h" />
     <ClInclude Include="Imgui\ImGuizmo\ImGuizmo.h" />
-    <ClInclude Include="include\BaseApp.h" />
-    <ClInclude Include="include\Buffer.h" />
-    <ClInclude Include="include\DepthStencilState.h" />
-    <ClInclude Include="include\DepthStencilView.h" />
-    <ClInclude Include="include\Device.h" />
-    <ClInclude Include="include\DeviceContext.h" />
-    <ClInclude Include="include\ECS\Actor.h" />
-    <ClInclude Include="include\ECS\Component.h" />
-    <ClInclude Include="include\ECS\LightComponent.h" />
-    <ClInclude Include="include\ECS\MeshRendererComponent.h" />
-    <ClInclude Include="include\ECS\Entity.h" />
-    <ClInclude Include="include\ECS\Transform.h" />
-    <ClInclude Include="include\EngineUtilities\GUI\GUI.h" />
-    <ClInclude Include="include\EngineUtilities\Memory\TSharedPointer.h" />
-    <ClInclude Include="include\EngineUtilities\Memory\TStaticPtr.h" />
-    <ClInclude Include="include\EngineUtilities\Memory\TUniquePtr.h" />
-    <ClInclude Include="include\EngineUtilities\Memory\TWeakPointer.h" />
-    <ClInclude Include="include\EngineUtilities\Utilities\Camera.h" />
-    <ClInclude Include="include\EngineUtilities\Utilities\EditorViewportPass.h" />
-    <ClInclude Include="include\Rendering\ForwardRenderer.h" />
-    <ClInclude Include="include\Rendering\Material.h" />
-    <ClInclude Include="include\Rendering\MaterialInstance.h" />
-    <ClInclude Include="include\Rendering\Mesh.h" />
-    <ClInclude Include="include\Rendering\RenderScene.h" />
-    <ClInclude Include="include\Rendering\RenderTypes.h" />
-    <ClInclude Include="include\EngineUtilities\Utilities\EngineMath.h" />
-    <ClInclude Include="include\EngineUtilities\Utilities\LayoutBuilder.h" />
-    <ClInclude Include="include\EngineUtilities\Utilities\Skybox.h" />
-    <ClInclude Include="include\EngineUtilities\Vectors\Vector2.h" />
-    <ClInclude Include="include\EngineUtilities\Vectors\Vector3.h" />
-    <ClInclude Include="include\EngineUtilities\Vectors\Vector4.h" />
-    <ClInclude Include="include\InputLayout.h" />
-    <ClInclude Include="include\IResource.h" />
-    <ClInclude Include="include\MeshComponent.h" />
-    <ClInclude Include="include\Model3D.h" />
-    <ClInclude Include="include\Prerequisites.h" />
-    <ClInclude Include="include\RasterizerState.h" />
-    <ClInclude Include="include\RenderTargetView.h" />
-    <ClInclude Include="include\ResourceManager.h" />
-    <ClInclude Include="include\SamplerState.h" />
-    <ClInclude Include="include\SceneGraph\HierarchyComponent.h" />
-    <ClInclude Include="include\SceneGraph\SceneGraph.h" />
-    <ClInclude Include="include\ShaderProgram.h" />
-    <ClInclude Include="include\stb_image.h" />
-    <ClInclude Include="include\SwapChain.h" />
-    <ClInclude Include="include\Texture.h" />
-    <ClInclude Include="include\Viewport.h" />
-    <ClInclude Include="include\Window.h" />
+    <ClInclude Include="Include\BaseApp.h" />
+    <ClInclude Include="Include\Buffer.h" />
+    <ClInclude Include="Include\DepthStencilState.h" />
+    <ClInclude Include="Include\DepthStencilView.h" />
+    <ClInclude Include="Include\Device.h" />
+    <ClInclude Include="Include\DeviceContext.h" />
+    <ClInclude Include="Include\ECS\Actor.h" />
+    <ClInclude Include="Include\ECS\Component.h" />
+    <ClInclude Include="Include\ECS\Entity.h" />
+    <ClInclude Include="Include\ECS\LightComponent.h" />
+    <ClInclude Include="Include\ECS\MeshRendererComponent.h" />
+    <ClInclude Include="Include\ECS\Transform.h" />
+    <ClInclude Include="Include\EngineUtilities\Memory\TSharedPointer.h" />
+    <ClInclude Include="Include\EngineUtilities\Memory\TStaticPtr.h" />
+    <ClInclude Include="Include\EngineUtilities\Memory\TUniquePtr.h" />
+    <ClInclude Include="Include\EngineUtilities\Memory\TWeakPointer.h" />
+    <ClInclude Include="Include\EngineUtilities\Utilities\Camera.h" />
+    <ClInclude Include="Include\EngineUtilities\Utilities\EditorViewportPass.h" />
+    <ClInclude Include="Include\EngineUtilities\Utilities\EngineMath.h" />
+    <ClInclude Include="Include\EngineUtilities\Utilities\LayoutBuilder.h" />
+    <ClInclude Include="Include\EngineUtilities\Utilities\Skybox.h" />
+    <ClInclude Include="Include\EngineUtilities\Vectors\Vector2.h" />
+    <ClInclude Include="Include\EngineUtilities\Vectors\Vector3.h" />
+    <ClInclude Include="Include\EngineUtilities\Vectors\Vector4.h" />
+    <ClInclude Include="Include\GUI\GUI.h" />
+    <ClInclude Include="Include\InputLayout.h" />
+    <ClInclude Include="Include\IResource.h" />
+    <ClInclude Include="Include\MeshComponent.h" />
+    <ClInclude Include="Include\Model3D.h" />
+    <ClInclude Include="Include\Prerequisites.h" />
+    <ClInclude Include="Include\RasterizerState.h" />
+    <ClInclude Include="Include\Rendering\ForwardRenderer.h" />
+    <ClInclude Include="Include\Rendering\Material.h" />
+    <ClInclude Include="Include\Rendering\MaterialInstance.h" />
+    <ClInclude Include="Include\Rendering\Mesh.h" />
+    <ClInclude Include="Include\Rendering\RenderScene.h" />
+    <ClInclude Include="Include\Rendering\RenderTypes.h" />
+    <ClInclude Include="Include\RenderTargetView.h" />
+    <ClInclude Include="Include\ResourceManager.h" />
+    <ClInclude Include="Include\SamplerState.h" />
+    <ClInclude Include="Include\SceneGraph\HierarchyComponent.h" />
+    <ClInclude Include="Include\SceneGraph\SceneGraph.h" />
+    <ClInclude Include="Include\ShaderProgram.h" />
+    <ClInclude Include="Include\stb_image.h" />
+    <ClInclude Include="Include\SwapChain.h" />
+    <ClInclude Include="Include\Texture.h" />
+    <ClInclude Include="Include\Viewport.h" />
+    <ClInclude Include="Include\Window.h" />
     <CLInclude Include="resource.h" />
     <ResourceCompile Include="WildvineEngine.rc" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="bin\ShadowMap.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

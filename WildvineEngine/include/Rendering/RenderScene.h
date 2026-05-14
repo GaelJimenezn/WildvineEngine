@@ -5,7 +5,7 @@
 class Skybox;
 
 class
-RenderScene {
+	RenderScene {
 public:
 	void clear();
 

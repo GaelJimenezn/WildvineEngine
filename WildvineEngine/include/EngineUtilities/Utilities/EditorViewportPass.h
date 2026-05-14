@@ -7,8 +7,8 @@
 class Device;
 class DeviceContext;
 
-class 
-EditorViewportPass {
+class
+	EditorViewportPass {
 public:
 	EditorViewportPass() = default;
 	~EditorViewportPass() = default;

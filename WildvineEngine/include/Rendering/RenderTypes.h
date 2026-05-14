@@ -1,18 +1,23 @@
-﻿#pragma once
+﻿/**
+ * @file RenderTypes.h
+ * @brief Declara la API de RenderTypes dentro del subsistema Rendering.
+ * @ingroup rendering
+ */
+#pragma once
 #include "Prerequisites.h"
 
 class Mesh;
 class MaterialInstance;
 
 enum class
-MaterialDomain {
+	MaterialDomain {
 	Opaque = 0,
 	Masked,
 	Transparent
 };
 
 enum class
-BlendMode {
+	BlendMode {
 	Opaque = 0,
 	Alpha,
 	Additive,
@@ -20,7 +25,7 @@ BlendMode {
 };
 
 enum class
-RenderPassType {
+	RenderPassType {
 	Shadow = 0,
 	Opaque,
 	Skybox,
@@ -29,14 +34,16 @@ RenderPassType {
 };
 
 enum class
-LightType {
+	LightType {
 	Directional = 0,
 	Point,
 	Spot
 };
 
+constexpr int RMaxLights = 8;
+
 struct
-LightData {
+	LightData {
 	LightType type = LightType::Directional;
 	EU::Vector3 color = EU::Vector3(1.0f, 1.0f, 1.0f);
 	float intensity = 1.0f;
@@ -49,7 +56,7 @@ LightData {
 };
 
 struct
-MaterialParams {
+	MaterialParams {
 	XMFLOAT4 baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	float metallic = 1.0f;
 	float roughness = 1.0f;
@@ -60,24 +67,28 @@ MaterialParams {
 };
 
 struct
-CBPerFrame {
+	CBPerFrame {
 	XMFLOAT4X4 View{};
 	XMFLOAT4X4 Projection{};
+	XMFLOAT4X4 LightViewProjection{};
 	EU::Vector3 CameraPos{};
 	float pad0 = 0.0f;
 	EU::Vector3 LightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
 	float pad1 = 0.0f;
 	EU::Vector3 LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
-	float pad2 = 0.0f;
+	float ligthRange = 10.0f;
+	EU::Vector3 LightPosition = EU::Vector3(0.0f, 5.0f, 0.0f);
+	int LightCount = 0;
+	XMFLOAT3 pad2 = XMFLOAT3(0.0f, 0.0f, 0.0f);
 };
 
 struct
-CBPerObject {
+	CBPerObject {
 	XMFLOAT4X4 World{};
 };
 
 struct
-CBPerMaterial {
+	CBPerMaterial {
 	XMFLOAT4 BaseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	float Metallic = 1.0f;
 	float Roughness = 1.0f;
@@ -94,7 +105,7 @@ CBPerMaterial {
 };
 
 struct
-RenderObject {
+	RenderObject {
 	Mesh* mesh = nullptr;
 	MaterialInstance* materialInstance = nullptr;
 	std::vector<MaterialInstance*> materialInstances;

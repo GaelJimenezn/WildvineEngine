@@ -416,3 +416,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Ignorar todos los archivos .lib en cualquier parte del proyecto
+*.lib
+
+# O solo los .lib dentro de la estructura de WildvineEngine
+WildvineEngine/lib/fbxlibs/*.lib

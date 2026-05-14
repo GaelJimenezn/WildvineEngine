@@ -7,7 +7,7 @@
 HRESULT
 RenderTargetView::init(Device& device, Texture& backBuffer, DXGI_FORMAT Format) {
 	if (!device.m_device) {
-		ERROR("RenderTargetView", "init",	"Device is nullptr.");
+		ERROR("RenderTargetView", "init", "Device is nullptr.");
 		return E_POINTER;
 	}
 	if (!backBuffer.m_texture) {
@@ -26,11 +26,11 @@ RenderTargetView::init(Device& device, Texture& backBuffer, DXGI_FORMAT Format) 
 	desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 
 	// Create the render target view
-	HRESULT hr = device.m_device->CreateRenderTargetView(backBuffer.m_texture, 
-																											 &desc, 
-																											 &m_renderTargetView);
+	HRESULT hr = device.m_device->CreateRenderTargetView(backBuffer.m_texture,
+		&desc,
+		&m_renderTargetView);
 	if (FAILED(hr)) {
-		ERROR("RenderTargetView", "init", 
+		ERROR("RenderTargetView", "init",
 			("Failed to create render target view. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
@@ -38,11 +38,11 @@ RenderTargetView::init(Device& device, Texture& backBuffer, DXGI_FORMAT Format) 
 	return S_OK;
 }
 
-HRESULT 
-RenderTargetView::init(Device& device, 
-											Texture& inTex, 
-											D3D11_RTV_DIMENSION ViewDimension, 
-											DXGI_FORMAT Format) {
+HRESULT
+RenderTargetView::init(Device& device,
+	Texture& inTex,
+	D3D11_RTV_DIMENSION ViewDimension,
+	DXGI_FORMAT Format) {
 	if (!device.m_device) {
 		ERROR("RenderTargetView", "init", "Device is nullptr.");
 		return E_POINTER;
@@ -63,12 +63,12 @@ RenderTargetView::init(Device& device,
 	desc.ViewDimension = ViewDimension;
 
 	// Create the render target view
-	HRESULT hr = device.m_device->CreateRenderTargetView(inTex.m_texture, 
-																											 &desc, 
-																											 &m_renderTargetView);
+	HRESULT hr = device.m_device->CreateRenderTargetView(inTex.m_texture,
+		&desc,
+		&m_renderTargetView);
 
 	if (FAILED(hr)) {
-		ERROR("RenderTargetView", "init", 
+		ERROR("RenderTargetView", "init",
 			("Failed to create render target view. HRESULT: " + std::to_string(hr)).c_str());
 		return hr;
 	}
@@ -76,11 +76,11 @@ RenderTargetView::init(Device& device,
 	return S_OK;
 }
 
-void 
-RenderTargetView::render(DeviceContext& deviceContext, 
-												 DepthStencilView& depthStencilView, 
-												 unsigned int numViews, 
-												 const float ClearColor[4]) {
+void
+RenderTargetView::render(DeviceContext& deviceContext,
+	DepthStencilView& depthStencilView,
+	unsigned int numViews,
+	const float ClearColor[4]) {
 	if (!deviceContext.m_deviceContext) {
 		ERROR("RenderTargetView", "render", "DeviceContext is nullptr.");
 		return;
@@ -95,11 +95,11 @@ RenderTargetView::render(DeviceContext& deviceContext,
 
 	// Config render target view and depth stencil view
 	deviceContext.m_deviceContext->OMSetRenderTargets(numViews,
-																										&m_renderTargetView,
-																										depthStencilView.m_depthStencilView);
+		&m_renderTargetView,
+		depthStencilView.m_depthStencilView);
 }
 
-void 
+void
 RenderTargetView::render(DeviceContext& deviceContext, unsigned int numViews) {
 	if (!deviceContext.m_deviceContext) {
 		ERROR("RenderTargetView", "render", "DeviceContext is nullptr.");
@@ -110,9 +110,9 @@ RenderTargetView::render(DeviceContext& deviceContext, unsigned int numViews) {
 		return;
 	}
 	// Config render target view
-	deviceContext.m_deviceContext->OMSetRenderTargets(numViews, 
-																										&m_renderTargetView, 
-																										nullptr);
+	deviceContext.m_deviceContext->OMSetRenderTargets(numViews,
+		&m_renderTargetView,
+		nullptr);
 }
 
 void RenderTargetView::destroy() {

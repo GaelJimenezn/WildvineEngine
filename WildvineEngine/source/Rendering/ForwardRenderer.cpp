@@ -1,5 +1,11 @@
-﻿#include "Rendering/ForwardRenderer.h"
+﻿/**
+ * @file ForwardRenderer.cpp
+ * @brief Implementa la logica de ForwardRenderer dentro del subsistema Rendering.
+ * @ingroup rendering
+ */
+#include "Rendering/ForwardRenderer.h"
 #include <algorithm>
+#include <cmath>
 #include "Device.h"
 #include "DeviceContext.h"
 #include "Rendering/Material.h"
@@ -8,6 +14,7 @@
 #include "SamplerState.h"
 #include "EngineUtilities/Utilities/Camera.h"
 #include "EngineUtilities/Utilities/EditorViewportPass.h"
+#include "EngineUtilities/Utilities/LayoutBuilder.h"
 #include "EngineUtilities/Utilities/Skybox.h"
 
 HRESULT
@@ -35,6 +42,16 @@ ForwardRenderer::init(Device& device) {
 		return hr;
 	}
 
+	hr = createShadowResources(device);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	hr = m_preShadowDebugPass.init(device, 1280, 720);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
 	hr = createBlendStates(device);
 	if (FAILED(hr)) {
 		return hr;
@@ -45,15 +62,14 @@ ForwardRenderer::init(Device& device) {
 
 void
 ForwardRenderer::resize(Device& device, unsigned int width, unsigned int height) {
-	(void)device;
-	(void)width;
-	(void)height;
+	m_preShadowDebugPass.resize(device, width, height);
 }
 
 void
 ForwardRenderer::updatePerFrame(const Camera& camera,
 	const RenderScene& scene,
 	DeviceContext& deviceContext) {
+	updateLightMatrices(camera, scene);
 	XMStoreFloat4x4(&m_cbPerFrame.View, XMMatrixTranspose(camera.getView()));
 	XMStoreFloat4x4(&m_cbPerFrame.Projection, XMMatrixTranspose(camera.getProj()));
 	m_cbPerFrame.CameraPos = camera.getPosition();
@@ -75,13 +91,15 @@ ForwardRenderer::render(DeviceContext& deviceContext,
 	RenderScene& scene,
 	EditorViewportPass& viewportPass) {
 	const float viewportClear[4] = { 0.10f, 0.10f, 0.10f, 1.0f };
-	viewportPass.begin(deviceContext, viewportClear);
-	viewportPass.setViewport(deviceContext);
-	viewportPass.clearDepth(deviceContext);
 
 	buildQueues(scene, camera);
 	updatePerFrame(camera, scene, deviceContext);
 
+	renderPreShadowDebugPass(deviceContext, scene);
+	renderShadowPass(deviceContext);
+	viewportPass.begin(deviceContext, viewportClear);
+	viewportPass.setViewport(deviceContext);
+	viewportPass.clearDepth(deviceContext);
 	renderSkyboxPass(deviceContext, scene);
 	renderOpaquePass(deviceContext);
 	renderTransparentPass(deviceContext);
@@ -99,6 +117,12 @@ ForwardRenderer::destroy() {
 	m_perMaterialBuffer.destroy();
 	m_perObjectBuffer.destroy();
 	m_perFrameBuffer.destroy();
+	m_shadowRasterizer.destroy();
+	m_shadowShader.destroy();
+	m_shadowDSV.destroy();
+	m_shadowDepthSRV.destroy();
+	m_shadowDepthTexture.destroy();
+	m_preShadowDebugPass.destroy();
 }
 
 void
@@ -130,8 +154,67 @@ ForwardRenderer::buildQueues(RenderScene& scene, const Camera& camera) {
 }
 
 void
+ForwardRenderer::renderShadowPass(DeviceContext& deviceContext) {
+	if (!m_shadowDSV.m_depthStencilView || !m_shadowShader.m_VertexShader) {
+		return;
+	}
+
+	ID3D11ShaderResourceView* nullShadowSRV[1] = { nullptr };
+	deviceContext.PSSetShaderResources(6, 1, nullShadowSRV);
+	deviceContext.OMSetRenderTargets(0, nullptr, m_shadowDSV.m_depthStencilView);
+	deviceContext.ClearDepthStencilView(m_shadowDSV.m_depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	D3D11_VIEWPORT shadowViewport{};
+	shadowViewport.TopLeftX = 0.0f;
+	shadowViewport.TopLeftY = 0.0f;
+	shadowViewport.Width = static_cast<float>(m_shadowMapSize);
+	shadowViewport.Height = static_cast<float>(m_shadowMapSize);
+	shadowViewport.MinDepth = 0.0f;
+	shadowViewport.MaxDepth = 1.0f;
+	deviceContext.RSSetViewports(1, &shadowViewport);
+
+	m_shadowRasterizer.render(deviceContext);
+	m_perFrameBuffer.render(deviceContext, 0, 1, false);
+
+	for (const RenderObject* object : m_opaqueQueue) {
+		if (!object || !object->castShadow) {
+			continue;
+		}
+		renderShadowObject(deviceContext, *object);
+	}
+}
+
+void
+ForwardRenderer::renderPreShadowDebugPass(DeviceContext& deviceContext, RenderScene& scene) {
+	if (!m_preShadowDebugPass.isValid()) {
+		return;
+	}
+
+	const float clearColor[4] = { 0.10f, 0.10f, 0.10f, 1.0f };
+	ID3D11ShaderResourceView* nullShadowSRV[1] = { nullptr };
+	deviceContext.PSSetShaderResources(6, 1, nullShadowSRV);
+	m_applyShadows = false;
+
+	m_preShadowDebugPass.begin(deviceContext, clearColor);
+	m_preShadowDebugPass.setViewport(deviceContext);
+	m_preShadowDebugPass.clearDepth(deviceContext);
+	renderSkyboxPass(deviceContext, scene);
+	renderOpaquePass(deviceContext);
+	renderTransparentPass(deviceContext);
+
+	m_applyShadows = true;
+}
+
+void
 ForwardRenderer::renderOpaquePass(DeviceContext& deviceContext) {
 	m_perFrameBuffer.render(deviceContext, 0, 1, true);
+	if (m_applyShadows && m_shadowDepthSRV.m_textureFromImg) {
+		deviceContext.PSSetShaderResources(6, 1, &m_shadowDepthSRV.m_textureFromImg);
+	}
+	else {
+		ID3D11ShaderResourceView* nullShadowSRV[1] = { nullptr };
+		deviceContext.PSSetShaderResources(6, 1, nullShadowSRV);
+	}
 	deviceContext.OMSetBlendState(m_opaqueBlendState, m_blendFactor, 0xffffffff);
 
 	for (const RenderObject* object : m_opaqueQueue) {
@@ -145,6 +228,13 @@ ForwardRenderer::renderOpaquePass(DeviceContext& deviceContext) {
 void
 ForwardRenderer::renderTransparentPass(DeviceContext& deviceContext) {
 	m_perFrameBuffer.render(deviceContext, 0, 1, true);
+	if (m_applyShadows && m_shadowDepthSRV.m_textureFromImg) {
+		deviceContext.PSSetShaderResources(6, 1, &m_shadowDepthSRV.m_textureFromImg);
+	}
+	else {
+		ID3D11ShaderResourceView* nullShadowSRV[1] = { nullptr };
+		deviceContext.PSSetShaderResources(6, 1, nullShadowSRV);
+	}
 
 	for (const RenderObject* object : m_transparentQueue) {
 		if (!object) {
@@ -238,6 +328,91 @@ ForwardRenderer::renderObject(DeviceContext& deviceContext,
 	}
 }
 
+void
+ForwardRenderer::renderShadowObject(DeviceContext& deviceContext, const RenderObject& object) {
+	if (!object.mesh) {
+		return;
+	}
+
+	XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(object.world));
+	m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
+	m_perObjectBuffer.render(deviceContext, 1, 1, false);
+
+	m_shadowShader.render(deviceContext);
+	deviceContext.m_deviceContext->PSSetShader(nullptr, nullptr, 0);
+	deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	std::vector<Submesh>& submeshes = object.mesh->getSubmeshes();
+	for (Submesh& submesh : submeshes) {
+		submesh.vertexBuffer.render(deviceContext, 0, 1);
+		submesh.indexBuffer.render(deviceContext, 0, 1, false, DXGI_FORMAT_R32_UINT);
+		deviceContext.DrawIndexed(submesh.indexCount, submesh.startIndex, 0);
+	}
+}
+
+HRESULT
+ForwardRenderer::createShadowResources(Device& device) {
+	HRESULT hr = m_shadowDepthTexture.init(
+		device,
+		m_shadowMapSize,
+		m_shadowMapSize,
+		DXGI_FORMAT_R24G8_TYPELESS,
+		D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	hr = m_shadowDepthSRV.init(device, m_shadowDepthTexture, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	hr = m_shadowDSV.init(device, m_shadowDepthTexture, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_DSV_DIMENSION_TEXTURE2D);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	LayoutBuilder builder;
+	builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
+		.Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+		.Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+		.Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+		.Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+
+	hr = m_shadowShader.init(device, "ShadowMap.hlsl", builder);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	hr = m_shadowRasterizer.init(device, D3D11_FILL_SOLID, D3D11_CULL_BACK, false, true);
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	return S_OK;
+}
+
+void
+ForwardRenderer::updateLightMatrices(const Camera& camera, const RenderScene& scene) {
+	EU::Vector3 lightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
+	if (!scene.directionalLights.empty()) {
+		lightDir = scene.directionalLights.front().direction;
+	}
+
+	XMVECTOR lightDirVec = XMVector3Normalize(XMVectorSet(lightDir.x, lightDir.y, lightDir.z, 0.0f));
+	XMVECTOR cameraPos = XMVectorSet(camera.getPosition().x, camera.getPosition().y, camera.getPosition().z, 1.0f);
+	XMVECTOR lightTarget = cameraPos;
+	XMVECTOR lightEye = XMVectorSubtract(lightTarget, XMVectorScale(lightDirVec, 35.0f));
+	XMVECTOR worldUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	if (fabsf(XMVectorGetX(XMVector3Dot(lightDirVec, worldUp))) > 0.98f) {
+		worldUp = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	}
+
+	XMMATRIX lightView = XMMatrixLookAtLH(lightEye, lightTarget, worldUp);
+	XMMATRIX lightProjection = XMMatrixOrthographicLH(40.0f, 40.0f, 1.0f, 80.0f);
+	XMStoreFloat4x4(&m_cbPerFrame.LightViewProjection, XMMatrixTranspose(lightView * lightProjection));
+}
+
 HRESULT
 ForwardRenderer::createBlendStates(Device& device) {
 	if (!device.m_device) {
@@ -321,6 +496,3 @@ ForwardRenderer::resolveBlendState(const Material* material) const {
 		return m_alphaBlendState ? m_alphaBlendState : m_opaqueBlendState;
 	}
 }
-
-
-

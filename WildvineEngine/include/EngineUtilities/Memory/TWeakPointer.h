@@ -69,8 +69,8 @@ namespace
 		}
 
 		// Reset
-		void 
-		reset() {
+		void
+			reset() {
 			ptr = nullptr;
 			refCount = nullptr;
 		}

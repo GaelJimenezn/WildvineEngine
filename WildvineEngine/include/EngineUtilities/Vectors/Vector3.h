@@ -120,14 +120,14 @@ namespace EU {
 		}
 
 		void
-    zero() {
-      Vector3(0, 0, 0);
-    }
-    
-    void
-    one() {
-      Vector3(1,1,1);
-    }
+			zero() {
+			Vector3(0, 0, 0);
+		}
+
+		void
+			one() {
+			Vector3(1, 1, 1);
+		}
 
 
 		// ---- helpers con tu Vector3 ----

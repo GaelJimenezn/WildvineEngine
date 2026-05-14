@@ -25,12 +25,12 @@ RasterizerState::init(Device device) {
 	return hr;
 }
 
-HRESULT 
+HRESULT
 RasterizerState::init(Device& device,
-                      D3D11_FILL_MODE fill,
-                      D3D11_CULL_MODE cull,
-                      bool frontCCW,
-                      bool depthClip) {
+	D3D11_FILL_MODE fill,
+	D3D11_CULL_MODE cull,
+	bool frontCCW,
+	bool depthClip) {
 	D3D11_RASTERIZER_DESC desc{};
 	desc.FillMode = fill;
 	desc.CullMode = cull;
