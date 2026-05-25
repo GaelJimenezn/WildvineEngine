@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -504,7 +504,9 @@
     <ClInclude Include="Include\Model3D.h" />
     <ClInclude Include="Include\Prerequisites.h" />
     <ClInclude Include="Include\RasterizerState.h" />
+    <ClInclude Include="Include\Rendering\DeferredRenderer.h" />
     <ClInclude Include="Include\Rendering\ForwardRenderer.h" />
+    <ClInclude Include="Include\Rendering\ISceneRenderer.h" />
     <ClInclude Include="Include\Rendering\Material.h" />
     <ClInclude Include="Include\Rendering\MaterialInstance.h" />
     <ClInclude Include="Include\Rendering\Mesh.h" />
