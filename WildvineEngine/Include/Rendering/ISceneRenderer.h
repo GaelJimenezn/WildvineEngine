@@ -36,13 +36,30 @@ public:
     EditorViewportPass& viewport) = 0;
   virtual void destroy() = 0;
 
-  virtual ID3D11ShaderResourceView* getShadowMapSRV() const { return nullptr; }
-  virtual ID3D11ShaderResourceView* getPreShadowSRV() const { return nullptr; }
-  virtual ID3D11ShaderResourceView* getGBufferAlbedoMetallicSRV() const { return nullptr; }
-  virtual ID3D11ShaderResourceView* getGBufferNormalRoughnessSRV() const { return nullptr; }
-  virtual ID3D11ShaderResourceView* getGBufferWorldAoSRV() const { return nullptr; }
-  virtual ID3D11ShaderResourceView* getGBufferEmissiveAlphaSRV() const { return nullptr; }
-  virtual void setShaderFactorDebugEnabled(bool enabled) { (void)enabled; }
-  virtual void setDeferredDebugViewMode(int mode) { (void)mode; }
-  virtual const char* getDebugName() const = 0;
+  virtual 
+  ID3D11ShaderResourceView* getShadowMapSRV() const { return nullptr; }
+
+  virtual 
+  ID3D11ShaderResourceView* getPreShadowSRV() const { return nullptr; }
+
+  virtual 
+  ID3D11ShaderResourceView* getGBufferAlbedoMetallicSRV() const { return nullptr; }
+
+  virtual 
+  ID3D11ShaderResourceView* getGBufferNormalRoughnessSRV() const { return nullptr; }
+
+  virtual 
+  ID3D11ShaderResourceView* getGBufferWorldAoSRV() const { return nullptr; }
+
+  virtual 
+  ID3D11ShaderResourceView* getGBufferEmissiveAlphaSRV() const { return nullptr; }
+
+  virtual void 
+  setShaderFactorDebugEnabled(bool enabled) { (void)enabled; }
+
+  virtual void 
+  setDeferredDebugViewMode(int mode) { (void)mode; }
+
+  virtual 
+  const char* getDebugName() const = 0;
 };

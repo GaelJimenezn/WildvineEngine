@@ -66,7 +66,7 @@ public:
     getGBufferEmissiveAlphaSRV() const override { return m_gBufferEmissiveAlphaSRV.m_textureFromImg; }
 
     void
-    setShadowFactorDebugEnabled(bool enabled) override { m_shadowFactorDebugEnabled = enabled; }
+    setShaderFactorDebugEnabled(bool enabled) override { m_shadowFactorDebugEnabled = enabled; }
 
     void
     setDeferredDebugViewMode(int mode) override { m_deferredDebugViewMode = mode; }
