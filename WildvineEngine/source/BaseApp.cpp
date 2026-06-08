@@ -125,7 +125,12 @@ BaseApp::init() {
 		"Skybox/cubemap_4.png",
 		"Skybox/cubemap_5.png"
 	};
-	m_skyboxTex.CreateCubemap(m_device, m_deviceContext, faces, false);
+	hr = m_skyboxTex.CreateCubemap(m_device, m_deviceContext, faces, false);
+	if (FAILED(hr)) {
+		ERROR("Main", "InitDevice",
+			("Failed to initialize Skybox cubemap. HRESULT: " + std::to_string(hr)).c_str());
+		return hr;
+	}
 
 	// Set CyberGun Actor
 	m_cyberGun = EU::MakeShared<Actor>(m_device);
@@ -178,11 +183,11 @@ BaseApp::init() {
 		m_cyberGun->setName("CyberGun");
 		m_actors.push_back(m_cyberGun);
 
-		// El orden es: setTransform(Posición, Rotación, Escala)
+		// El orden es: setTransform(Posicion, Rotacion en grados, Escala)
 		m_cyberGun->getComponent<Transform>()->setTransform(
-			EU::Vector3(0.05f, 2.92f, 5.60f),   // Nueva posición centrada
-			EU::Vector3(-1.80f, 2.00f, -0.20f), // Rotación actual
-			EU::Vector3(1.0f, 1.0f, 1.0f)       // Escala actual
+			EU::Vector3(0.00f, 2.99f, -3.30f),     // Location estilo Unreal
+			EU::Vector3(275.02f, 177.62f, 0.00f), // Rotation en grados
+			EU::Vector3(1.0f, 1.0f, 1.0f)         // Scale normal
 		);
 	}
 	else {

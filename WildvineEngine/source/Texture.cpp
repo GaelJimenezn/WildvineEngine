@@ -161,7 +161,7 @@ Texture::init(Device& device,
     }
     if (width == 0 || height == 0) {
         ERROR("Texture", "init", "Width and height must be greater than 0");
-        E_INVALIDARG;
+        return E_INVALIDARG;
     }
 
     // Config the texture
@@ -268,13 +268,15 @@ Texture::CreateCubemap(Device& device,
         int w = 0, h = 0, c = 0;
         facePixels[i] = stbi_load(facePaths[i].c_str(), &w, &h, &c, 4);
         if (!facePixels[i]) {
+            ERROR("Texture", "CreateCubemap",
+                ("Failed to load cubemap face: " + facePaths[i] + ". Reason: " + stbi_failure_reason()).c_str());
             // liberar lo ya cargado
             for (int k = 0; k < i; ++k) {
                 if (facePixels[k]) {
                     stbi_image_free(facePixels[k]);
-                    return E_FAIL;
                 }
             }
+            return E_FAIL;
         }
 
         if (i == 0) {

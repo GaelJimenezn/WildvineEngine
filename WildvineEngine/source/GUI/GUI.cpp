@@ -183,7 +183,10 @@ void GUI::vec3Control(const std::string& label, float* values, float resetValue,
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
 	ImGui::SameLine();
-	ImGui::DragFloat("##X", &values[0], 0.1f, 0.0f, 0.0f, "%.2f");
+	const float dragSpeed = displayAsDegrees ? 1.0f : 0.1f;
+	const char* valueFormat = "%.2f";
+
+	ImGui::DragFloat("##X", &values[0], dragSpeed, 0.0f, 0.0f, valueFormat);
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
 
@@ -196,7 +199,7 @@ void GUI::vec3Control(const std::string& label, float* values, float resetValue,
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
 	ImGui::SameLine();
-	ImGui::DragFloat("##Y", &values[1], 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::DragFloat("##Y", &values[1], dragSpeed, 0.0f, 0.0f, valueFormat);
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
 
@@ -209,7 +212,7 @@ void GUI::vec3Control(const std::string& label, float* values, float resetValue,
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
 	ImGui::SameLine();
-	ImGui::DragFloat("##Z", &values[2], 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::DragFloat("##Z", &values[2], dragSpeed, 0.0f, 0.0f, valueFormat);
 	ImGui::PopItemWidth();
 
 	ImGui::PopStyleVar();
@@ -331,7 +334,7 @@ void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
 
     EU::Vector3 rot = transform->getRotation();
     float r[3] = { rot.x, rot.y, rot.z };
-    vec3Control("Rotation", r, 0.0f, 75.0f);
+    vec3Control("Rotation", r, 0.0f, 75.0f, true);
     transform->setRotation(EU::Vector3(r[0], r[1], r[2]));
 
     EU::Vector3 sca = transform->getScale();
