@@ -43,6 +43,7 @@ public:
 	virtual
 		~Actor() = default;
 
+	/** @brief Actor early setup hook; currently no additional work is required. */
 	void
 		awake() override {}
 
@@ -76,6 +77,7 @@ public:
 	void
 		render(DeviceContext& deviceContext) override;
 
+	/** @brief Renders actor geometry with skybox-specific state and shaders. */
 	void
 		renderForSkybox(DeviceContext& deviceContext);
 

@@ -15,18 +15,24 @@
 class
     Device {
 public:
+    /** @brief Creates an empty device wrapper. */
     Device() = default;
+    /** @brief Does not automatically release the D3D device; call destroy(). */
     ~Device() = default;
 
+    /** @brief Initializes the D3D11 device pointer used by this facade. */
     void
         init();
 
+    /** @brief Reserved update hook for device-level state. */
     void
         update();
 
+    /** @brief Reserved render hook for device-level diagnostics. */
     void
         render();
 
+    /** @brief Releases the wrapped @c ID3D11Device. */
     void
         destroy();
 

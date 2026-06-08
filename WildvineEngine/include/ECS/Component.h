@@ -1,4 +1,8 @@
 #pragma once
+/**
+ * @file Component.h
+ * @brief Declares the abstract ECS component contract.
+ */
 #include "Prerequisites.h"
 class DeviceContext;
 
@@ -29,6 +33,7 @@ public:
 	virtual
 		~Component() = default;
 
+	/** @brief Initializes component state before update/render use. */
 	virtual void
 		init() = 0;
 
@@ -46,6 +51,7 @@ public:
 	virtual void
 		render(DeviceContext& deviceContext) = 0;
 
+	/** @brief Releases resources owned by the component. */
 	virtual void
 		destroy() = 0;
 

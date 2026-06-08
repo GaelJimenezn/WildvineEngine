@@ -1,12 +1,24 @@
 #pragma once
+/**
+ * @file Entity.h
+ * @brief Declares the abstract ECS entity contract and component container helpers.
+ */
 #include "Prerequisites.h"
 #include "Component.h"
 
 class DeviceContext;
 
+/**
+ * @class Entity
+ * @brief Base class for scene objects that own ECS components and participate in update/render flow.
+ *
+ * Entity exposes lifecycle hooks implemented by concrete objects such as @c Actor and provides
+ * templated helpers for attaching and querying component instances stored as shared pointers.
+ */
 class
     Entity {
 public:
+    /** @brief Creates an entity with default base state. */
     Entity() = default;
 
     /**
@@ -15,6 +27,7 @@ public:
     virtual
         ~Entity() = default;
 
+    /** @brief Early lifecycle hook invoked before init() for object-specific setup. */
     virtual void
         awake() = 0;
 
@@ -76,7 +89,10 @@ public:
     }
 private:
 protected:
+    /** @brief Runtime active flag used by derived entity implementations. */
     bool m_isActive;
+    /** @brief Entity identifier used by derived systems/editor code. */
     int m_id;
+    /** @brief Components owned by this entity as base-class shared pointers. */
     std::vector<EU::TSharedPointer<Component>> m_components;
 };

@@ -2,10 +2,19 @@
 #include "Prerequisites.h"
 #include "EngineUtilities\Vectors\Vector3.h"
 
+/**
+ * @class Camera
+ * @brief Left-handed perspective camera with cached view/projection matrices.
+ *
+ * Camera stores position, orthonormal basis vectors, projection parameters, and dirty state
+ * so movement/rotation can update the view matrix lazily before rendering.
+ */
 class 
 Camera {
 public:
+	/** @brief Creates a camera with default basis and perspective settings. */
 	Camera();
+	/** @brief Default destructor. */
 	~Camera() = default;
 
 	/**
@@ -39,6 +48,7 @@ public:
 	EU::Vector3 
 	getPosition() const { return m_position; }
 	
+	/** @brief Obtiene una referencia mutable a la posicion en mundo. */
 	EU::Vector3 &
 	getPosition() { return m_position; }
 
@@ -131,17 +141,27 @@ public:
 	 * @brief Devuelve parámetros de proyección (útil para UI/debug).
 	 */
 	float getFovY()   const { return m_fovY; }
+	/** @brief Devuelve el aspect ratio de proyeccion. */
 	float getAspect() const { return m_aspectRatio; }
+	/** @brief Devuelve la distancia del plano cercano. */
 	float getNearZ()  const { return m_nearPlane; }
+	/** @brief Devuelve la distancia del plano lejano. */
 	float getFarZ()   const { return m_farPlane; }
 
 	/**
 	 * @brief Vectores base (mundo) de la cámara.
 	 */
 	EU::Vector3 GetRight()   const { return m_right; }
+	/** @brief Devuelve el vector up de la base de camara. */
 	EU::Vector3 GetUp()      const { return m_up; }
+	/** @brief Devuelve el vector forward de la base de camara. */
 	EU::Vector3 GetForward() const { return m_forward; }
 
+	/**
+	 * @brief Converts a DirectX vector into an @c EU::Vector3.
+	 * @param v DirectX vector value.
+	 * @return Converted engine vector.
+	 */
 	inline EU::Vector3 
 	FromXM(FXMVECTOR v)	{
 		XMFLOAT3 t;

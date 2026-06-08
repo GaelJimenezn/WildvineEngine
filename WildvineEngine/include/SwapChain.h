@@ -93,9 +93,20 @@ public:
     void
         present();
 
+    /**
+     * @brief Resizes the swap-chain back buffers.
+     * @param width New back-buffer width in pixels.
+     * @param height New back-buffer height in pixels.
+     * @return @c S_OK on success; failing @c HRESULT otherwise.
+     */
     HRESULT
         resizeBuffers(unsigned int width, unsigned int height);
 
+    /**
+     * @brief Retrieves the current swap-chain back buffer into @p backBuffer.
+     * @param backBuffer Destination texture wrapper.
+     * @return @c S_OK on success; failing @c HRESULT otherwise.
+     */
     HRESULT
         getBackBuffer(Texture& backBuffer);
 

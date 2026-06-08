@@ -122,12 +122,29 @@ public:
     void
         destroy();
 
+    /**
+     * @brief Creates a cubemap texture from six image file paths.
+     * @param device Device used to create texture and SRV resources.
+     * @param deviceContext Context used for upload/copy operations.
+     * @param facePaths Ordered image paths for the six cubemap faces.
+     * @param generateMips Whether mipmaps should be generated when supported.
+     * @return @c S_OK on success; failing @c HRESULT otherwise.
+     */
     HRESULT
         CreateCubemap(Device& device,
             DeviceContext& deviceContext,
             const std::array<std::string, 6>& facePaths,
             bool generateMips /*= false*/);
 
+    /**
+     * @brief Creates an SRV that views one face of a cubemap as a 2D texture array slice.
+     * @param device Native D3D11 device.
+     * @param cubemapTex Cubemap texture resource.
+     * @param format View format.
+     * @param faceIndex Cubemap face index to expose.
+     * @param mipLevels Number of mip levels visible through the SRV.
+     * @return Created SRV, or @c nullptr on failure.
+     */
     ID3D11ShaderResourceView* CreateCubemapFaceSRV(
         ID3D11Device* device,
         ID3D11Texture2D* cubemapTex,
