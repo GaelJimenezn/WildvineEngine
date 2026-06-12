@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Prerequisites.h"
 #include "MeshComponent.h"
 
@@ -9,11 +9,12 @@ class MeshComponent;
  * @class ModelLoader
  * @brief Clase encargada de cargar modelos 3D desde archivos (OBJ Parser manual).
  * @details
- * Esta clase es responsable de la lectura, el parseo y la triangulación de
- * archivos de modelos OBJ para extraer la geometría y poblar un objeto MeshComponent
- * con datos de vértices e índices re-indexados.
+ * Esta clase es responsable de la lectura, el parseo y la triangulaciÃ³n de
+ * archivos de modelos OBJ para extraer la geometrÃ­a y poblar un objeto MeshComponent
+ * con datos de vÃ©rtices e Ã­ndices re-indexados.
  */
-class ModelLoader {
+class
+	ModelLoader {
 public:
   /** @brief Constructor por defecto. */
   ModelLoader() = default;
@@ -27,12 +28,16 @@ public:
    * @param fileName Source OBJ file path.
    * @return @c S_OK on success; failing @c HRESULT otherwise.
    */
-  HRESULT init(MeshComponent& mesh, const std::string& fileName);
+  HRESULT
+  	init(MeshComponent& mesh, const std::string& fileName);
 
   /** @brief Reserved update hook for future streaming/import progress. */
-  void update();
+  void
+  	update();
   /** @brief Reserved render hook; model loading does not draw directly. */
-  void render();
+  void
+  	render();
   /** @brief Releases transient loader state, if any. */
-  void destroy();
+  void
+  	destroy();
 };

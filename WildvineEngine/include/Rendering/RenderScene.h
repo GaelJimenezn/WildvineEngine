@@ -8,8 +8,10 @@ class Skybox;
  * @class RenderScene
  * @brief Per-frame render packet built from ECS and scene graph data.
  *
- * Renderers consume this lightweight structure instead of walking gameplay entities directly.
- * Objects are separated into opaque and transparent lists so each renderer can sort and draw
+ * Renderers consume this lightweight structure instead of walking gameplay entities
+ * directly.
+ * Objects are separated into opaque and transparent lists so each renderer can sort and
+ * draw
  * them with pass-appropriate state.
  */
 class
@@ -17,9 +19,11 @@ class
 public:
 	/**
 	 * @brief Clears all gathered objects and lights for reuse in a new frame.
-	 * @post Object and light arrays are empty; the skybox pointer is reset by the implementation if required.
+	 * @post Object and light arrays are empty; the skybox pointer is reset by the
+	 * implementation if required.
 	 */
-	void clear();
+	void
+		clear();
 
 public:
 	/** @brief Opaque render objects gathered for depth-friendly rendering. */

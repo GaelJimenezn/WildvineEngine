@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 #include "Prerequisites.h"
 #include "IResource.h"
 
@@ -10,17 +10,21 @@
  * Typed accessors use @c std::dynamic_pointer_cast so callers can request concrete
  * resource types while the manager keeps a single heterogeneous cache.
  */
-class 
-ResourceManager {
+class
+	ResourceManager {
 public:
 	/** @brief Creates an empty resource cache. */
 	ResourceManager()  = default;
-	/** @brief Does not automatically unload resources; call UnloadAll() for deterministic cleanup. */
+	/**
+	 * @brief Does not automatically unload resources; call UnloadAll() for deterministic
+	 * cleanup.
+	 */
 	~ResourceManager() = default;
 
 	// Singleton
 	/** @brief Returns the process-local resource manager singleton. */
-	static ResourceManager& getInstance() {
+	static ResourceManager&
+		getInstance() {
 		static ResourceManager instance;
 		return instance;
 	}
@@ -31,7 +35,8 @@ public:
 	ResourceManager& operator=(const ResourceManager&) = delete;
 
 	/**
-	 * @brief Returns an already loaded resource or creates, loads, initializes, and caches it.
+	 * @brief Returns an already loaded resource or creates, loads, initializes, and caches
+	 * it.
 	 * @tparam T Concrete resource type derived from @c IResource.
 	 * @tparam Args Extra constructor arguments forwarded after the key.
 	 * @param key Cache key and resource name.
@@ -39,13 +44,13 @@ public:
 	 * @param args Extra construction arguments for @c T.
 	 * @return Loaded resource instance, or @c nullptr if load/init fails.
 	 */
-	template<typename T, typename... Args>
-	std::shared_ptr<T> GetOrLoad(const std::string& key,
+	template<typename T, typename... Args> std::shared_ptr<T>
+		GetOrLoad(const std::string& key,
                                const std::string& filename,
                                Args&&... args) {
 		static_assert(std::is_base_of<IResource, T>::value,
                       "T debe heredar de IResource");
-		// 1. øYa existe el recurso en el cachÈ?
+		// 1. ¬øYa existe el recurso en el cach√©?
 		auto it = m_resources.find(key);
 		if (it != m_resources.end()) {
 			// Intentar castear al tipo correcto
@@ -55,11 +60,11 @@ public:
 			}
 		}
 
-		// 2. No existe o no est· cargado -> crearlo y cargarlo
+		// 2. No existe o no est√° cargado -> crearlo y cargarlo
 		std::shared_ptr<T> resource = std::make_shared<T>(key, std::forward<Args>(args)...);
 
 		if (!resource->load(filename)) {
-			// Puedes manejar errores m·s fino aquÌ
+			// Puedes manejar errores m√°s fino aqu√≠
 			return nullptr;
 		}
 
@@ -67,7 +72,7 @@ public:
 			return nullptr;
 		}
 
-		// 3. Guardar en el cachÈ y devolver
+		// 3. Guardar en el cach√© y devolver
 		m_resources[key] = resource;
 		return resource;
 	}
@@ -78,8 +83,8 @@ public:
 	 * @param key Cache key to search.
 	 * @return Cached resource cast to @c T, or @c nullptr if absent/incompatible.
 	 */
-	template<typename T>
-	std::shared_ptr<T> Get(const std::string& key) const
+	template<typename T> std::shared_ptr<T>
+		Get(const std::string& key) const
 	{
 		auto it = m_resources.find(key);
 		if (it == m_resources.end()) return nullptr;
@@ -91,7 +96,8 @@ public:
 	 * @brief Unloads and erases one cached resource.
 	 * @param key Cache key to remove.
 	 */
-	void Unload(const std::string& key)
+	void
+		Unload(const std::string& key)
 	{
 		auto it = m_resources.find(key);
 		if (it != m_resources.end()) {
@@ -101,7 +107,8 @@ public:
 	}
 
 	/** @brief Unloads every cached resource and clears the cache. */
-	void UnloadAll()
+	void
+		UnloadAll()
 	{
 		for (auto& [key, res] : m_resources) {
 			if (res) {

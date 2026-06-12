@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Prerequisites.h"
 
 
@@ -7,7 +7,8 @@ class BaseApp;
  * @class Window
  * @brief Owns the Win32 window handle and presentation dimensions for the engine.
  *
- * The window wrapper registers/creates the native window, stores its dimensions, and keeps
+ * The window wrapper registers/creates the native window, stores its dimensions, and
+ * keeps
  * the application instance/rectangle data needed by resize and message handling code.
  */
 class
@@ -15,7 +16,10 @@ class
 public:
 	/** @brief Creates an empty window wrapper. */
 	Window() = default;
-	/** @brief Does not destroy the native window automatically; use destroy() in shutdown flow. */
+	/**
+	 * @brief Does not destroy the native window automatically; use destroy() in shutdown
+	 * flow.
+	 */
 	~Window() = default;
 
 	/**

@@ -34,14 +34,17 @@ class
 	Mesh {
 public:
 	/** @brief Returns mutable submesh storage for mesh construction. */
-	std::vector<Submesh>& getSubmeshes() { return m_submeshes; }
+	std::vector<Submesh>&
+		getSubmeshes() { return m_submeshes; }
 	/** @brief Returns read-only submesh storage for render traversal. */
-	const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
+	const std::vector<Submesh>&
+		getSubmeshes() const { return m_submeshes; }
 
 	/**
 	 * @brief Releases all submesh buffers and clears the mesh.
 	 *
-	 * @post @c m_submeshes is empty and each previous vertex/index buffer has received destroy().
+	 * @post @c m_submeshes is empty and each previous vertex/index buffer has received
+	 * destroy().
 	 */
 	void
 		destroy() {

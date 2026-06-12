@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file DeferredRenderer.h
  * @brief Declara la API de DeferredRenderer dentro del subsistema Rendering.
  * @ingroup rendering
@@ -30,135 +30,173 @@ class Material;
  * con el contenido actual del engine.
  */
 class
-DeferredRenderer : public ISceneRenderer {
+	DeferredRenderer : public ISceneRenderer {
 public:
-    /** @brief Creates renderer-owned GPU resources, shaders, GBuffer targets, and pass state. */
+    /**
+     * @brief Creates renderer-owned GPU resources, shaders, GBuffer targets, and pass
+     * state.
+     */
     HRESULT
-    init(Device& device) override;
+    	init(Device& device) override;
 
     /** @brief Recreates size-dependent GBuffer/final-target resources. */
     void
-    resize(Device& device, unsigned int width, unsigned int height) override;
+    	resize(Device& device, unsigned int width, unsigned int height) override;
 
-    /** @brief Renders the scene through geometry, lighting, skybox, and transparent passes. */
+    /**
+     * @brief Renders the scene through geometry, lighting, skybox, and transparent
+     * passes.
+     */
     void
-    render(DeviceContext& deviceContext,
+    	render(DeviceContext& deviceContext,
            const Camera& camera,
            RenderScene& scene,
            EditorViewportPass& viewportPass) override;
 
     /** @brief Releases all GPU resources owned by the deferred renderer. */
     void
-    destroy() override;
+    	destroy() override;
 
     /** @brief Returns the shadow-map SRV produced by the shadow pass. */
     ID3D11ShaderResourceView*
-    getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
+    	getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
 
     /** @brief Returns the pre-shadow debug texture displayed by editor debug UI. */
     ID3D11ShaderResourceView*
-    getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
+    	getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
 
     /** @brief Returns the GBuffer albedo/metallic SRV. */
     ID3D11ShaderResourceView*
-    getGBufferAlbedoMetallicSRV() const override { return m_gBufferAlbedoMetallicSRV.m_textureFromImg; }
+    	getGBufferAlbedoMetallicSRV() const override {
+    		return m_gBufferAlbedoMetallicSRV.m_textureFromImg;
+    	}
 
     /** @brief Returns the GBuffer normal/roughness SRV. */
     ID3D11ShaderResourceView*
-    getGBufferNormalRoughnessSRV() const override { return m_gBufferNormalRoughnessSRV.m_textureFromImg; }
+    	getGBufferNormalRoughnessSRV() const override {
+    		return m_gBufferNormalRoughnessSRV.m_textureFromImg;
+    	}
 
     /** @brief Returns the GBuffer world-position/AO SRV. */
     ID3D11ShaderResourceView*
-    getGBufferWorldAoSRV() const override { return m_gBufferWorldAoSRV.m_textureFromImg; }
+    	getGBufferWorldAoSRV() const override {
+    		return m_gBufferWorldAoSRV.m_textureFromImg;
+    	}
 
     /** @brief Returns the GBuffer emissive/alpha SRV. */
     ID3D11ShaderResourceView*
-    getGBufferEmissiveAlphaSRV() const override { return m_gBufferEmissiveAlphaSRV.m_textureFromImg; }
+    	getGBufferEmissiveAlphaSRV() const override {
+    		return m_gBufferEmissiveAlphaSRV.m_textureFromImg;
+    	}
 
     /** @brief Enables a lighting debug mode that visualizes shadow contribution. */
     void
-    setShaderFactorDebugEnabled(bool enabled) override { m_shadowFactorDebugEnabled = enabled; }
+    	setShaderFactorDebugEnabled(bool enabled) override {
+    		m_shadowFactorDebugEnabled = enabled;
+    	}
 
     /** @brief Selects which deferred debug view the lighting shader should output. */
     void
-    setDeferredDebugViewMode(int mode) override { m_deferredDebugViewMode = mode; }
+    	setDeferredDebugViewMode(int mode) override { m_deferredDebugViewMode = mode; }
 
     /** @brief Returns the renderer name used by debug/editor UI. */
     const char*
-    getDebugName() const override { return "DeferredRenderer"; }
+    	getDebugName() const override { return "DeferredRenderer"; }
 
 private:
     /** @brief Splits scene objects into opaque and transparent queues. */
     void
-    buildQueues(RenderScene& scene, const Camera& camera);
+    	buildQueues(RenderScene& scene, const Camera& camera);
 
     /** @brief Updates per-frame constants used by geometry and lighting shaders. */
     void
-    updatePerFrame(const Camera& camera, const RenderScene& scene, DeviceContext& deviceContext);
+    	updatePerFrame(
+    		const Camera& camera,
+    		const RenderScene& scene,
+    		DeviceContext& deviceContext
+    	);
 
     /** @brief Computes light view/projection matrices for shadowing. */
     void
-    updateLightMatrices(const Camera& camera, const RenderScene& scene);
+    	updateLightMatrices(const Camera& camera, const RenderScene& scene);
 
     /** @brief Runs the complete scene render into @p targetPass. */
     void
-    renderSceneToTarget(DeviceContext& deviceContext, RenderScene& scene, EditorViewportPass& targetPass, bool applyShadows);
+    	renderSceneToTarget(
+    		DeviceContext& deviceContext,
+    		RenderScene& scene,
+    		EditorViewportPass& targetPass,
+    		bool applyShadows
+    	);
 
     /** @brief Binds all GBuffer render targets plus the shared depth buffer. */
     void
-    bindGBufferTargets(DeviceContext& deviceContext, ID3D11DepthStencilView* depthStencilView);
+    	bindGBufferTargets(
+    		DeviceContext& deviceContext,
+    		ID3D11DepthStencilView* depthStencilView
+    	);
 
     /** @brief Binds the final color target used by lighting/composition. */
     void
-    bindFinalTarget(DeviceContext& deviceContext, ID3D11RenderTargetView* renderTargetView, ID3D11DepthStencilView* depthStencilView);
+    	bindFinalTarget(
+    		DeviceContext& deviceContext,
+    		ID3D11RenderTargetView* renderTargetView,
+    		ID3D11DepthStencilView* depthStencilView
+    	);
 
-    /** @brief Unbinds deferred SRVs to avoid read/write hazards before rendering targets. */
+    /**
+     * @brief Unbinds deferred SRVs to avoid read/write hazards before rendering targets.
+     */
     void
-    clearDeferredSRVs(DeviceContext& deviceContext);
+    	clearDeferredSRVs(DeviceContext& deviceContext);
 
     /** @brief Renders opaque objects into the GBuffer. */
     void
-    renderGeometryPass(DeviceContext& deviceContext);
+    	renderGeometryPass(DeviceContext& deviceContext);
 
     /** @brief Renders one object into the GBuffer. */
     void
-    renderGeometryObject(DeviceContext& deviceContext, const RenderObject& object);
+    	renderGeometryObject(DeviceContext& deviceContext, const RenderObject& object);
 
     /** @brief Renders a fullscreen lighting pass from GBuffer inputs. */
     void
-    renderLightingPass(DeviceContext& deviceContext);
+    	renderLightingPass(DeviceContext& deviceContext);
 
     /** @brief Renders the skybox into the final target. */
     void
-    renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
+    	renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
 
     /** @brief Renders sorted transparent objects with forward shading. */
     void
-    renderTransparentPass(DeviceContext& deviceContext);
+    	renderTransparentPass(DeviceContext& deviceContext);
 
     /** @brief Renders one object through the forward fallback path. */
     void
-    renderForwardObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
+    	renderForwardObject(
+    		DeviceContext& deviceContext,
+    		const RenderObject& object,
+    		RenderPassType passType
+    	);
 
     /** @brief Renders shadow-casting objects into the shadow depth map. */
     void
-    renderShadowPass(DeviceContext& deviceContext);
+    	renderShadowPass(DeviceContext& deviceContext);
 
     /** @brief Renders one object into the shadow map. */
     void
-    renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
+    	renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
 
     /** @brief Creates shadow-map texture, SRV, DSV, shader, and pass state. */
     HRESULT
-    createShadowResources(Device& device);
+    	createShadowResources(Device& device);
 
     /** @brief Creates all GBuffer textures, SRVs, and RTVs at the requested size. */
     HRESULT
-    createGBufferResources(Device& device, unsigned int width, unsigned int height);
+    	createGBufferResources(Device& device, unsigned int width, unsigned int height);
 
     /** @brief Creates one typed GBuffer render target and matching SRV. */
     HRESULT
-    createGBufferTarget(Device& device,
+    	createGBufferTarget(Device& device,
                         unsigned int width,
                         unsigned int height,
                         DXGI_FORMAT format,
@@ -168,19 +206,19 @@ private:
 
     /** @brief Creates shaders/states needed by the fullscreen lighting pass. */
     HRESULT
-    createLightingResources(Device& device);
+    	createLightingResources(Device& device);
 
     /** @brief Creates fullscreen quad vertex and index buffers. */
     HRESULT
-    createFullScreenQuad(Device& device);
+    	createFullScreenQuad(Device& device);
 
     /** @brief Creates blend states used by transparent material modes. */
     HRESULT
-    createBlendStates(Device& device);
+    	createBlendStates(Device& device);
 
     /** @brief Returns the blend state matching @p material blend settings. */
     ID3D11BlendState*
-    resolveBlendState(const Material* material) const;
+    	resolveBlendState(const Material* material) const;
 
     /** @brief Per-frame constant buffer. */
     Buffer m_perFrameBuffer;
@@ -279,7 +317,8 @@ private:
     /** @brief CPU-side per-material constants. */
     CBPerMaterial m_cbPerMaterial{};
     /** @brief CPU-side debug data consumed by the deferred lighting shader. */
-    struct DeferredLightingDebugData {
+    struct
+    	DeferredLightingDebugData {
         /** @brief Selected deferred debug output mode. */
         int DebugViewMode = 0;
         /** @brief Shadow contribution strength used by debug visualization. */

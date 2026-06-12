@@ -1,7 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * @file Prerequisites.h
- * @brief Central include hub, common macros, vertex formats, constant buffers, and engine enums.
+ * @brief Central include hub, common macros, vertex formats, constant buffers, and engine
+ * enums.
  */
 
 // Librerias STD
@@ -39,7 +40,15 @@
 #define MESSAGE( classObj, method, state )   \
 {                                            \
    std::wostringstream os_;                  \
-   os_ << classObj << "::" << method << " : " << "[CREATION OF RESOURCE " << ": " << state << "] \n"; \
+   os_ \
+   		<< classObj \
+   		<< "::" \
+   		<< method \
+   		<< " : " \
+   		<< "[CREATION OF RESOURCE " \
+   		<< ": " \
+   		<< state \
+   		<< "] \n"; \
    OutputDebugStringW( os_.str().c_str() );  \
 }
 
@@ -61,9 +70,11 @@
 //--------------------------------------------------------------------------------------
 /**
  * @struct SimpleVertex
- * @brief Standard mesh vertex containing position, basis vectors, and texture coordinates.
+ * @brief Standard mesh vertex containing position, basis vectors, and texture
+ * coordinates.
  */
-struct SimpleVertex
+struct
+	SimpleVertex
 {
     /** @brief Object-space vertex position. */
     EU::Vector3 Position;
@@ -79,28 +90,31 @@ struct SimpleVertex
 
 /** @brief Compact position-only vertex used by skybox cube geometry. */
 struct
-    SkyboxVertex {
+	SkyboxVertex {
     /** @brief Position components in object space. */
     float x, y, z;
 };
 
 
 /** @brief Legacy constant buffer for values that rarely change. */
-struct CBNeverChanges
+struct
+	CBNeverChanges
 {
     /** @brief View matrix. */
     XMMATRIX mView;
 };
 
 /** @brief Constant buffer used by skybox rendering. */
-struct CBSkybox
+struct
+	CBSkybox
 {
     /** @brief Combined skybox view-projection matrix. */
     XMMATRIX mviewProj;
 };
 
 /** @brief Constant buffer updated when swap-chain or viewport size changes. */
-struct CBChangeOnResize
+struct
+	CBChangeOnResize
 {
     /** @brief Projection matrix. */
     XMMATRIX mProjection;
@@ -108,7 +122,8 @@ struct CBChangeOnResize
 
 // Constant buffer used in the vertex and pixel shaders.  Align to
 // 16?bytes as required by Direct3D constant buffers.
-struct CBMain
+struct
+	CBMain
 {
     //XMFLOAT4X4 World;
     /** @brief View matrix. */
@@ -130,7 +145,8 @@ struct CBMain
 };
 
 /** @brief Legacy per-object/per-frame constant buffer used by actor rendering. */
-struct CBChangesEveryFrame
+struct
+	CBChangesEveryFrame
 {
     /** @brief World matrix. */
     XMMATRIX mWorld;
@@ -142,7 +158,8 @@ struct CBChangesEveryFrame
  * @enum ExtensionType
  * @brief Texture file extension identifiers used by texture loading helpers.
  */
-enum ExtensionType {
+enum
+	ExtensionType {
     /** @brief DirectDraw Surface texture. */
     DDS = 0,
     /** @brief PNG texture. */
@@ -155,7 +172,8 @@ enum ExtensionType {
  * @enum ShaderType
  * @brief Shader stage identifiers used by shader-program loading.
  */
-enum ShaderType {
+enum
+	ShaderType {
     /** @brief Vertex shader stage. */
     VERTEX_SHADER = 0,
     /** @brief Pixel shader stage. */
@@ -167,7 +185,7 @@ enum ShaderType {
  * @brief Tipos de componentes disponibles en el juego.
  */
 enum
-    ComponentType {
+	ComponentType {
     NONE = 0,     ///< Tipo de componente no especificado.
     TRANSFORM = 1,///< Componente de transformación.
     MESH = 2,     ///< Componente de malla.

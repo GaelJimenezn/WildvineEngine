@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 /**
  * @file Component.h
  * @brief Declares the abstract ECS component contract.
@@ -10,8 +10,9 @@ class DeviceContext;
  * @class Component
  * @brief Clase base abstracta para todos los componentes del juego.
  *
- * La clase Component define la interfaz básica que todos los componentes deben implementar,
- * permitiendo actualizar y renderizar el componente, así como obtener su tipo.
+ * La clase Component define la interfaz bÃ¡sica que todos los componentes deben
+ * implementar,
+ * permitiendo actualizar y renderizar el componente, asÃ­ como obtener su tipo.
  */
 class
 	Component {
@@ -38,15 +39,15 @@ public:
 		init() = 0;
 
 	/**
-	 * @brief Método virtual puro para actualizar el componente.
-	 * @param deltaTime El tiempo transcurrido desde la última actualización.
+	 * @brief MÃ©todo virtual puro para actualizar el componente.
+	 * @param deltaTime El tiempo transcurrido desde la Ãºltima actualizaciÃ³n.
 	 */
 	virtual void
 		update(float deltaTime) = 0;
 
 	/**
-	 * @brief Método virtual puro para renderizar el componente.
-	 * @param deviceContext Contexto del dispositivo para operaciones gráficas.
+	 * @brief MÃ©todo virtual puro para renderizar el componente.
+	 * @param deviceContext Contexto del dispositivo para operaciones grÃ¡ficas.
 	 */
 	virtual void
 		render(DeviceContext& deviceContext) = 0;

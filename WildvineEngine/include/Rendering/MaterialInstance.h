@@ -19,77 +19,77 @@ class Texture;
  * y parametros PBR por objeto renderizado.
  */
 class
-MaterialInstance {
+	MaterialInstance {
 public:
     /** @brief Sets the shared material definition used by this instance. */
-    void 
-    setMaterial(Material* material) { m_material = material; }
+    void
+    	setMaterial(Material* material) { m_material = material; }
 
     /** @brief Assigns the albedo/base-color texture. */
-    void 
-    setAlbedo(Texture* texture) { m_albedo = texture; }
+    void
+    	setAlbedo(Texture* texture) { m_albedo = texture; }
 
     /** @brief Assigns the normal-map texture. */
-    void 
-    setNormal(Texture* texture) { m_normal = texture; }
+    void
+    	setNormal(Texture* texture) { m_normal = texture; }
 
     /** @brief Assigns the metallic texture. */
-    void 
-    setMetallic(Texture* texture) { m_metallic = texture; }
+    void
+    	setMetallic(Texture* texture) { m_metallic = texture; }
 
     /** @brief Assigns the roughness texture. */
-    void 
-    setRoughness(Texture* texture) { m_roughness = texture; }
+    void
+    	setRoughness(Texture* texture) { m_roughness = texture; }
 
     /** @brief Assigns the ambient-occlusion texture. */
-    void 
-    setAO(Texture* texture) { m_ao = texture; }
+    void
+    	setAO(Texture* texture) { m_ao = texture; }
 
     /** @brief Assigns the emissive texture. */
-    void 
-    setEmissive(Texture* texture) { m_emissive = texture; }
+    void
+    	setEmissive(Texture* texture) { m_emissive = texture; }
 
     /** @brief Returns the shared material definition. */
-    Material* 
-    getMaterial() const { return m_material; }
+    Material*
+    	getMaterial() const { return m_material; }
 
     /** @brief Returns the albedo/base-color texture. */
     Texture*
-    getAlbedo() const { return m_albedo; }
+    	getAlbedo() const { return m_albedo; }
 
     /** @brief Returns the normal-map texture. */
-    Texture* 
-    getNormal() const { return m_normal; }
+    Texture*
+    	getNormal() const { return m_normal; }
 
     /** @brief Returns the metallic texture. */
-    Texture* 
-    getMetallic() const { return m_metallic; }
+    Texture*
+    	getMetallic() const { return m_metallic; }
 
     /** @brief Returns the roughness texture. */
-    Texture* 
-    getRoughness() const { return m_roughness; }
+    Texture*
+    	getRoughness() const { return m_roughness; }
 
     /** @brief Returns the ambient-occlusion texture. */
-    Texture* 
-    getAO() const { return m_ao; }
+    Texture*
+    	getAO() const { return m_ao; }
 
     /** @brief Returns the emissive texture. */
-    Texture* 
-    getEmissive() const { return m_emissive; }
+    Texture*
+    	getEmissive() const { return m_emissive; }
 
     /** @brief Returns mutable scalar/vector material parameters. */
-    MaterialParams& 
-    getParams() { return m_params; }
+    MaterialParams&
+    	getParams() { return m_params; }
 
     /** @brief Returns read-only scalar/vector material parameters. */
-    const MaterialParams& 
-    getParams() const { return m_params; }
+    const MaterialParams&
+    	getParams() const { return m_params; }
 
     /**
      * @brief Enlaza las texturas de la instancia en el contexto grafico actual.
      */
-    void 
-    bindTextures(DeviceContext& deviceContext) const;
+    void
+    	bindTextures(DeviceContext& deviceContext) const;
 
 private:
     /** @brief Non-owning shared material definition. */

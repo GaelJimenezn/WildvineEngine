@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include <iostream>
 #include "Structures/TArray.h"
@@ -10,68 +10,75 @@ class DeviceContext;
 namespace EU {
 
 	/**
-	 * @brief Estructura que representa un vértice en el espacio 3D.
-	 * Contiene una posición 3D y coordenadas de textura 2D.
+	 * @brief Estructura que representa un vÃ©rtice en el espacio 3D.
+	 * Contiene una posiciÃ³n 3D y coordenadas de textura 2D.
 	 */
-	struct Vertex {
-		EU::Vector3 Pos;  ///< Posición del vértice en el espacio 3D.
-		EU::Vector2 Tex;  ///< Coordenadas de textura del vértice.
+	struct
+		Vertex {
+		EU::Vector3 Pos;  ///< PosiciÃ³n del vÃ©rtice en el espacio 3D.
+		EU::Vector2 Tex;  ///< Coordenadas de textura del vÃ©rtice.
 	};
 
 	/**
-	 * @brief Componente de malla que contiene información de geometría.
+	 * @brief Componente de malla que contiene informaciÃ³n de geometrÃ­a.
 	 *
-	 * Esta clase almacena los vértices e índices necesarios para representar
-	 * una malla 3D, así como métodos básicos para inicialización, actualización,
-	 * renderizado y destrucción.
+	 * Esta clase almacena los vÃ©rtices e Ã­ndices necesarios para representar
+	 * una malla 3D, asÃ­ como mÃ©todos bÃ¡sicos para inicializaciÃ³n, actualizaciÃ³n,
+	 * renderizado y destrucciÃ³n.
 	 *
-	 * Nota: Actualmente no hereda de una clase `Component`, pero está preparado para ello.
+	 * Nota: Actualmente no hereda de una clase `Component`, pero estÃ¡ preparado para ello.
 	 */
-	class MeshComponent /*: public Component*/ {
+	class
+		MeshComponent /*: public Component*/ {
 	public:
 		/**
 		 * @brief Constructor por defecto.
-		 * Inicializa el componente con 0 vértices e índices.
+		 * Inicializa el componente con 0 vÃ©rtices e Ã­ndices.
 		 */
 		MeshComponent() : m_numVertex(0), m_numIndex(0)/*, Component(ComponentType::MESH)*/ {}
 
 		/**
 		 * @brief Destructor virtual por defecto.
 		 */
-		virtual ~MeshComponent() = default;
+		virtual
+			~MeshComponent() = default;
 
 		/**
 		 * @brief Inicializa el componente.
-		 * Actualmente es un placeholder para lógica de inicialización personalizada.
+		 * Actualmente es un placeholder para lÃ³gica de inicializaciÃ³n personalizada.
 		 */
-		void init() /*override*/ {}
+		void
+			init() /*override*/ {}
 
 		/**
 		 * @brief Actualiza el componente de malla.
 		 *
-		 * @param deltaTime Tiempo transcurrido desde la última actualización.
-		 * @param deviceContext Contexto del dispositivo gráfico (no utilizado actualmente).
+		 * @param deltaTime Tiempo transcurrido desde la Ãºltima actualizaciÃ³n.
+		 * @param deviceContext Contexto del dispositivo grÃ¡fico (no utilizado actualmente).
 		 */
-		void update(float deltaTime) /*override*/ {}
+		void
+			update(float deltaTime) /*override*/ {}
 
 		/**
-		 * @brief Renderiza la malla utilizando el contexto del dispositivo gráfico.
+		 * @brief Renderiza la malla utilizando el contexto del dispositivo grÃ¡fico.
 		 *
-		 * @param deviceContext Referencia al contexto del dispositivo gráfico.
+		 * @param deviceContext Referencia al contexto del dispositivo grÃ¡fico.
 		 */
-		void render(DeviceContext& deviceContext) /*override*/ {}
+		void
+			render(DeviceContext& deviceContext) /*override*/ {}
 
 		/**
 		 * @brief Libera los recursos asociados al componente.
 		 */
-		void destroy() /*override*/ {}
+		void
+			destroy() /*override*/ {}
 
 	public:
 		std::string m_name;                     ///< Nombre del componente o malla.
-		unsigned int m_numVertex;              ///< Número de vértices en la malla.
-		unsigned int m_numIndex;               ///< Número de índices en la malla.
-		EngineUtilities::TArray<Vertex> m_vertex; ///< Arreglo de vértices.
-		EngineUtilities::TArray<unsigned int> m_index; ///< Arreglo de índices.
+		unsigned int m_numVertex;              ///< NÃºmero de vÃ©rtices en la malla.
+		unsigned int m_numIndex;               ///< NÃºmero de Ã­ndices en la malla.
+		EngineUtilities::TArray<Vertex> m_vertex; ///< Arreglo de vÃ©rtices.
+		EngineUtilities::TArray<unsigned int> m_index; ///< Arreglo de Ã­ndices.
 	};
 
 } // namespace EU

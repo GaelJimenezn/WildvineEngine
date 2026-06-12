@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Prerequisites.h"
 
 /**
@@ -8,8 +8,8 @@
  * The builder stores @c D3D11_INPUT_ELEMENT_DESC values in insertion order and returns
  * references to itself so vertex and instance layout declarations can be chained.
  */
-class 
-LayoutBuilder {
+class
+	LayoutBuilder {
 public:
   // **Add() base** (per-vertex por defecto)
   /**
@@ -23,8 +23,8 @@ public:
    * @param instanceStepRate Instance step rate for instanced data.
    * @return This builder for chained calls.
    */
-  LayoutBuilder& 
-  Add(const char* semantic,
+  LayoutBuilder&
+  	Add(const char* semantic,
       DXGI_FORMAT format,
       UINT semanticIndex = 0,
       UINT inputSlot = 0,
@@ -49,7 +49,7 @@ public:
    * @return This builder for chained calls.
    */
   LayoutBuilder&
-  AddInstance(const char* semantic,
+  	AddInstance(const char* semantic,
               DXGI_FORMAT format,
               UINT semanticIndex = 0,
               UINT inputSlot = 1,
@@ -60,9 +60,11 @@ public:
   }
 
   /** @brief Returns the accumulated input element descriptors. */
-  const std::vector<D3D11_INPUT_ELEMENT_DESC>& Get() const { return m_elems; }
+  const std::vector<D3D11_INPUT_ELEMENT_DESC>&
+  	Get() const { return m_elems; }
   /** @brief Returns the number of accumulated input element descriptors. */
-  UINT Count() const { return (UINT)m_elems.size(); }
+  UINT
+  	Count() const { return (UINT)m_elems.size(); }
 
 private:
   /** @brief Input-layout descriptors in shader declaration order. */

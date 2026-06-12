@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Prerequisites.h"
 
 /**
@@ -44,7 +44,8 @@ enum class
  * Resources expose a shared lifecycle contract for disk loading, runtime initialization,
  * unloading, memory reporting, and metadata used by @c ResourceManager.
  */
-class IResource {
+class
+	IResource {
 public:
 	/**
 	 * @brief Creates resource metadata and assigns a unique process-local id.
@@ -52,42 +53,82 @@ public:
 	 */
 	IResource(const std::string& name)
 		: m_name(name)
-		, m_filePath("")
-		, m_type(ResourceType::Unknown)
-		, m_state(ResourceState::Unloaded)
-		, m_id(GenerateID())
+		/**
+		 * @brief Método m_filePath.
+		 *
+		 * @return Retorna el resultado de la operación.
+		 */
+		,
+			m_filePath("")
+		/**
+		 * @brief Método m_type.
+		 *
+		 * @param Unknown Parámetro del método.
+		 * @return Retorna el resultado de la operación.
+		 */
+		,
+			m_type(ResourceType::Unknown)
+		/**
+		 * @brief Método m_state.
+		 *
+		 * @param Unloaded Parámetro del método.
+		 * @return Retorna el resultado de la operación.
+		 */
+		,
+			m_state(ResourceState::Unloaded)
+		/**
+		 * @brief Método m_id.
+		 *
+		 * @param GenerateID Parámetro del método.
+		 * @return Retorna el resultado de la operación.
+		 */
+		,
+			m_id(GenerateID())
 	{
 	}
 	/** @brief Virtual destructor for polymorphic resource cleanup. */
-	virtual ~IResource() = default;
+	virtual
+		~IResource() = default;
 
 	/** @brief Creates runtime or GPU payload after source data is loaded. */
-	virtual bool init() = 0;
+	virtual bool
+		init() = 0;
 	/** @brief Loads source data from disk. */
-	virtual bool load(const std::string& filename) = 0;
+	virtual bool
+		load(const std::string& filename) = 0;
 	/** @brief Releases CPU/GPU payload while keeping metadata valid. */
-	virtual void unload() = 0;
+	virtual void
+		unload() = 0;
 	/** @brief Reports approximate payload memory for profiling. */
-	virtual size_t getSizeInBytes() const = 0;
+	virtual size_t
+		getSizeInBytes() const = 0;
 
 	/** @brief Sets the canonical source path for this resource. */
-	void SetPath(const std::string& path) { m_filePath = path; }
+	void
+		SetPath(const std::string& path) { m_filePath = path; }
 	/** @brief Sets the resource category. */
-	void SetType(ResourceType t) { m_type = t; }
+	void
+		SetType(ResourceType t) { m_type = t; }
 	/** @brief Sets the current lifecycle state. */
-	void SetState(ResourceState s) { m_state = s; }
+	void
+		SetState(ResourceState s) { m_state = s; }
 
 
 	/** @brief Returns the resource cache/display name. */
-	const std::string& GetName() const { return m_name; }
+	const std::string&
+		GetName() const { return m_name; }
 	/** @brief Returns the source path assigned to the resource. */
-	const std::string& GetPath() const { return m_filePath; }
+	const std::string&
+		GetPath() const { return m_filePath; }
 	/** @brief Returns the resource category. */
-	ResourceType GetType() const { return m_type; }
+	ResourceType
+		GetType() const { return m_type; }
 	/** @brief Returns the current lifecycle state. */
-	ResourceState GetState() const { return m_state; }
+	ResourceState
+		GetState() const { return m_state; }
 	/** @brief Returns the unique process-local resource id. */
-	uint64_t GetID() const { return m_id; }
+	uint64_t
+		GetID() const { return m_id; }
 
 protected:
 	/** @brief Human-readable/cache name. */
@@ -103,7 +144,8 @@ protected:
 
 private:
 	/** @brief Generates monotonically increasing process-local ids. */
-	static uint64_t GenerateID()
+	static uint64_t
+		GenerateID()
 	{
 		static uint64_t nextID = 1;
 		return nextID++;

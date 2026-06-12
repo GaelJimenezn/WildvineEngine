@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 #include "Prerequisites.h"
 
 class Device;
@@ -6,17 +6,18 @@ class DeviceContext;
 
 /**
  * @class SamplerState
- * @brief Encapsula un @c ID3D11SamplerState para la etapa de muestreo de texturas en Direct3D 11.
+ * @brief Encapsula un @c ID3D11SamplerState para la etapa de muestreo de texturas en
+ * Direct3D 11.
  *
- * Un Sampler State define cÛmo se leen las texturas en los shaders:
+ * Un Sampler State define c√≥mo se leen las texturas en los shaders:
  * - Filtrado (point, linear, anisotropic).
  * - Direccionamiento (wrap, mirror, clamp, border).
  * - Nivel de mipmapping.
  *
- * Esta clase administra la creaciÛn, aplicaciÛn y destrucciÛn de un @c SamplerState.
+ * Esta clase administra la creaci√≥n, aplicaci√≥n y destrucci√≥n de un @c SamplerState.
  */
 class
-    SamplerState {
+	SamplerState {
 public:
     /**
      * @brief Constructor por defecto.
@@ -25,66 +26,66 @@ public:
 
     /**
      * @brief Destructor por defecto.
-     * @details No libera autom·ticamente el recurso COM; llamar a destroy().
+     * @details No libera autom√°ticamente el recurso COM; llamar a destroy().
      */
     ~SamplerState() = default;
 
     /**
-     * @brief Inicializa el Sampler State con una configuraciÛn predeterminada.
+     * @brief Inicializa el Sampler State con una configuraci√≥n predeterminada.
      *
-     * Crea un @c ID3D11SamplerState configurado seg˙n la implementaciÛn (ejemplo:
+     * Crea un @c ID3D11SamplerState configurado seg√∫n la implementaci√≥n (ejemplo:
      * filtrado lineal, wrap en UV, LOD completo).
      *
-     * @param device Dispositivo con el que se crear· el recurso.
-     * @return @c S_OK si fue exitoso; cÛdigo @c HRESULT en caso de error.
+     * @param device Dispositivo con el que se crear√° el recurso.
+     * @return @c S_OK si fue exitoso; c√≥digo @c HRESULT en caso de error.
      *
      * @post Si retorna @c S_OK, @c m_sampler != nullptr.
      * @sa render(), destroy()
      */
     HRESULT
-        init(Device& device);
+    	init(Device& device);
 
     /**
-     * @brief Actualiza par·metros internos del Sampler.
+     * @brief Actualiza par√°metros internos del Sampler.
      *
-     * MÈtodo de marcador para recrear o mutar din·micamente la configuraciÛn
-     * (por ejemplo, cambiar de filtrado linear a anisotrÛpico).
+     * M√©todo de marcador para recrear o mutar din√°micamente la configuraci√≥n
+     * (por ejemplo, cambiar de filtrado linear a anisotr√≥pico).
      *
-     * @note Actualmente no realiza ninguna operaciÛn.
+     * @note Actualmente no realiza ninguna operaci√≥n.
      */
     void
-        update();
+    	update();
 
     /**
      * @brief Asigna el Sampler State a la etapa de Pixel Shader.
      *
      * Llama a @c ID3D11DeviceContext::PSSetSamplers para establecer el sampler.
      *
-     * @param deviceContext Contexto donde se aplicar· el sampler.
-     * @param StartSlot     Slot inicial en el que se vincular· el sampler.
-     * @param NumSamplers   N˙mero de samplers a enlazar (normalmente 1).
+     * @param deviceContext Contexto donde se aplicar√° el sampler.
+     * @param StartSlot     Slot inicial en el que se vincular√° el sampler.
+     * @param NumSamplers   N√∫mero de samplers a enlazar (normalmente 1).
      *
      * @pre @c m_sampler debe haberse creado con init().
      */
     void
-        render(DeviceContext& deviceContext,
+    	render(DeviceContext& deviceContext,
             unsigned int StartSlot,
             unsigned int NumSamplers);
 
     /**
      * @brief Libera el recurso @c ID3D11SamplerState.
      *
-     * Idempotente: puede llamarse m˙ltiples veces de forma segura.
+     * Idempotente: puede llamarse m√∫ltiples veces de forma segura.
      *
      * @post @c m_sampler == nullptr.
      */
     void
-        destroy();
+    	destroy();
 
 public:
     /**
      * @brief Recurso COM de Direct3D 11 para el Sampler State.
-     * @details V·lido tras init(); @c nullptr despuÈs de destroy().
+     * @details V√°lido tras init(); @c nullptr despu√©s de destroy().
      */
     ID3D11SamplerState* m_sampler = nullptr;
 };

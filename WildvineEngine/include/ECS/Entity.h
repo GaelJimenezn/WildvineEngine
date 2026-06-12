@@ -10,13 +10,16 @@ class DeviceContext;
 
 /**
  * @class Entity
- * @brief Base class for scene objects that own ECS components and participate in update/render flow.
+ * @brief Base class for scene objects that own ECS components and participate in
+ * update/render flow.
  *
- * Entity exposes lifecycle hooks implemented by concrete objects such as @c Actor and provides
- * templated helpers for attaching and querying component instances stored as shared pointers.
+ * Entity exposes lifecycle hooks implemented by concrete objects such as @c Actor and
+ * provides
+ * templated helpers for attaching and querying component instances stored as shared
+ * pointers.
  */
 class
-    Entity {
+Entity {
 public:
     /** @brief Creates an entity with default base state. */
     Entity() = default;
@@ -25,10 +28,16 @@ public:
    * @brief Destructor virtual.
    */
     virtual
+        /**
+         * @brief Método ~Entity.
+         */
         ~Entity() = default;
 
     /** @brief Early lifecycle hook invoked before init() for object-specific setup. */
     virtual void
+        /**
+         * @brief Método awake.
+         */
         awake() = 0;
 
     /**
@@ -37,6 +46,9 @@ public:
      * @return True if initialization is successful, false otherwise.
        */
     virtual void
+        /**
+         * @brief Inicializa la instancia de la clase.
+         */
         init() = 0;
 
     /**
@@ -44,6 +56,12 @@ public:
      * @param deltaTime El tiempo transcurrido desde la última actualización.
      */
     virtual void
+        /**
+         * @brief Actualiza el estado de la instancia en cada frame.
+         *
+         * @param deltaTime Parámetro del método.
+         * @param deviceContext Parámetro del método.
+         */
         update(float deltaTime, DeviceContext& deviceContext) = 0;
 
     /**
@@ -51,6 +69,11 @@ public:
      * @param deviceContext Contexto del dispositivo para operaciones gráficas.
      */
     virtual void
+        /**
+         * @brief Renderiza los elementos asociados en el pipeline gráfico.
+         *
+         * @param deviceContext Parámetro del método.
+         */
         render(DeviceContext& deviceContext) = 0;
 
     /**
@@ -58,6 +81,9 @@ public:
      * Libera los recursos asociados al componente.
        */
     virtual void
+        /**
+         * @brief Libera todos los recursos asociados y destruye la instancia.
+         */
         destroy() = 0;
 
     /**
@@ -66,21 +92,32 @@ public:
      * @param component Puntero compartido al componente que se va a agregar.
      */
     template <typename T> void
+        /**
+         * @brief Método addComponent.
+         *
+         * @param component Parámetro del método.
+         */
         addComponent(EU::TSharedPointer<T> component) {
-        static_assert(std::is_base_of<Component, T>::value, "T must be derived from Component");
+        static_assert(std::is_base_of<Component, T>::value,
+        		"T must be derived from Component");
         m_components.push_back(component.template dynamic_pointer_cast<Component>());
     }
 
     /**
      * @brief Obtiene un componente de la entidad por su tipo.
      * @tparam T Tipo del componente a obtener.
-     * @return Puntero compartido al componente si se encuentra, nullptr en caso contrario.
+     * @return Puntero compartido al componente si se encuentra, nullptr en caso
+     * contrario.
        */
     template<typename T>
     EU::TSharedPointer<T>
+        /**
+         * @brief Obtiene la propiedad de Component.
+         */
         getComponent() {
         for (auto& component : m_components) {
-            EU::TSharedPointer<T> specificComponent = component.template dynamic_pointer_cast<T>();
+            EU::TSharedPointer<T> specificComponent =
+            		component.template dynamic_pointer_cast<T>();
             if (specificComponent) {
                 return specificComponent;
             }

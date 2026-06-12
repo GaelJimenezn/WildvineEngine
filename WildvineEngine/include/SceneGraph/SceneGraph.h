@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Prerequisites.h"
 
 class Entity;
@@ -8,10 +8,13 @@ class RenderScene;
 
 /**
  * @class SceneGraph
- * @brief Maintains entity registration, hierarchy relationships, and render-scene gathering.
+ * @brief Maintains entity registration, hierarchy relationships, and render-scene
+ * gathering.
  *
- * The scene graph stores non-owning entity pointers, validates parent/child attachment rules,
- * updates hierarchical world transforms, and converts active entities into a @c RenderScene
+ * The scene graph stores non-owning entity pointers, validates parent/child attachment
+ * rules,
+ * updates hierarchical world transforms, and converts active entities into a @c
+ * RenderScene
  * consumed by the renderer.
  */
 class
@@ -38,7 +41,10 @@ public:
 	bool
 		isAncestor(Entity* possibleAncestor, Entity* node) const;
 
-	/** @brief Attaches @p child under @p parent when both are registered and no cycle is created. */
+	/**
+	 * @brief Attaches @p child under @p parent when both are registered and no cycle is
+	 * created.
+	 */
 	bool
 		attach(Entity* child, Entity* parent);
 
@@ -62,7 +68,10 @@ public:
 	void
 		destroy();
 private:
-	/** @brief Recursively combines local transforms with @p parentWorld for a hierarchy branch. */
+	/**
+	 * @brief Recursively combines local transforms with @p parentWorld for a hierarchy
+	 * branch.
+	 */
 	void
 		updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld);
 

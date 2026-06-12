@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 #include "Prerequisites.h"
 
 class Device;
@@ -8,16 +8,19 @@ class Texture;
 
 /**
  * @class SwapChain
- * @brief Encapsula un @c IDXGISwapChain en Direct3D 11 para administrar buffers de presentaciÛn.
+ * @brief Encapsula un @c IDXGISwapChain en Direct3D 11 para administrar buffers de
+ * presentaci√≥n.
  *
- * Un Swap Chain es responsable de la gestiÛn de los buffers de renderizado que se presentan
+ * Un Swap Chain es responsable de la gesti√≥n de los buffers de renderizado que se
+ * presentan
  * en pantalla (front y back buffer).
- * Esta clase maneja su creaciÛn, actualizaciÛn, renderizado y presentaciÛn final.
+ * Esta clase maneja su creaci√≥n, actualizaci√≥n, renderizado y presentaci√≥n final.
  *
- * TambiÈn soporta configuraciÛn de **MSAA (Multisample Anti-Aliasing)** para suavizado de bordes.
+ * Tambi√©n soporta configuraci√≥n de **MSAA (Multisample Anti-Aliasing)** para suavizado de
+ * bordes.
  */
 class
-    SwapChain {
+	SwapChain {
 public:
     /**
      * @brief Constructor por defecto.
@@ -26,61 +29,61 @@ public:
 
     /**
      * @brief Destructor por defecto.
-     * @details No libera autom·ticamente los recursos COM; llamar a destroy().
+     * @details No libera autom√°ticamente los recursos COM; llamar a destroy().
      */
     ~SwapChain() = default;
 
     /**
      * @brief Inicializa el Swap Chain y obtiene el back buffer.
      *
-     * Crea el objeto @c IDXGISwapChain asociado a una ventana especÌfica,
-     * obteniendo adem·s la textura del back buffer para el renderizado.
+     * Crea el objeto @c IDXGISwapChain asociado a una ventana espec√≠fica,
+     * obteniendo adem√°s la textura del back buffer para el renderizado.
      *
      * @param device       Dispositivo con el que se crea el recurso.
      * @param deviceContext Contexto de dispositivo asociado.
-     * @param backBuffer   Textura que representar· el back buffer.
-     * @param window       Ventana de la aplicaciÛn donde se presentar· la imagen.
-     * @return @c S_OK si fue exitoso; cÛdigo @c HRESULT en caso contrario.
+     * @param backBuffer   Textura que representar√° el back buffer.
+     * @param window       Ventana de la aplicaci√≥n donde se presentar√° la imagen.
+     * @return @c S_OK si fue exitoso; c√≥digo @c HRESULT en caso contrario.
      *
      * @post Si retorna @c S_OK, @c m_swapChain != nullptr.
      */
     HRESULT
-        init(Device& device,
+    	init(Device& device,
             DeviceContext& deviceContext,
             Texture& backBuffer,
             Window window);
 
     /**
-     * @brief Actualiza par·metros internos del Swap Chain.
+     * @brief Actualiza par√°metros internos del Swap Chain.
      *
-     * MÈtodo de marcador para soportar cambios din·micos, como resize de ventana,
-     * reconfiguraciÛn de MSAA u otros ajustes.
+     * M√©todo de marcador para soportar cambios din√°micos, como resize de ventana,
+     * reconfiguraci√≥n de MSAA u otros ajustes.
      *
-     * @note Actualmente no realiza ninguna operaciÛn.
+     * @note Actualmente no realiza ninguna operaci√≥n.
      */
     void
-        update();
+    	update();
 
     /**
      * @brief Ejecuta operaciones de renderizado relacionadas con el Swap Chain.
      *
-     * Usualmente se utilizarÌa para depuraciÛn o para sincronizar buffers
-     * antes de la presentaciÛn.
+     * Usualmente se utilizar√≠a para depuraci√≥n o para sincronizar buffers
+     * antes de la presentaci√≥n.
      *
-     * @note Actualmente no realiza ninguna operaciÛn.
+     * @note Actualmente no realiza ninguna operaci√≥n.
      */
     void
-        render();
+    	render();
 
     /**
      * @brief Libera todos los recursos asociados al Swap Chain.
      *
-     * TambiÈn libera las interfaces relacionadas de DXGI (device, adapter, factory).
+     * Tambi√©n libera las interfaces relacionadas de DXGI (device, adapter, factory).
      *
      * @post @c m_swapChain == nullptr.
      */
     void
-        destroy();
+    	destroy();
 
     /**
      * @brief Presenta el back buffer en pantalla.
@@ -88,10 +91,10 @@ public:
      * Llama a @c IDXGISwapChain::Present para mostrar el contenido renderizado
      * en la ventana asociada.
      *
-     * @note Si se utiliza V-Sync, puede configurarse en la implementaciÛn de este mÈtodo.
+     * @note Si se utiliza V-Sync, puede configurarse en la implementaci√≥n de este m√©todo.
      */
     void
-        present();
+    	present();
 
     /**
      * @brief Resizes the swap-chain back buffers.
@@ -100,7 +103,7 @@ public:
      * @return @c S_OK on success; failing @c HRESULT otherwise.
      */
     HRESULT
-        resizeBuffers(unsigned int width, unsigned int height);
+    	resizeBuffers(unsigned int width, unsigned int height);
 
     /**
      * @brief Retrieves the current swap-chain back buffer into @p backBuffer.
@@ -108,7 +111,7 @@ public:
      * @return @c S_OK on success; failing @c HRESULT otherwise.
      */
     HRESULT
-        getBackBuffer(Texture& backBuffer);
+    	getBackBuffer(Texture& backBuffer);
 
 public:
     /**
@@ -123,19 +126,19 @@ public:
 
 private:
     /**
-     * @brief Nivel de caracterÌsticas de Direct3D soportado por el dispositivo.
+     * @brief Nivel de caracter√≠sticas de Direct3D soportado por el dispositivo.
      */
     D3D_FEATURE_LEVEL m_featureLevel = D3D_FEATURE_LEVEL_11_0;
 
     /**
-     * @brief N˙mero de muestras para MSAA.
+     * @brief N√∫mero de muestras para MSAA.
      *
-     * Ejemplo: 4 = 4x MSAA (4 muestras por pÌxel).
+     * Ejemplo: 4 = 4x MSAA (4 muestras por p√≠xel).
      */
     unsigned int m_sampleCount;
 
     /**
-     * @brief Niveles de calidad soportados para la configuraciÛn de MSAA.
+     * @brief Niveles de calidad soportados para la configuraci√≥n de MSAA.
      */
     unsigned int m_qualityLevels;
 
@@ -150,7 +153,7 @@ private:
     IDXGIAdapter* m_dxgiAdapter = nullptr;
 
     /**
-     * @brief Interfaz DXGI para la f·brica (creaciÛn de swap chains).
+     * @brief Interfaz DXGI para la f√°brica (creaci√≥n de swap chains).
      */
     IDXGIFactory* m_dxgiFactory = nullptr;
 };

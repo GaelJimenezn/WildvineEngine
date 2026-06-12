@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Prerequisites.h"
 #include "Window.h"
 #include "Device.h"
@@ -28,14 +28,25 @@
 #include "Rendering/ForwardRenderer.h"
 #include "Rendering/RenderScene.h"
 #include <string>
-extern IMGUI_IMPL_API
-LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+/**
+ * @brief Método ImGui_ImplWin32_WndProcHandler.
+ *
+ * @param hWnd Parámetro del método.
+ * @param msg Parámetro del método.
+ * @param wParam Parámetro del método.
+ * @param lParam Parámetro del método.
+ * @return Retorna el resultado de la operación.
+ */
+extern IMGUI_IMPL_API LRESULT
+	ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 /**
  * @class BaseApp
- * @brief Coordinates the engine application lifetime, editor UI, scene, and render pipeline.
+ * @brief Coordinates the engine application lifetime, editor UI, scene, and render
+ * pipeline.
  *
- * BaseApp owns the Win32 window, D3D device/context wrappers, swap chain, editor viewport,
+ * BaseApp owns the Win32 window, D3D device/context wrappers, swap chain, editor
+ * viewport,
  * GUI layer, scene graph, startup assets, and the active renderer.
  */
 class
@@ -75,14 +86,18 @@ public:
 		onResize(unsigned int newW, unsigned int newH);
 
 	/** @brief Applies a pending editor viewport resize to off-screen render resources. */
-	void handleEditorViewportResize();
+	void
+		handleEditorViewportResize();
 
 	/** @brief Serializes the current scene to @p path. */
-	bool saveScene(const std::string& path);
+	bool
+		saveScene(const std::string& path);
 	/** @brief Loads scene data from @p path and rebuilds runtime objects. */
-	bool loadScene(const std::string& path);
+	bool
+		loadScene(const std::string& path);
 	/** @brief Returns the default scene path used by editor save/load commands. */
-	std::string getDefaultScenePath() const;
+	std::string
+		getDefaultScenePath() const;
 private:
 	/** @brief Static Win32 message procedure that forwards messages to BaseApp and ImGui. */
 	static LRESULT CALLBACK

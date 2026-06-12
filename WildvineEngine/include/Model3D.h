@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Prerequisites.h"
 #include "IResource.h"
 #include "MeshComponent.h"
@@ -44,8 +44,7 @@ public:
 	 * @param indices Thirty-six cube indices.
 	 */
 	Model3D(const std::string& name,
-		const SkyboxVertex vertices[],
-		const unsigned int indices[]) : IResource(name) {
+		const SkyboxVertex vertices[], const unsigned int indices[]) : IResource(name) {
 		MeshComponent mesh;
 		mesh.m_skyVertex.assign(vertices, vertices + 8);
 		mesh.m_index.assign(indices, indices + 36);

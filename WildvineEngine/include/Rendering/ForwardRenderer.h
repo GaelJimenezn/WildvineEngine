@@ -25,7 +25,8 @@ class Material;
  * @brief Ejecuta el pipeline de render forward del motor.
  *
  * Esta clase construye colas opacas y transparentes, genera recursos de sombras,
- * actualiza buffers por frame y compone el resultado final dentro del viewport del editor.
+ * actualiza buffers por frame y compone el resultado final dentro del viewport del
+ * editor.
  */
 class
 	ForwardRenderer {
@@ -33,22 +34,30 @@ public:
 	/**
 	 * @brief Inicializa buffers, shaders y estados del renderer.
 	 */
-	HRESULT init(Device& device);
+	HRESULT
+		init(Device& device);
 
 	/**
 	 * @brief Reconstuye los recursos dependientes del tamano del viewport.
 	 */
-	void resize(Device& device, unsigned int width, unsigned int height);
+	void
+		resize(Device& device, unsigned int width, unsigned int height);
 
 	/**
 	 * @brief Actualiza constantes globales usadas por el frame actual.
 	 */
-	void updatePerFrame(const Camera& camera, const RenderScene& scene, DeviceContext& deviceContext);
+	void
+		updatePerFrame(
+			const Camera& camera,
+			const RenderScene& scene,
+			DeviceContext& deviceContext
+		);
 
 	/**
 	 * @brief Renderiza la escena completa sobre el `EditorViewportPass`.
 	 */
-	void render(DeviceContext& deviceContext,
+	void
+		render(DeviceContext& deviceContext,
 		const Camera& camera,
 		RenderScene& scene,
 		EditorViewportPass& viewportPass);
@@ -56,37 +65,58 @@ public:
 	/**
 	 * @brief Libera los recursos internos del renderer.
 	 */
-	void destroy();
+	void
+		destroy();
 	/** @brief Returns the shadow-map shader-resource view produced by the shadow pass. */
-	ID3D11ShaderResourceView* getShadowMapSRV() const { return m_shadowDepthSRV.m_textureFromImg; }
+	ID3D11ShaderResourceView*
+		getShadowMapSRV() const { return m_shadowDepthSRV.m_textureFromImg; }
 	/** @brief Returns the pre-shadow debug pass texture shown by editor debug UI. */
-	ID3D11ShaderResourceView* getPreShadowSRV() const { return m_preShadowDebugPass.getSRV(); }
+	ID3D11ShaderResourceView*
+		getPreShadowSRV() const { return m_preShadowDebugPass.getSRV(); }
 
 private:
 	/** @brief Splits scene objects into opaque and transparent queues for pass execution. */
-	void buildQueues(RenderScene& scene, const Camera& camera);
+	void
+		buildQueues(RenderScene& scene, const Camera& camera);
 	/** @brief Renders an editor debug preview before the shadow pass. */
-	void renderPreShadowDebugPass(DeviceContext& deviceContext, RenderScene& scene);
+	void
+		renderPreShadowDebugPass(DeviceContext& deviceContext, RenderScene& scene);
 	/** @brief Renders shadow-casting objects into the shadow depth map. */
-	void renderShadowPass(DeviceContext& deviceContext);
+	void
+		renderShadowPass(DeviceContext& deviceContext);
 	/** @brief Renders queued opaque objects with depth-friendly state. */
-	void renderOpaquePass(DeviceContext& deviceContext);
+	void
+		renderOpaquePass(DeviceContext& deviceContext);
 	/** @brief Renders queued transparent objects with resolved blend state. */
-	void renderTransparentPass(DeviceContext& deviceContext);
+	void
+		renderTransparentPass(DeviceContext& deviceContext);
 	/** @brief Renders the scene skybox after opaque geometry. */
-	void renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
+	void
+		renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
 	/** @brief Renders one object for the requested render pass. */
-	void renderObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
+	void
+		renderObject(
+			DeviceContext& deviceContext,
+			const RenderObject& object,
+			RenderPassType passType
+		);
 	/** @brief Renders one object into the shadow map. */
-	void renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
+	void
+		renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
 	/** @brief Creates shadow-map texture, SRV, DSV, shader, and rasterizer resources. */
-	HRESULT createShadowResources(Device& device);
-	/** @brief Updates light view/projection matrices from the active camera and scene lights. */
-	void updateLightMatrices(const Camera& camera, const RenderScene& scene);
+	HRESULT
+		createShadowResources(Device& device);
+	/**
+	 * @brief Updates light view/projection matrices from the active camera and scene lights.
+	 */
+	void
+		updateLightMatrices(const Camera& camera, const RenderScene& scene);
 	/** @brief Creates blend states used by transparent material modes. */
-	HRESULT createBlendStates(Device& device);
+	HRESULT
+		createBlendStates(Device& device);
 	/** @brief Returns the D3D blend state matching a material blend mode. */
-	ID3D11BlendState* resolveBlendState(const Material* material) const;
+	ID3D11BlendState*
+		resolveBlendState(const Material* material) const;
 
 private:
 	/** @brief Per-frame constant buffer bound to scene shaders. */
