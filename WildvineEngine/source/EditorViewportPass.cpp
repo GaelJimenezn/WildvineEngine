@@ -3,14 +3,14 @@
 #include "DeviceContext.h"
 
 // Inicializa el viewport creando todos los recursos necesarios (color + depth)
-HRESULT
+HRESULT 
 EditorViewportPass::init(Device& device, unsigned int width, unsigned int height)
 {
 	return createResources(device, width, height);
 }
 
 // Redimensiona el viewport, recreando recursos solo si realmente cambió el tamaño
-HRESULT
+HRESULT 
 EditorViewportPass::resize(Device& device, unsigned int width, unsigned int height)
 {
 	// Evita tamaños inválidos o demasiado pequeños (protección mínima)
@@ -26,7 +26,7 @@ EditorViewportPass::resize(Device& device, unsigned int width, unsigned int heig
 }
 
 // Crea todos los recursos GPU necesarios para renderizar el viewport offscreen
-HRESULT
+HRESULT 
 EditorViewportPass::createResources(Device& device, unsigned int width, unsigned int height)
 {
 	// Libera cualquier recurso previo antes de crear nuevos
@@ -40,7 +40,7 @@ EditorViewportPass::createResources(Device& device, unsigned int width, unsigned
 	m_height = height;
 
 	HRESULT
-		hr = S_OK;
+  hr = S_OK;
 
 	// 1) Textura de color donde se renderiza la escena (offscreen render target)
 	hr = m_colorTexture.init(
@@ -72,13 +72,13 @@ EditorViewportPass::createResources(Device& device, unsigned int width, unsigned
 
 	// 4) Textura de profundidad para test de profundidad durante el render
 	hr = m_depthTexture.init(
-		device,
-		width,
-		height,
-		DXGI_FORMAT_D24_UNORM_S8_UINT,
-		D3D11_BIND_DEPTH_STENCIL,
-		1,
-		0
+			device,
+			width,
+			height,
+			DXGI_FORMAT_D24_UNORM_S8_UINT,
+			D3D11_BIND_DEPTH_STENCIL,
+			1,
+			0
 	);
 
 	if (FAILED(hr)) return hr;
@@ -97,14 +97,14 @@ EditorViewportPass::createResources(Device& device, unsigned int width, unsigned
 }
 
 // Inicia el pass de render: limpia y establece render target + depth
-void
+void 
 EditorViewportPass::begin(DeviceContext& deviceContext, const float clearColor[4])
 {
 	m_rtv.render(deviceContext, m_dsv, 1, clearColor);
 }
 
 // Intercambia todos los recursos con otro viewport (útil para double buffering o ping-pong)
-void
+void 
 EditorViewportPass::swap(EditorViewportPass& other)
 {
 	std::swap(m_colorTexture, other.m_colorTexture);
@@ -124,7 +124,7 @@ EditorViewportPass::clearDepth(DeviceContext& deviceContext)
 }
 
 // Configura el viewport en el pipeline (dimensiones donde se dibuja)
-void
+void 
 EditorViewportPass::setViewport(DeviceContext& deviceContext)
 {
 	D3D11_VIEWPORT vp{};

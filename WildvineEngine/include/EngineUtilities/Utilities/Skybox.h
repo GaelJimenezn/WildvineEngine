@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
@@ -10,59 +10,86 @@
 #include "EngineUtilities\Utilities\Camera.h"
 #include "ECS\Actor.h"
 
+
 class Device;
 class DeviceContext;
 
 /**
  * @class Skybox
- * @brief Renders the environment cubemap behind the scene.
+ * @brief Clase encargada de la inicialización, actualización y renderizado de un skybox.
  *
- * Skybox owns the shader, constant buffer, sampler, rasterizer/depth state, cubemap
- * texture wrapper, and cube actor/model references required to draw the background.
+ * Maneja los recursos necesarios como shaders, buffers, estados de rasterización,
+ * profundidad y textura cúbica para representar el entorno.
  */
 class
-	Skybox {
+Skybox {
 public:
-	/** @brief Creates an empty skybox renderer. */
-	Skybox()  = default;
-	/** @brief Does not automatically release resources; call destroy() in shutdown flow. */
+	/**
+	 * @brief Constructor por defecto.
+	 */
+	Skybox() = default;
+
+	/**
+	 * @brief Destructor por defecto.
+	 */
 	~Skybox() = default;
 
 	/**
-	 * @brief Initializes skybox shaders, states, buffers, cube geometry, and cubemap
-	 * binding.
+	 * @brief Inicializa los recursos del skybox.
+	 *
+	 * @param device Referencia al dispositivo gráfico.
+	 * @param deviceContext Contexto del dispositivo.
+	 * @param cubemap Textura cúbica utilizada como skybox.
+	 * @return HRESULT Resultado de la operación.
 	 */
 	HRESULT
-		init(Device& device, DeviceContext* deviceContext, Texture& cubemap);
-	
-	/** @brief Updates skybox frame constants from the current camera. */
-	void
-		update(DeviceContext& deviceContext, Camera& camera);
+  init(Device& device, DeviceContext* deviceContext, Texture& cubemap);
 
-	/** @brief Draws the skybox cube using cubemap sampling state. */
+	/**
+	 * @brief Actualiza el estado del skybox según la cámara.
+	 *
+	 * @param deviceContext Contexto del dispositivo.
+	 * @param camera Cámara utilizada para la vista.
+	 */
 	void
-		render(DeviceContext& deviceContext);
+	update(DeviceContext& deviceContext, Camera& camera);
 
-	/** @brief Releases skybox-owned resources when implemented. */
+	/**
+	 * @brief Renderiza el skybox.
+	 *
+	 * @param deviceContext Contexto del dispositivo.
+	 */
 	void
-		destroy() {}
+	render(DeviceContext& deviceContext);
+
+	/**
+	 * @brief Libera recursos del skybox.
+	 */
+	void
+	destroy() {}
 
 private:
-	/** @brief Shader program used by the skybox pass. */
+	/** @brief Programa de shaders utilizado para el skybox. */
 	ShaderProgram m_shaderProgram;
-	/** @brief Constant buffer containing view/projection data. */
-	Buffer m_constantBuffer;
-	/** @brief Sampler used to sample the cubemap. */
-	SamplerState m_samplerState;
-	/** @brief Rasterizer state usually configured for inside-out cube rendering. */
-	RasterizerState m_rasterizerState;
-	/** @brief Depth state used to render background behind scene geometry. */
-	DepthStencilState m_depthStencilState;
-	/** @brief Cubemap texture sampled by the skybox shader. */
-	Texture m_skyboxTexture;
-	/** @brief Cube model used as skybox geometry. */
-	Model3D* m_cubeModel = nullptr;
-	/** @brief Actor wrapper that draws the skybox cube. */
-	EU::TSharedPointer<Actor> m_skybox;
 
+	/** @brief Buffer constante para enviar datos al shader. */
+	Buffer m_constantBuffer;
+
+	/** @brief Estado de muestreo de texturas. */
+	SamplerState m_samplerState;
+
+	/** @brief Estado de rasterización. */
+	RasterizerState m_rasterizerState;
+
+	/** @brief Estado de profundidad y stencil. */
+	DepthStencilState m_depthStencilState;
+
+	/** @brief Textura cúbica del skybox. */
+	Texture m_skyboxTexture;
+
+	/** @brief Modelo 3D del cubo utilizado para el skybox. */
+	Model3D* m_cubeModel = nullptr;
+
+	/** @brief Actor asociado al skybox. */
+	EU::TSharedPointer<Actor> m_skybox;
 };

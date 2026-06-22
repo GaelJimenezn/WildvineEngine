@@ -1,5 +1,6 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
+
 
 class Entity;
 class DeviceContext;
@@ -8,84 +9,144 @@ class RenderScene;
 
 /**
  * @class SceneGraph
- * @brief Maintains entity registration, hierarchy relationships, and render-scene
- * gathering.
+ * @brief Grafo de escena jerárquico del motor.
  *
- * The scene graph stores non-owning entity pointers, validates parent/child attachment
- * rules,
- * updates hierarchical world transforms, and converts active entities into a @c
- * RenderScene
- * consumed by the renderer.
+ * El SceneGraph administra la relación padre-hijo entre entidades,
+ * permite la propagación de transformaciones y controla la actualización
+ * y renderizado jerárquico de la escena.
  */
 class
-	SceneGraph {
+SceneGraph {
 public:
-	/** @brief Creates an empty scene graph. */
+	/**
+	 * @brief Constructor por defecto.
+	 */
 	SceneGraph() = default;
-	/** @brief Does not own registered entities; call destroy() to clear graph state. */
+
+	/**
+	 * @brief Destructor por defecto.
+	 */
 	~SceneGraph() = default;
 
-	/** @brief Initializes internal scene-graph state before entity registration. */
+	/**
+	 * @brief Inicializa el grafo de escena.
+	 *
+	 * Prepara estructuras internas necesarias para operar el grafo.
+	 */
 	void
-		init();
-
-	/** @brief Registers an entity pointer in the graph without taking ownership. */
-	void
-		addEntity(Entity* e);  // registra en el grafo
-
-	/** @brief Removes an entity pointer and any graph relationship that references it. */
-	void
-		removeEntity(Entity* e);
-
-	/** @brief Returns true when @p possibleAncestor is above @p node in the hierarchy. */
-	bool
-		isAncestor(Entity* possibleAncestor, Entity* node) const;
+	init();
 
 	/**
-	 * @brief Attaches @p child under @p parent when both are registered and no cycle is
-	 * created.
+	 * @brief Registra una entidad dentro del grafo de escena.
+	 *
+	 * @param e Puntero a la entidad a registrar.
+	 */
+	void
+	addEntity(Entity* e);  // registra en el grafo
+
+	/**
+	 * @brief Elimina una entidad del grafo de escena.
+	 *
+	 * @param e Puntero a la entidad a remover.
+	 */
+	void
+	removeEntity(Entity* e);
+
+	/**
+	 * @brief Comprueba si una entidad es ancestro de otra.
+	 *
+	 * @param possibleAncestor Entidad candidata a ser ancestro.
+	 * @param node Entidad hija a comprobar.
+	 * @return true si possibleAncestor es ancestro de node.
 	 */
 	bool
-		attach(Entity* child, Entity* parent);
+	isAncestor(Entity* possibleAncestor, Entity* node) const;
 
-	/** @brief Detaches @p child from its current parent and promotes it to root level. */
+	/**
+	 * @brief Adjunta una entidad hija a una entidad padre.
+	 *
+	 * @param child Entidad que será hija.
+	 * @param parent Entidad que será el padre.
+	 * @return true si la operación fue exitosa.
+	 */
 	bool
-		detach(Entity* child);
+	attach(Entity* child, Entity* parent);
 
-	/** @brief Updates registered entities and propagates hierarchy transforms. */
-	void
-		update(float deltaTime, DeviceContext& deviceContext);
+	/**
+	 * @brief Desacopla una entidad de su padre.
+	 *
+	 * @param child Entidad a desacoplar.
+	 * @return true si la operación fue exitosa.
+	 */
+	bool
+	detach(Entity* child);
 
-	/** @brief Invokes direct entity rendering for graph-managed entities. */
+	/**
+	 * @brief Actualiza el estado del grafo de escena.
+	 *
+	 * Propaga transformaciones y ejecuta la lógica de actualización
+	 * de cada entidad registrada.
+	 *
+	 * @param deltaTime Tiempo transcurrido desde el último frame.
+	 * @param deviceContext Contexto del dispositivo para la actualización.
+	 */
 	void
-		render(DeviceContext& deviceContext);
+	update(float deltaTime, DeviceContext& deviceContext);
 
-	/** @brief Builds render queues and light data for the current camera. */
+	/**
+	 * @brief Renderiza todas las entidades del grafo de escena.
+	 *
+	 * El render se realiza respetando la jerarquía del grafo.
+	 *
+	 * @param deviceContext Contexto del dispositivo para renderizado.
+	 */
 	void
-		gatherRenderScene(RenderScene& outScene, const Camera& camera);
+	render(DeviceContext& deviceContext);
 
-	/** @brief Clears graph registration and relationship data without deleting entities. */
 	void
-		destroy();
+	gatherRenderScene(RenderScene& outScene, const Camera& camera);
+
+	/**
+	 * @brief Libera los recursos asociados al grafo de escena.
+	 */
+	void
+	destroy();
+
 private:
 	/**
-	 * @brief Recursively combines local transforms with @p parentWorld for a hierarchy
-	 * branch.
+	 * @brief Actualiza recursivamente la matriz de mundo de una entidad.
+	 *
+	 * @param node Entidad actual a actualizar.
+	 * @param parentWorld Matriz de mundo del padre.
 	 */
 	void
-		updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld);
+	updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld);
 
-	/** @brief Returns true when an entity has no parent relationship in the graph. */
+	/**
+	 * @brief Comprueba si una entidad es raíz del grafo.
+	 *
+	 * @param e Entidad a comprobar.
+	 * @return true si la entidad no tiene padre.
+	 */
 	bool
-		isRoot(Entity* e) const;
+	isRoot(Entity* e) const;
 
-	/** @brief Returns true when @p e is present in @c m_entities. */
+	/**
+	 * @brief Comprueba si una entidad está registrada en el grafo.
+	 *
+	 * @param e Entidad a comprobar.
+	 * @return true si la entidad está registrada.
+	 */
 	bool
-		isRegistered(Entity* e) const;
+  isRegistered(Entity* e) const;
 
 private:
 	//std::vector<EU::TSharedPointer<Entity>> m_entities;
 public:
-	/** @brief Non-owning entity registry used by hierarchy and render-scene traversal. */
+	/**
+	 * @brief Lista de entidades registradas en el grafo de escena.
+	 *
+	 * Contiene todas las entidades administradas por el SceneGraph.
+	 */
 	std::vector<Entity*> m_entities;
 };

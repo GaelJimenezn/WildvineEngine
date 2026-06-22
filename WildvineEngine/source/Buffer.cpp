@@ -2,6 +2,7 @@
 #include "Device.h"
 #include "DeviceContext.h"
 
+
 HRESULT
 Buffer::init(Device& device, const MeshComponent& mesh, unsigned int bindFlag) {
 	if (!device.m_device) {
@@ -23,13 +24,14 @@ Buffer::init(Device& device, const MeshComponent& mesh, unsigned int bindFlag) {
 	desc.Usage = D3D11_USAGE_DEFAULT;
 	desc.CPUAccessFlags = 0;
 	m_bindFlag = bindFlag;
-	desc.BindFlags = (D3D11_BIND_FLAG)bindFlag;
+  desc.BindFlags = (D3D11_BIND_FLAG)bindFlag;
 
 	if (bindFlag & D3D11_BIND_VERTEX_BUFFER) {
 		if (mesh.m_skyVertex.size() > 0 && mesh.m_vertex.size() == 0) {
 			m_stride = sizeof(SkyboxVertex);
 			desc.ByteWidth = m_stride * static_cast<unsigned int>(mesh.m_skyVertex.size());
 			data.pSysMem = mesh.m_skyVertex.data();
+
 		}
 		else {
 			m_stride = sizeof(SimpleVertex);
@@ -43,6 +45,7 @@ Buffer::init(Device& device, const MeshComponent& mesh, unsigned int bindFlag) {
 		desc.BindFlags = (D3D11_BIND_FLAG)bindFlag;
 		data.pSysMem = mesh.m_index.data();
 	}
+
 	return createBuffer(device, desc, &data);
 }
 
@@ -69,12 +72,12 @@ Buffer::init(Device& device, unsigned int ByteWidth) {
 
 void
 Buffer::update(DeviceContext& deviceContext,
-	ID3D11Resource* pDstResource,
-	unsigned int DstSubresource,
-	const D3D11_BOX* pDstBox,
-	const void* pSrcData,
-	unsigned int SrcRowPitch,
-	unsigned int SrcDepthPitch) {
+							ID3D11Resource* pDstResource,
+							unsigned int DstSubresource,
+							const D3D11_BOX* pDstBox,
+							const void* pSrcData,
+							unsigned int SrcRowPitch,
+							unsigned int SrcDepthPitch) {
 	if (!m_buffer) {
 		ERROR("ShaderProgram", "update", "m_buffer is null.");
 		return;
@@ -95,10 +98,10 @@ Buffer::update(DeviceContext& deviceContext,
 
 void
 Buffer::render(DeviceContext& deviceContext,
-	unsigned int StartSlot,
-	unsigned int NumBuffers,
-	bool setPixelShader,
-	DXGI_FORMAT format) {
+							unsigned int StartSlot,
+							unsigned int NumBuffers,
+							bool setPixelShader,
+							DXGI_FORMAT format) {
 	if (!deviceContext.m_deviceContext) {
 		ERROR("RenderTargetView", "render", "DeviceContext is nullptr.");
 		return;

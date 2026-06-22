@@ -1,0 +1,44 @@
+/**
+ * @defgroup core Core
+ * @brief Infraestructura principal del motor, ciclo de vida de la aplicacion y wrappers de Direct3D 11.
+ */
+
+/**
+ * @defgroup rendering Rendering
+ * @brief Tipos, materiales, colas y pases del pipeline de render.
+ */
+
+/**
+ * @defgroup ecs ECS
+ * @brief Entidades, componentes y comportamiento base de la escena.
+ */
+
+/**
+ * @defgroup scenegraph SceneGraph
+ * @brief Jerarquia de nodos, relaciones padre-hijo y actualizacion espacial.
+ */
+
+/**
+ * @defgroup gui GUI
+ * @brief Herramientas del editor e integracion con ImGui.
+ */
+
+/**
+ * @defgroup utilities Utilities
+ * @brief Utilidades de camara, skybox, layout builders y pases auxiliares.
+ */
+
+/**
+ * @defgroup math Math
+ * @brief Tipos matematicos usados por el motor.
+ */
+
+/**
+ * @defgroup memory Memory
+ * @brief Smart pointers y helpers de administracion de memoria.
+ */
+
+/**
+ * @defgroup structures Structures
+ * @brief Contenedores auxiliares usados por la base del motor.
+ */

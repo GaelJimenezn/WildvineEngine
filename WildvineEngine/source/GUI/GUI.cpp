@@ -1,243 +1,552 @@
-#include "GUI/GUI.h"
+/**
+ * @file GUI.cpp
+ * @brief Implementa la logica de GUI dentro del subsistema GUI.
+ * @ingroup gui
+ */
+#include "EngineUtilities\GUI\GUI.h"
 #include "Viewport.h"
 #include "Window.h"
 #include "Device.h"
 #include "DeviceContext.h"
 #include "MeshComponent.h"
-#include "ECS/Actor.h"
-#include "ECS/Transform.h" // A袮DIDO PARA ECS
-#include "ECS/MeshRendererComponent.h" // A袮DIDO PARA ECS
-#include "ECS/LightComponent.h" // A袮DIDO PARA ECS
-#include "EngineUtilities/Utilities/Camera.h"
-#include <string>
-#include <vector>
-
+#include "ECS\Actor.h"
+#include "ECS\LightComponent.h"
+#include "ECS\MeshRendererComponent.h"
+#include "Rendering\Mesh.h"
+#include "Rendering\Material.h"
+#include "Rendering\MaterialInstance.h"
+#include "EngineUtilities\Utilities\Camera.h"
+//#include "imgui_internal.h"
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
+static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
+static bool mGizmoEnabled = true;
 
-void GUI::awake() {}
+namespace {
+const char* GetLightTypeLabel(LightType type);
 
-void GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
+struct DebugTextureItem {
+	const char* label;
+	const char* channels;
+	ID3D11ShaderResourceView* srv;
+};
+
+ImU32 AccentU32(const ImVec4& color) {
+	return ImGui::ColorConvertFloat4ToU32(color);
+}
+
+float RadToDeg(float radians) {
+	return XMConvertToDegrees(radians);
+}
+
+float DegToRad(float degrees) {
+	return XMConvertToRadians(degrees);
+}
+
+void DrawDebugTextureEntry(const DebugTextureItem& item, int index, int& selectedView, float thumbnailHeight) {
+	ImGui::PushID(index);
+	if (ImGui::Selectable(item.label, selectedView == index, 0, ImVec2(0.0f, 20.0f))) {
+		selectedView = index;
+	}
+
+	if (item.channels != nullptr && item.channels[0] != '\0') {
+		ImGui::TextDisabled("%s", item.channels);
+	}
+
+	if (item.srv) {
+		const float thumbnailWidth = thumbnailHeight * 1.6f;
+		ImGui::Image((ImTextureID)item.srv, ImVec2(thumbnailWidth, thumbnailHeight));
+	}
+	else {
+		ImGui::Dummy(ImVec2(thumbnailHeight * 1.6f, thumbnailHeight));
+		ImGui::SameLine(0.0f, 0.0f);
+		ImGui::TextDisabled("Unavailable");
+	}
+
+	ImGui::PopID();
+}
+
+void DrawInspectorPill(const char* text, const ImVec4& color) {
+	ImGui::PushStyleColor(ImGuiCol_Button, color);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 4.0f));
+	ImGui::Button(text);
+	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor(3);
+}
+
+bool BeginInspectorSection(const char* label, bool defaultOpen = true) {
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
+	if (defaultOpen) {
+		flags |= ImGuiTreeNodeFlags_DefaultOpen;
+	}
+
+	ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.10f, 0.12f, 0.15f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.13f, 0.16f, 0.20f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.14f, 0.24f, 0.38f, 1.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 6.0f));
+	const bool open = ImGui::CollapsingHeader(label, flags);
+	ImGui::PopStyleVar();
+	ImGui::PopStyleColor(3);
+	return open;
+}
+
+bool BeginInspectorPropertyTable(const char* id, float firstColumnWidth = 132.0f) {
+	if (!ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV)) {
+		return false;
+	}
+
+	ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, firstColumnWidth);
+	ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+	return true;
+}
+
+void DrawPropertyLabel(const char* label) {
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label);
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN);
+}
+
+void DrawPropertyValueText(const char* label, const char* value) {
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label);
+	ImGui::TableSetColumnIndex(1);
+	ImGui::TextUnformatted(value);
+}
+
+void DrawPropertyValueBool(const char* label, bool value) {
+	DrawPropertyValueText(label, value ? "Yes" : "No");
+}
+
+void DrawPropertyToggle(const char* label, const char* id, bool* value) {
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label);
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+	ImGui::Checkbox(id, value);
+	ImGui::PopStyleVar();
+}
+
+const char* GetActorTypeLabel(EU::TSharedPointer<Actor> actor) {
+	if (actor.isNull()) {
+		return "Actor";
+	}
+
+	auto lightComponent = actor->getComponent<LightComponent>();
+	if (!lightComponent.isNull()) {
+		return GetLightTypeLabel(lightComponent->getLightData().type);
+	}
+
+	if (!actor->getComponent<MeshRendererComponent>().isNull()) {
+		return "Static Mesh Actor";
+	}
+
+	if (!actor->getComponent<Transform>().isNull()) {
+		return "Empty Actor";
+	}
+
+	return "Actor";
+}
+
+ImVec4 GetActorTypeColor(EU::TSharedPointer<Actor> actor) {
+	if (actor.isNull()) {
+		return ImVec4(0.45f, 0.47f, 0.52f, 1.0f);
+	}
+
+	auto lightComponent = actor->getComponent<LightComponent>();
+	if (!lightComponent.isNull()) {
+		return ImVec4(0.92f, 0.68f, 0.22f, 1.0f);
+	}
+
+	if (!actor->getComponent<MeshRendererComponent>().isNull()) {
+		return ImVec4(0.24f, 0.50f, 0.92f, 1.0f);
+	}
+
+	return ImVec4(0.36f, 0.72f, 0.46f, 1.0f);
+}
+
+void DrawInspectorComponentChips(bool hasTransform, bool hasMeshRenderer, bool hasLight) {
+	if (hasTransform) {
+		DrawInspectorPill("Transform", ImVec4(0.18f, 0.50f, 0.28f, 1.0f));
+	}
+	if (hasMeshRenderer) {
+		if (hasTransform) {
+			ImGui::SameLine();
+		}
+		DrawInspectorPill("Renderer", ImVec4(0.22f, 0.42f, 0.76f, 1.0f));
+	}
+	if (hasLight) {
+		if (hasTransform || hasMeshRenderer) {
+			ImGui::SameLine();
+		}
+		DrawInspectorPill("Light", ImVec4(0.62f, 0.46f, 0.14f, 1.0f));
+	}
+}
+
+const char* GetLightTypeLabel(LightType type) {
+	switch (type) {
+	case LightType::Directional: return "Directional";
+	case LightType::Point: return "Point";
+	case LightType::Spot: return "Spot";
+	default: return "Unknown";
+	}
+}
+
+const char* GetMaterialDomainLabel(MaterialDomain domain) {
+	switch (domain) {
+	case MaterialDomain::Opaque: return "Opaque";
+	case MaterialDomain::Masked: return "Masked";
+	case MaterialDomain::Transparent: return "Transparent";
+	default: return "Unknown";
+	}
+}
+
+const char* GetBlendModeLabel(BlendMode blendMode) {
+	switch (blendMode) {
+	case BlendMode::Opaque: return "Opaque";
+	case BlendMode::Alpha: return "Alpha";
+	case BlendMode::Additive: return "Additive";
+	case BlendMode::PremultipliedAlpha: return "Premultiplied";
+	default: return "Unknown";
+	}
+}
+}
+void 
+GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
+	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
+	// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 	ImGuiStyle& style = ImGui::GetStyle();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
 		style.WindowRounding = 0.0f;
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 
-	// Estilo Unreal Engine 5 (Gris oscuro y Cian)
-	appleLiquidStyle(1.0f, ImVec4(0.0f, 0.44f, 0.87f, 1.0f));
+	appleLiquidStyle(0.76f, ImVec4(0.95f, 0.42f, 0.08f, 1.0f));
 
+	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(window.m_hWnd);
 	ImGui_ImplDX11_Init(device.m_device, deviceContext.m_deviceContext);
 
+	// Init ToolTips
 	toolTipData();
+
 	selectedActorIndex = 0;
 }
 
-void GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImVec4* colors = style.Colors;
-
-	// Geometr韆 m醩 cuadrada y profesional, estilo Unreal Engine
-	style.WindowRounding = 3.0f;
-	style.ChildRounding = 3.0f;
-	style.FrameRounding = 2.0f;
-	style.PopupRounding = 3.0f;
-	style.TabRounding = 2.0f;
-	style.GrabRounding = 2.0f;
-	style.ScrollbarRounding = 2.0f;
-	
-	style.WindowBorderSize = 1.0f;
-	style.FrameBorderSize = 1.0f;
-	style.PopupBorderSize = 1.0f;
-
-	style.WindowPadding = ImVec2(10, 10);
-	style.FramePadding = ImVec2(8, 6);
-	style.ItemSpacing = ImVec2(6, 6);
-
-	// Paleta de grises oscuros profundos (UE5 Theme)
-	const ImVec4 bgPanel = ImVec4(0.07f, 0.07f, 0.08f, opacity);       // Fondo de ventanas principales y Ribbon
-	const ImVec4 bgContent = ImVec4(0.11f, 0.11f, 0.12f, opacity);     // Fondo de childs/醨eas de trabajo (Inspector/Outliner)
-	const ImVec4 bgInteract = ImVec4(0.16f, 0.16f, 0.17f, opacity);    // Botones inactivos / frames
-	
-	// El cian el閏trico/azul caracter韘tico de Unreal para selecciones
-	const ImVec4 ueBlue = ImVec4(0.0f, 0.44f, 0.87f, 1.0f);            
-	const ImVec4 ueBlueHover = ImVec4(0.15f, 0.55f, 0.95f, 1.0f);
-
-	colors[ImGuiCol_Text] = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
-	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-	
-	colors[ImGuiCol_WindowBg] = bgPanel;
-	colors[ImGuiCol_ChildBg] = bgContent;
-	colors[ImGuiCol_PopupBg] = bgPanel;
-	
-	colors[ImGuiCol_Border] = ImVec4(0.04f, 0.04f, 0.04f, 1.0f);
-	colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-
-	colors[ImGuiCol_FrameBg] = bgInteract;
-	colors[ImGuiCol_FrameBgHovered] = ueBlue;
-	colors[ImGuiCol_FrameBgActive] = ueBlueHover;
-
-	colors[ImGuiCol_TitleBg] = bgPanel;
-	colors[ImGuiCol_TitleBgActive] = bgPanel;
-	colors[ImGuiCol_TitleBgCollapsed] = bgPanel;
-
-	colors[ImGuiCol_MenuBarBg] = bgPanel;
-
-	colors[ImGuiCol_Button] = bgInteract;
-	colors[ImGuiCol_ButtonHovered] = ueBlue;
-	colors[ImGuiCol_ButtonActive] = ueBlueHover;
-
-	colors[ImGuiCol_Header] = bgInteract;
-	colors[ImGuiCol_HeaderHovered] = ueBlueHover;
-	colors[ImGuiCol_HeaderActive] = ueBlue;
-
-	colors[ImGuiCol_Separator] = ImVec4(0.14f, 0.14f, 0.15f, 1.0f);
-	colors[ImGuiCol_SeparatorHovered] = ueBlueHover;
-	colors[ImGuiCol_SeparatorActive] = ueBlue;
-
-	colors[ImGuiCol_Tab] = bgPanel;
-	colors[ImGuiCol_TabHovered] = ueBlueHover;
-	colors[ImGuiCol_TabActive] = ueBlue;
-	colors[ImGuiCol_TabUnfocused] = bgPanel;
-	colors[ImGuiCol_TabUnfocusedActive] = bgContent;
-
-	colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-	colors[ImGuiCol_SliderGrab] = ueBlue;
-	colors[ImGuiCol_SliderGrabActive] = ueBlueHover;
-
-	colors[ImGuiCol_DockingPreview] = ImVec4(ueBlue.x, ueBlue.y, ueBlue.z, 0.40f);
-	colors[ImGuiCol_DockingEmptyBg] = bgPanel;
-}
-
-void GUI::update(Viewport& viewport, Window& window) {
+void
+GUI::update(Viewport& viewport, Window& window) {
+	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
 	ImGuizmo::BeginFrame();
 	ImGuiIO& io = ImGui::GetIO();
-	
 	if (io.KeyCtrl && ImGui::IsKeyPressed('S', false)) {
 		m_requestSaveScene = true;
 	}
-	
 	ImGuizmo::SetOrthographic(false);
+	//ImGuizmo::SetRect(0, 0, (float)window.m_width, (float)window.m_height);
 
+	// In Program always
 	drawStudioTopRibbon();
 	drawEditorDockspace();
 	closeApp();
-	
-	// ELIMINADO: drawGizmoToolbar(); para quitar la ventana molesta que sobraba en el viewport
+	drawGizmoToolbar();
 }
 
-void GUI::render() {
+void
+GUI::render() {
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+	// Update and Render additional Platform Windows
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 	}
 }
 
-void GUI::destroy() {
-	if (ImGui::GetCurrentContext() == nullptr) return;
+void
+GUI::destroy() {
+	// Cleanup
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 }
 
-
-void GUI::vec3Control(const std::string& label, float* values, float resetValue, float columnWidth, bool displayAsDegrees) {
+void 
+GUI::vec3Control(const std::string& label, float* values, float resetValue, float columnWidth, bool displayAsDegrees) {
 	ImGuiIO& io = ImGui::GetIO();
-	auto boldFont = io.Fonts->Fonts[0]; 
+	auto boldFont = io.Fonts->Fonts[0];
+	float displayValues[3] = { values[0], values[1], values[2] };
+	if (displayAsDegrees) {
+		displayValues[0] = RadToDeg(values[0]);
+		displayValues[1] = RadToDeg(values[1]);
+		displayValues[2] = RadToDeg(values[2]);
+	}
 
 	ImGui::PushID(label.c_str());
+	if (!ImGui::BeginTable(("##Vec3Table" + label).c_str(), 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV)) {
+		ImGui::PopID();
+		return;
+	}
 
-	ImGui::Columns(2);
-	ImGui::SetColumnWidth(0, columnWidth);
-	ImGui::Text("%s", label.c_str());
-	ImGui::NextColumn();
+	ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, columnWidth);
+	ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextDisabled("%s", label.c_str());
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushItemWidth(-1.0f);
 
-	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 2.0f, 0.0f }); 
-
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 3.0f, 4.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
 	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-	// BOT覰 X (Rojo)
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.7f, 0.2f, 0.2f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.8f, 0.3f, 0.3f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.6f, 0.1f, 0.1f, 1.0f });
-	ImGui::PushFont(boldFont);
-	if (ImGui::Button("X", buttonSize)) values[0] = resetValue;
-	ImGui::PopFont();
-	ImGui::PopStyleColor(3);
-	ImGui::SameLine();
+	ImVec2 buttonSize = { lineHeight, lineHeight };
+	const float spacing = ImGui::GetStyle().ItemSpacing.x;
+	const float availableWidth = ImGui::GetContentRegionAvail().x;
+	const float dragWidth = (availableWidth - (buttonSize.x * 3.0f) - (spacing * 5.0f)) / 3.0f;
+	const float safeDragWidth = dragWidth > 24.0f ? dragWidth : 24.0f;
 	const float dragSpeed = displayAsDegrees ? 1.0f : 0.1f;
-	const char* valueFormat = "%.2f";
+	const char* dragFormat = displayAsDegrees ? "%.1f deg" : "%.2f";
 
-	ImGui::DragFloat("##X", &values[0], dragSpeed, 0.0f, 0.0f, valueFormat);
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-
-	// BOT覰 Y (Verde)
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.3f, 0.6f, 0.3f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.4f, 0.7f, 0.4f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.5f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
 	ImGui::PushFont(boldFont);
-	if (ImGui::Button("Y", buttonSize)) values[1] = resetValue;
+	if (ImGui::Button("X", buttonSize)) {
+		values[0] = resetValue;
+		displayValues[0] = displayAsDegrees ? RadToDeg(resetValue) : resetValue;
+	}
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
+
 	ImGui::SameLine();
-	ImGui::DragFloat("##Y", &values[1], dragSpeed, 0.0f, 0.0f, valueFormat);
-	ImGui::PopItemWidth();
+	ImGui::SetNextItemWidth(safeDragWidth);
+	if (ImGui::DragFloat("##X", &displayValues[0], dragSpeed, 0.0f, 0.0f, dragFormat)) {
+		values[0] = displayAsDegrees ? DegToRad(displayValues[0]) : displayValues[0];
+	}
 	ImGui::SameLine();
 
-	// BOT覰 Z (Azul)
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.4f, 0.8f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.5f, 0.9f, 1.0f });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.3f, 0.7f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 	ImGui::PushFont(boldFont);
-	if (ImGui::Button("Z", buttonSize)) values[2] = resetValue;
+	if (ImGui::Button("Y", buttonSize)) {
+		values[1] = resetValue;
+		displayValues[1] = displayAsDegrees ? RadToDeg(resetValue) : resetValue;
+	}
 	ImGui::PopFont();
 	ImGui::PopStyleColor(3);
-	ImGui::SameLine();
-	ImGui::DragFloat("##Z", &values[2], dragSpeed, 0.0f, 0.0f, valueFormat);
-	ImGui::PopItemWidth();
 
-	ImGui::PopStyleVar();
-	ImGui::Columns(1);
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(safeDragWidth);
+	if (ImGui::DragFloat("##Y", &displayValues[1], dragSpeed, 0.0f, 0.0f, dragFormat)) {
+		values[1] = displayAsDegrees ? DegToRad(displayValues[1]) : displayValues[1];
+	}
+	ImGui::SameLine();
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("Z", buttonSize)) {
+		values[2] = resetValue;
+		displayValues[2] = displayAsDegrees ? RadToDeg(resetValue) : resetValue;
+	}
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(safeDragWidth);
+	if (ImGui::DragFloat("##Z", &displayValues[2], dragSpeed, 0.0f, 0.0f, dragFormat)) {
+		values[2] = displayAsDegrees ? DegToRad(displayValues[2]) : displayValues[2];
+	}
+
+	ImGui::PopStyleVar(2);
+	ImGui::PopItemWidth();
+	ImGui::EndTable();
+
 	ImGui::PopID();
 }
 
-void GUI::toolTipData() {}
+void 
+GUI::toolTipData() {
+}
 
-void GUI::ToolBar() {}
+void
+GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
+	(void)opacity;
+	(void)accent;
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImVec4* colors = style.Colors;
 
-void GUI::closeApp() {
+	style.WindowRounding = 0.0f;
+	style.ChildRounding = 3.0f;
+	style.PopupRounding = 3.0f;
+	style.FrameRounding = 3.0f;
+	style.GrabRounding = 3.0f;
+	style.ScrollbarRounding = 3.0f;
+	style.TabRounding = 3.0f;
+
+	style.WindowBorderSize = 1.0f;
+	style.FrameBorderSize = 1.0f;
+	style.PopupBorderSize = 1.0f;
+	style.TabBorderSize = 0.0f;
+
+	style.WindowPadding = ImVec2(8, 8);
+	style.FramePadding = ImVec2(8, 5);
+	style.ItemSpacing = ImVec2(6, 6);
+	style.ItemInnerSpacing = ImVec2(6, 4);
+	style.ScrollbarSize = 12.0f;
+
+	const ImVec4 bg0 = ImVec4(0.055f, 0.058f, 0.066f, 1.0f);
+	const ImVec4 bg1 = ImVec4(0.075f, 0.079f, 0.090f, 1.0f);
+	const ImVec4 bg2 = ImVec4(0.105f, 0.110f, 0.125f, 1.0f);
+	const ImVec4 bg3 = ImVec4(0.145f, 0.153f, 0.172f, 1.0f);
+	const ImVec4 blue = ImVec4(0.05f, 0.34f, 0.82f, 1.0f);
+	const ImVec4 blueHi = ImVec4(0.07f, 0.58f, 1.00f, 1.0f);
+	const ImVec4 purple = ImVec4(0.42f, 0.16f, 0.86f, 1.0f);
+	const ImVec4 purpleHi = ImVec4(0.64f, 0.26f, 1.00f, 1.0f);
+	const ImVec4 cyan = ImVec4(0.00f, 0.88f, 1.00f, 1.0f);
+
+	colors[ImGuiCol_Text] = ImVec4(0.88f, 0.90f, 0.94f, 1.0f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.48f, 0.51f, 0.56f, 1.0f);
+	colors[ImGuiCol_WindowBg] = bg1;
+	colors[ImGuiCol_ChildBg] = bg0;
+	colors[ImGuiCol_PopupBg] = bg2;
+	colors[ImGuiCol_Border] = ImVec4(0.22f, 0.23f, 0.26f, 1.0f);
+	colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0.0f);
+	colors[ImGuiCol_FrameBg] = bg0;
+	colors[ImGuiCol_FrameBgHovered] = bg2;
+	colors[ImGuiCol_FrameBgActive] = bg3;
+	colors[ImGuiCol_TitleBg] = bg0;
+	colors[ImGuiCol_TitleBgActive] = bg2;
+	colors[ImGuiCol_TitleBgCollapsed] = bg0;
+	colors[ImGuiCol_MenuBarBg] = ImVec4(0.032f, 0.034f, 0.040f, 1.0f);
+	colors[ImGuiCol_ScrollbarBg] = bg0;
+	colors[ImGuiCol_ScrollbarGrab] = bg3;
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.24f, 0.25f, 0.28f, 1.0f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.30f, 0.32f, 0.36f, 1.0f);
+	colors[ImGuiCol_CheckMark] = cyan;
+	colors[ImGuiCol_SliderGrab] = purpleHi;
+	colors[ImGuiCol_SliderGrabActive] = cyan;
+	colors[ImGuiCol_Button] = bg2;
+	colors[ImGuiCol_ButtonHovered] = bg3;
+	colors[ImGuiCol_ButtonActive] = purple;
+	colors[ImGuiCol_Header] = bg2;
+	colors[ImGuiCol_HeaderHovered] = bg3;
+	colors[ImGuiCol_HeaderActive] = purple;
+	colors[ImGuiCol_Separator] = ImVec4(0.23f, 0.24f, 0.27f, 1.0f);
+	colors[ImGuiCol_SeparatorHovered] = purpleHi;
+	colors[ImGuiCol_SeparatorActive] = cyan;
+	colors[ImGuiCol_Tab] = bg0;
+	colors[ImGuiCol_TabHovered] = bg3;
+	colors[ImGuiCol_TabActive] = bg2;
+	colors[ImGuiCol_TabUnfocused] = bg0;
+	colors[ImGuiCol_TabUnfocusedActive] = bg1;
+	colors[ImGuiCol_DockingPreview] = ImVec4(0.42f, 0.16f, 0.86f, 0.55f);
+	colors[ImGuiCol_DockingEmptyBg] = bg0;
+	colors[ImGuiCol_TableHeaderBg] = bg2;
+	colors[ImGuiCol_TableBorderStrong] = ImVec4(0.25f, 0.26f, 0.30f, 1.0f);
+	colors[ImGuiCol_TableBorderLight] = ImVec4(0.17f, 0.18f, 0.20f, 1.0f);
+	colors[ImGuiCol_TableRowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	colors[ImGuiCol_TableRowBgAlt] = ImVec4(1, 1, 1, 0.025f);
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.42f, 0.16f, 0.86f, 0.45f);
+	colors[ImGuiCol_NavHighlight] = cyan;
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1, 1, 1, 0.30f);
+	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0.20f);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0, 0, 0, 0.35f);
+}
+
+void
+GUI::ToolBar() {
+	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("New")) {
+				// Acci贸n para "New"
+			}
+			if (ImGui::MenuItem("Open")) {
+				// Acci贸n para "Open"
+			}
+			if (ImGui::MenuItem("Save")) {
+				// Acci贸n para "Save"
+			}
+			if (ImGui::MenuItem("Exit")) {
+				// Acci贸n para "Exit"
+				show_exit_popup = true;
+				ImGui::OpenPopup("Exit?");
+				//closeApp();
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Edit")) {
+			if (ImGui::MenuItem("Undo")) {
+				// Acci贸n para "Undo"
+			}
+			if (ImGui::MenuItem("Redo")) {
+				// Acci贸n para "Redo"
+			}
+			if (ImGui::MenuItem("Cut")) {
+				// Acci贸n para "Cut"
+			}
+			if (ImGui::MenuItem("Copy")) {
+				// Acci贸n para "Copy"
+			}
+			if (ImGui::MenuItem("Paste")) {
+				// Acci贸n para "Paste"
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Tools")) {
+			if (ImGui::MenuItem("Options")) {
+				// Acci贸n para "Options"
+			}
+			if (ImGui::MenuItem("Settings")) {
+				// Acci贸n para "Settings"
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+}
+
+void
+GUI::closeApp() {
 	if (show_exit_popup) {
 		ImGui::OpenPopup("Exit?");
-		show_exit_popup = false;
+		show_exit_popup = false; // Reset the flag
 	}
+	// Centrar el popup en la pantalla
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 	if (ImGui::BeginPopupModal("Exit?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-		ImGui::Text("Estas a punto de salir de MinerEngine.\n縀stas seguro?\n\n");
+		ImGui::Text("Estas a punto de salir de la aplicacion.\nEstas seguro?\n\n");
 		ImGui::Separator();
 
 		if (ImGui::Button("OK", ImVec2(120, 0))) {
-			exit(0);
+			exit(0); // Salir de la aplicaci贸n
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SetItemDefaultFocus();
@@ -249,184 +558,298 @@ void GUI::closeApp() {
 	}
 }
 
-
-void GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
-	ImGui::Begin("Inspector");
-
-	if (!actor) {
+void
+GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
+	ImGui::Begin("Details");
+	if (actor.isNull()) {
+		ImGui::Dummy(ImVec2(0.0f, 12.0f));
 		ImGui::TextDisabled("No actor selected");
+		ImGui::TextWrapped("Select an actor in the Hierarchy to inspect transforms, materials, lights and renderer data.");
 		ImGui::End();
 		return;
 	}
 
-	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.11f, 0.11f, 0.12f, 1.0f)); // UE5 bgContent
-	ImGui::BeginChild("HeaderRegion", ImVec2(0, 95), true);
-
-	bool isStatic = false;
-	ImGui::Checkbox("##Static", &isStatic);
-	ImGui::SameLine();
-
-	char objectName[128];
-	strcpy_s(objectName, sizeof(objectName), actor->getName().c_str());
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40.0f);
-	if (ImGui::InputText("##ObjectName", objectName, IM_ARRAYSIZE(objectName))) {
-		actor->setName(std::string(objectName));
+	static char objectName[128] = {};
+	static Actor* cachedActor = nullptr;
+	if (cachedActor != actor.get()) {
+		cachedActor = actor.get();
+		strncpy_s(objectName, actor->getName().c_str(), _TRUNCATE);
 	}
 
-	ImGui::SameLine();
-	ImGui::Button("Icon", ImVec2(30, 0));
+	auto meshRenderer = actor->getComponent<MeshRendererComponent>();
+	auto lightComponent = actor->getComponent<LightComponent>();
+	auto transform = actor->getComponent<Transform>();
+	const bool hasMeshRenderer = !meshRenderer.isNull();
+	const bool hasLightComponent = !lightComponent.isNull();
+	const bool hasTransform = !transform.isNull();
+	const ImVec4 accentColor = GetActorTypeColor(actor);
+	const char* actorTypeLabel = GetActorTypeLabel(actor);
 
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6.0f);
+	ImGui::BeginChild("##InspectorHeader", ImVec2(0.0f, 104.0f), true);
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+	ImVec2 headerMin = ImGui::GetWindowPos();
+	ImVec2 headerMax = ImVec2(headerMin.x + ImGui::GetWindowSize().x, headerMin.y + ImGui::GetWindowSize().y);
+	drawList->AddRectFilled(headerMin, ImVec2(headerMax.x, headerMin.y + 4.0f), AccentU32(accentColor), 6.0f, ImDrawFlags_RoundCornersTop);
+
+	ImGui::TextDisabled("Details");
+	ImGui::Text("Selected Actor");
+	ImGui::SameLine();
+	ImGui::TextDisabled("| %s", actorTypeLabel);
+	ImGui::SetNextItemWidth(-1.0f);
+	if (ImGui::InputText("##ObjectName", objectName, IM_ARRAYSIZE(objectName))) {
+		actor->setName(objectName);
+	}
 	ImGui::Spacing();
-
-	const char* tags[] = { "Untagged", "Player", "Enemy", "Environment" };
-	static int currentTag = 0;
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.45f);
-	ImGui::Combo("Tag", &currentTag, tags, IM_ARRAYSIZE(tags));
-	ImGui::SameLine();
-
-	const char* layers[] = { "Default", "TransparentFX", "Ignore Raycast", "Water", "UI" };
-	static int currentLayer = 0;
-	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-	ImGui::Combo("Layer", &currentLayer, layers, IM_ARRAYSIZE(layers));
-
+	DrawInspectorComponentChips(hasTransform, hasMeshRenderer, hasLightComponent);
+	ImGui::Spacing();
+	ImGui::TextDisabled("Component details, rendering data and editable properties");
 	ImGui::EndChild();
-	ImGui::PopStyleColor();
+	ImGui::PopStyleVar();
 
 	ImGui::Spacing();
+	if (BeginInspectorSection("Identity")) {
+		if (BeginInspectorPropertyTable("##IdentityProperties")) {
+			DrawPropertyValueText("Name", actor->getName().c_str());
+			DrawPropertyValueText("Type", actorTypeLabel);
+			DrawPropertyValueBool("Transform", hasTransform);
+			DrawPropertyValueBool("Renderer", hasMeshRenderer);
+			DrawPropertyValueBool("Light", hasLightComponent);
+			ImGui::EndTable();
+		}
+	}
 
-	if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+	ImGui::Spacing();
+	if (hasTransform && BeginInspectorSection("Transform")) {
 		inspectorContainer(actor);
 	}
 
-	ImGui::Spacing();
+	if (hasMeshRenderer) {
+		const std::vector<MaterialInstance*>& materialInstances = meshRenderer->getMaterialInstances();
+		Mesh* mesh = meshRenderer->getMesh();
 
-	if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Indent(10.0f);
-        
-        auto meshRenderer = actor->getComponent<MeshRendererComponent>();
-        auto lightComp = actor->getComponent<LightComponent>();
-        bool castShadow = false;
+		if (BeginInspectorSection("Renderer")) {
+			const int submeshCount = mesh ? static_cast<int>(mesh->getSubmeshes().size()) : 0;
+			const int materialCount = static_cast<int>(materialInstances.size());
+			if (BeginInspectorPropertyTable("##RendererProperties")) {
+				bool isVisible = meshRenderer->isVisible();
+				DrawPropertyToggle("Visible", "##RendererVisible", &isVisible);
+				meshRenderer->setVisible(isVisible);
 
-        if (!meshRenderer.isNull()) castShadow = meshRenderer->canCastShadow();
-        else if (!lightComp.isNull()) castShadow = lightComp->canCastShadow();
+				bool castShadow = meshRenderer->canCastShadow();
+				DrawPropertyToggle("Cast Shadow", "##RendererCastShadow", &castShadow);
+				meshRenderer->setCastShadow(castShadow);
 
-		if (ImGui::Checkbox("Cast Shadows", &castShadow)) {
-            if (!meshRenderer.isNull()) meshRenderer->setCastShadow(castShadow);
-            if (!lightComp.isNull()) lightComp->setCastShadow(castShadow);
+				char countBuffer[32] = {};
+				sprintf_s(countBuffer, "%d", submeshCount);
+				DrawPropertyValueText("Submeshes", countBuffer);
+
+				sprintf_s(countBuffer, "%d", materialCount);
+				DrawPropertyValueText("Material Slots", countBuffer);
+				ImGui::EndTable();
+			}
 		}
 
-		ImGui::TextDisabled("Configuraciones de luz y material...");
-		ImGui::Unindent(10.0f);
+		if (!materialInstances.empty() && BeginInspectorSection("Materials")) {
+			for (size_t i = 0; i < materialInstances.size(); ++i) {
+				MaterialInstance* materialInstance = materialInstances[i];
+				if (!materialInstance) {
+					continue;
+				}
+
+				MaterialParams& params = materialInstance->getParams();
+				Material* material = materialInstance->getMaterial();
+				std::string header = "Material Slot " + std::to_string(i);
+				if (ImGui::TreeNodeEx(header.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth)) {
+					if (material) {
+						if (BeginInspectorPropertyTable(("##MaterialMeta" + std::to_string(i)).c_str())) {
+							DrawPropertyValueText("Domain", GetMaterialDomainLabel(material->getDomain()));
+							if (material->getDomain() == MaterialDomain::Transparent) {
+								DrawPropertyValueText("Blend", GetBlendModeLabel(material->getBlendMode()));
+							}
+							ImGui::EndTable();
+						}
+
+						static const char* kMaterialDomains[] = { "Opaque", "Masked", "Transparent" };
+						int currentDomain = static_cast<int>(material->getDomain());
+						if (BeginInspectorPropertyTable(("##MaterialEditor" + std::to_string(i)).c_str())) {
+							DrawPropertyLabel("Domain");
+							if (ImGui::Combo(("##Domain" + std::to_string(i)).c_str(), &currentDomain, kMaterialDomains, IM_ARRAYSIZE(kMaterialDomains))) {
+								material->setDomain(static_cast<MaterialDomain>(currentDomain));
+							}
+
+							if (material->getDomain() == MaterialDomain::Transparent) {
+								static const char* kBlendModes[] = { "Opaque", "Alpha", "Additive", "Premultiplied" };
+								int currentBlendMode = static_cast<int>(material->getBlendMode());
+								DrawPropertyLabel("Blend Mode");
+								if (ImGui::Combo(("##BlendMode" + std::to_string(i)).c_str(), &currentBlendMode, kBlendModes, IM_ARRAYSIZE(kBlendModes))) {
+									material->setBlendMode(static_cast<BlendMode>(currentBlendMode));
+								}
+							}
+
+							DrawPropertyLabel("Base Color");
+							ImGui::ColorEdit4(("##BaseColor" + std::to_string(i)).c_str(), &params.baseColor.x);
+							DrawPropertyLabel("Metallic");
+							ImGui::SliderFloat(("##Metallic" + std::to_string(i)).c_str(), &params.metallic, 0.0f, 1.0f);
+							DrawPropertyLabel("Roughness");
+							ImGui::SliderFloat(("##Roughness" + std::to_string(i)).c_str(), &params.roughness, 0.0f, 1.0f);
+							DrawPropertyLabel("Ambient Occlusion");
+							ImGui::SliderFloat(("##AO" + std::to_string(i)).c_str(), &params.ao, 0.0f, 1.0f);
+							DrawPropertyLabel("Normal Scale");
+							ImGui::SliderFloat(("##NormalScale" + std::to_string(i)).c_str(), &params.normalScale, 0.0f, 2.0f);
+							if (materialInstance->getEmissive()) {
+								DrawPropertyLabel("Emissive Strength");
+								ImGui::SliderFloat(("##EmissiveStrength" + std::to_string(i)).c_str(), &params.emissiveStrength, 0.0f, 8.0f);
+							}
+							if (material->getDomain() == MaterialDomain::Masked) {
+								DrawPropertyLabel("Alpha Cutoff");
+								ImGui::SliderFloat(("##AlphaCutoff" + std::to_string(i)).c_str(), &params.alphaCutoff, 0.0f, 1.0f);
+							}
+							ImGui::EndTable();
+						}
+					}
+					ImGui::TreePop();
+				}
+			}
+		}
 	}
 
+	if (hasLightComponent && BeginInspectorSection("Light")) {
+		LightData& light = lightComponent->getLightData();
+		if (BeginInspectorPropertyTable("##LightProperties")) {
+			DrawPropertyValueText("Type", GetLightTypeLabel(light.type));
+			bool castShadow = lightComponent->canCastShadow();
+			DrawPropertyToggle("Cast Shadow", "##LightCastShadow", &castShadow);
+			lightComponent->setCastShadow(castShadow);
+			DrawPropertyLabel("Color");
+			ImGui::ColorEdit3("##LightColor", &light.color.x);
+			DrawPropertyLabel("Intensity");
+			ImGui::SliderFloat("##LightIntensity", &light.intensity, 0.0f, 10.0f);
+			if (light.type == LightType::Directional || light.type == LightType::Spot) {
+				DrawPropertyLabel("Direction");
+				ImGui::SliderFloat3("##LightDirection", &light.direction.x, -1.0f, 1.0f);
+			}
+			if (light.type == LightType::Point || light.type == LightType::Spot) {
+				DrawPropertyLabel("Range");
+				ImGui::SliderFloat("##LightRange", &light.range, 0.0f, 100.0f);
+			}
+			ImGui::EndTable();
+		}
+	}
 	ImGui::End();
 }
 
-void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
-	if (!actor) return;
-	auto transform = actor->getComponent<Transform>();
-	if (!transform) return;
+void
+GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
+	//ImGui::Begin("Transform");
+	// Draw the structure
+	vec3Control("Position", const_cast<float*>(actor->getComponent<Transform>()->getPosition().data()), 0.0f, 78.0f, false);
+	vec3Control("Rotation", const_cast<float*>(actor->getComponent<Transform>()->getRotation().data()), 0.0f, 78.0f, true);
+	vec3Control("Scale", const_cast<float*>(actor->getComponent<Transform>()->getScale().data()), 1.0f, 78.0f, false);
 
-    EU::Vector3 pos = transform->getPosition();
-    float p[3] = { pos.x, pos.y, pos.z };
-    vec3Control("Position", p, 0.0f, 75.0f);
-    transform->setPosition(EU::Vector3(p[0], p[1], p[2]));
-
-    EU::Vector3 rot = transform->getRotation();
-    float r[3] = { rot.x, rot.y, rot.z };
-    vec3Control("Rotation", r, 0.0f, 75.0f, true);
-    transform->setRotation(EU::Vector3(r[0], r[1], r[2]));
-
-    EU::Vector3 sca = transform->getScale();
-    float s[3] = { sca.x, sca.y, sca.z };
-    vec3Control("Scale", s, 1.0f, 75.0f);
-    transform->setScale(EU::Vector3(s[0], s[1], s[2]));
+	//ImGui::End();
 }
 
+void 
+GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
+	ImGui::Begin("World Outliner");
 
-void GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
-	ImGui::Begin("Hierarchy");
-
+	ImGui::TextDisabled("Scene");
 	static ImGuiTextFilter filter;
-	filter.Draw("Search...", ImGui::GetContentRegionAvail().x);
+	filter.Draw("Search...", -1.0f);
 
 	ImGui::Separator();
 
-	for (int i = 0; i < (int)actors.size(); ++i) {
+	if (selectedActorIndex >= static_cast<int>(actors.size())) {
+		selectedActorIndex = actors.empty() ? -1 : static_cast<int>(actors.size()) - 1;
+	}
+
+	for (int i = 0; i < static_cast<int>(actors.size()); ++i) {
 		const auto& actor = actors[i];
-		if (!actor) continue;
+		std::string actorName = actor ? actor->getName() : "Actor";
+		const char* actorTypeLabel = GetActorTypeLabel(actor);
+		ImVec4 actorTypeColor = GetActorTypeColor(actor);
+		std::string filterLabel = actorName + " " + actorTypeLabel;
+		if (!filter.PassFilter(filterLabel.c_str())) {
+			continue;
+		}
 
-		std::string actorName = actor->getName();
-		if (!filter.PassFilter(actorName.c_str())) continue;
+		auto meshRenderer = actor ? actor->getComponent<MeshRendererComponent>() : EU::TSharedPointer<MeshRendererComponent>();
+		auto lightComponent = actor ? actor->getComponent<LightComponent>() : EU::TSharedPointer<LightComponent>();
+		const bool hasMeshRenderer = !meshRenderer.isNull();
+		const bool hasLightComponent = !lightComponent.isNull();
 
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-		if (selectedActorIndex == i) flags |= ImGuiTreeNodeFlags_Selected;
+		ImGui::PushID(i);
+		const bool isSelected = (selectedActorIndex == i);
+		if (isSelected) {
+			ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.18f, 0.32f, 0.58f, 0.70f));
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.22f, 0.38f, 0.66f, 0.85f));
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.24f, 0.42f, 0.72f, 0.95f));
+		}
 
-		bool nodeOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, flags, "%s", actorName.c_str());
-
-		if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+		ImVec2 rowSize(ImGui::GetContentRegionAvail().x, 42.0f);
+		if (ImGui::Selectable("##actorRow", isSelected, ImGuiSelectableFlags_SpanAvailWidth, rowSize)) {
 			selectedActorIndex = i;
 		}
 
-		if (ImGui::BeginPopupContextItem()) {
-			selectedActorIndex = i; 
-			ImGui::TextDisabled("Actor Options");
-			ImGui::Separator();
-			if (ImGui::MenuItem("Rename...")) {  }
-			if (ImGui::MenuItem("Duplicate", "Ctrl+D")) {  }
-			ImGui::Separator();
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
-			if (ImGui::MenuItem("Delete", "Del")) {  }
-			ImGui::PopStyleColor();
-			ImGui::EndPopup();
+		ImVec2 min = ImGui::GetItemRectMin();
+		ImVec2 max = ImGui::GetItemRectMax();
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddText(ImVec2(min.x + 12.0f, min.y + 6.0f), ImGui::GetColorU32(ImGuiCol_Text), actorName.c_str());
+		drawList->AddText(ImVec2(min.x + 12.0f, min.y + 23.0f), AccentU32(actorTypeColor), actorTypeLabel);
+
+		float badgeX = max.x - 84.0f;
+		if (hasMeshRenderer) {
+			drawList->AddRectFilled(ImVec2(badgeX, min.y + 12.0f), ImVec2(badgeX + 28.0f, min.y + 30.0f), IM_COL32(68, 118, 180, 180), 6.0f);
+			drawList->AddText(ImVec2(badgeX + 9.0f, min.y + 14.0f), IM_COL32(240, 244, 255, 255), "M");
+			badgeX += 40.0f;
+		}
+		if (hasLightComponent) {
+			drawList->AddRectFilled(ImVec2(badgeX, min.y + 12.0f), ImVec2(badgeX + 28.0f, min.y + 30.0f), IM_COL32(180, 142, 52, 180), 6.0f);
+			drawList->AddText(ImVec2(badgeX + 9.0f, min.y + 14.0f), IM_COL32(255, 248, 232, 255), "L");
 		}
 
-		if (nodeOpen) {
-			auto transform = actor->getComponent<Transform>();
-			if (transform) {
-				ImGui::TextDisabled(" Pos: %.1f, %.1f, %.1f",
-					transform->getPosition().x,
-					transform->getPosition().y,
-					transform->getPosition().z);
-			}
-			ImGui::TreePop();
+		if (isSelected) {
+			ImGui::PopStyleColor(3);
 		}
-	}
-
-	if (ImGui::BeginPopupContextWindow(nullptr, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
-		if (ImGui::MenuItem("Create Empty Actor")) {  }
-		if (ImGui::MenuItem("Create 3D Object")) {  }
-		ImGui::EndPopup();
+		ImGui::PopID();
 	}
 
 	ImGui::End();
 }
 
-void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor) {
-	if (!actor) return;
-	static ImGuizmo::MODE mCurrentGizmoMode = ImGuizmo::WORLD;
+void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor)
+{
+	if (actor.isNull()) return;
 	auto transform = actor->getComponent<Transform>();
-	if (!transform) return;
+	if (transform.isNull()) return;
+	if (!mGizmoEnabled) {
+		m_isUsingGizmo = false;
+		return;
+	}
 
 	float rectX = m_viewportPos.x;
 	float rectY = m_viewportPos.y;
 	float rectW = m_viewportSize.x;
 	float rectH = m_viewportSize.y;
 
-	if (rectW < 64.0f || rectH < 64.0f) {
+	if (rectW < 64.0f || rectH < 64.0f)
+	{
 		m_isUsingGizmo = false;
 		return;
 	}
 
-    EU::Vector3 pos = transform->getPosition();
-    EU::Vector3 rot = transform->getRotation();
-    EU::Vector3 sca = transform->getScale();
-    float posArr[3] = { pos.x, pos.y, pos.z };
-    float rotArr[3] = { rot.x, rot.y, rot.z };
-    float scaArr[3] = { sca.x, sca.y, sca.z };
+	float* pos = const_cast<float*>(transform->getPosition().data());
+	float* rot = const_cast<float*>(transform->getRotation().data());
+	float* sca = const_cast<float*>(transform->getScale().data());
+	float gizmoRotation[3] = {
+		RadToDeg(rot[0]),
+		RadToDeg(rot[1]),
+		RadToDeg(rot[2])
+	};
 
 	float mArr[16];
-	ImGuizmo::RecomposeMatrixFromComponents(posArr, rotArr, scaArr, mArr);
+	ImGuizmo::RecomposeMatrixFromComponents(pos, gizmoRotation, sca, mArr);
 
 	float vArr[16], pArr[16];
 	ToFloatArray(cam.getView(), vArr);
@@ -434,95 +857,207 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 
 	ImGuizmo::SetOrthographic(false);
 
-	if (m_viewportDrawList) ImGuizmo::SetDrawlist(m_viewportDrawList);
-	else ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList());
+	// MUY IMPORTANTE: usar el drawlist del viewport, no el actual
+	if (m_viewportDrawList)
+		ImGuizmo::SetDrawlist(m_viewportDrawList);
+	else
+		ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList());
 
 	ImGuizmo::SetID(0);
-	ImGuizmo::SetGizmoSizeClipSpace(0.15f);
-	ImGuizmo::AllowAxisFlip(false);
+	ImGuizmo::SetGizmoSizeClipSpace(0.12f);
+	ImGuizmo::AllowAxisFlip(true);
 	ImGuizmo::SetRect(rectX, rectY, rectW, rectH);
 
 	float snapValue = 25.0f;
-	if (mCurrentGizmoOperation == ImGuizmo::ROTATE)    snapValue = 5.0f;
+	if (mCurrentGizmoOperation == ImGuizmo::ROTATE)    snapValue = 1.0f;
 	if (mCurrentGizmoOperation == ImGuizmo::TRANSLATE) snapValue = 0.5f;
 
 	float snap[3] = { snapValue, snapValue, snapValue };
 	bool useSnap = ImGui::GetIO().KeyCtrl;
-	bool canManipulate = m_viewportHovered || m_viewportActive || m_isUsingGizmo;
-
-	if (canManipulate) {
-		ImGuizmo::Manipulate(vArr, pArr, mCurrentGizmoOperation, mCurrentGizmoMode, mArr, nullptr, useSnap ? snap : nullptr);
+	ImGuizmo::MODE activeGizmoMode = mCurrentGizmoMode;
+	if (mCurrentGizmoOperation == ImGuizmo::SCALE) {
+		activeGizmoMode = ImGuizmo::LOCAL;
 	}
+
+	ImGuizmo::Manipulate(
+		vArr,
+		pArr,
+		mCurrentGizmoOperation,
+		activeGizmoMode,
+		mArr,
+		nullptr,
+		useSnap ? snap : nullptr
+	);
 
 	m_isUsingGizmo = ImGuizmo::IsUsing();
 
-	if (m_isUsingGizmo) {
+	if (m_isUsingGizmo)
+	{
 		float newPos[3], newRot[3], newSca[3];
 		ImGuizmo::DecomposeMatrixToComponents(mArr, newPos, newRot, newSca);
+
 		transform->setPosition(EU::Vector3(newPos[0], newPos[1], newPos[2]));
-		transform->setRotation(EU::Vector3(newRot[0], newRot[1], newRot[2]));
+		transform->setRotation(EU::Vector3(DegToRad(newRot[0]), DegToRad(newRot[1]), DegToRad(newRot[2])));
 		transform->setScale(EU::Vector3(newSca[0], newSca[1], newSca[2]));
 	}
 }
 
-// Se mantiene la declaraci髇 de la funci髇 para no romper el .h, pero ya no se llama en el Viewport
-void GUI::drawGizmoToolbar() {
-	ImGui::SetNextWindowBgAlpha(0.0f);
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+void GUI::drawGizmoToolbar()
+{
+	//ImGui::SetNextWindowPos(ImVec2(300, 150), ImGuiCond_Always);
+	ImGui::SetNextWindowBgAlpha(0.0f); // 0 = transparente total
+
+	ImGuiWindowFlags window_flags =
+		ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_AlwaysAutoResize |/*
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoSavedSettings |*/
+		ImGuiWindowFlags_NoFocusOnAppearing |
+		ImGuiWindowFlags_NoNav;
+
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-	if (ImGui::Begin("GizmoToolBar", nullptr, window_flags)) {
-		auto buttonMode = [&](const char* label, ImGuizmo::OPERATION op, const char* shortcut) {
-			bool isActive = (mCurrentGizmoOperation == op);
-			if (isActive) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.44f, 0.87f, 1.0f)); // UE5 Blue
-			if (ImGui::Button(label)) mCurrentGizmoOperation = op;
-			if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s (%s)", label, shortcut);
-			if (isActive) ImGui::PopStyleColor();
-			ImGui::SameLine();
+	if (ImGui::Begin("GizmoToolBar", nullptr, window_flags))
+	{
+		auto buttonMode = [&](const char* label, ImGuizmo::OPERATION op, const char* shortcut)
+			{
+				bool isActive = (mGizmoEnabled && mCurrentGizmoOperation == op);
+				if (isActive)
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.8f, 1.0f));
+
+				if (ImGui::Button(label)) {
+					mGizmoEnabled = true;
+					mCurrentGizmoOperation = op;
+				}
+
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("%s (%s)", label, shortcut);
+
+				if (isActive) ImGui::PopStyleColor();
+				ImGui::SameLine();
 			};
 
 		buttonMode("T", ImGuizmo::TRANSLATE, "W");
 		buttonMode("R", ImGuizmo::ROTATE, "E");
 		buttonMode("S", ImGuizmo::SCALE, "R");
 
-		static ImGuizmo::MODE mCurrentGizmoMode = ImGuizmo::WORLD;
-		if (ImGui::Button(mCurrentGizmoMode == ImGuizmo::WORLD ? "Global" : "Local")) {
+		const bool worldLocalSupported = (mGizmoEnabled && mCurrentGizmoOperation != ImGuizmo::SCALE);
+		if (!worldLocalSupported) {
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+		if (ImGui::Button(mCurrentGizmoMode == ImGuizmo::WORLD ? "Global" : "Local"))
 			mCurrentGizmoMode = (mCurrentGizmoMode == ImGuizmo::WORLD) ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+		if (!worldLocalSupported) {
+			ImGui::PopStyleVar();
+			ImGui::PopItemFlag();
+			if (ImGui::IsItemHovered()) {
+				ImGui::SetTooltip(mGizmoEnabled
+					? "Scale uses local orientation. World/Local affects Move and Rotate."
+					: "Select mode disables gizmo orientation.");
+			}
 		}
 	}
 	ImGui::End();
+
 	ImGui::PopStyleVar();
 }
 
-void GUI::drawStudioTopRibbon() {
+void GUI::drawStudioTopRibbon()
+{
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
+
 	const float menuBarHeight = 24.0f;
-	const float ribbonHeight = 72.0f;
+	const float ribbonHeight = 64.0f;
 
 	ImGui::SetNextWindowPos(viewport->Pos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, menuBarHeight), ImGuiCond_Always);
 
-	ImGuiWindowFlags menuFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_MenuBar;
+	ImGuiWindowFlags menuFlags =
+		ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoScrollWithMouse |
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_MenuBar;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 4.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.07f, 0.07f, 0.08f, 1.0f)); // UE5 bgPanel
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 3.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.032f, 0.034f, 0.040f, 1.0f));
 
-	if (ImGui::Begin("##StudioMenuBar", nullptr, menuFlags)) {
-		if (ImGui::BeginMenuBar()) {
-			if (ImGui::BeginMenu("File")) {
-				ImGui::MenuItem("New Scene");
-				ImGui::MenuItem("Open Scene...");
-				ImGui::MenuItem("Save");
+	if (ImGui::Begin("##UnrealMenuBar", nullptr, menuFlags))
+	{
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				ImGui::MenuItem("New Level");
+				ImGui::MenuItem("Open Level");
+				if (ImGui::MenuItem("Save Current", "Ctrl+S")) {
+					m_requestSaveScene = true;
+				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Exit MinerEngine")) show_exit_popup = true;
+				if (ImGui::MenuItem("Exit")) {
+					show_exit_popup = true;
+				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Edit")) {
+
+			if (ImGui::BeginMenu("Edit"))
+			{
 				ImGui::MenuItem("Undo");
 				ImGui::MenuItem("Redo");
+				ImGui::Separator();
+				ImGui::MenuItem("Cut");
+				ImGui::MenuItem("Copy");
+				ImGui::MenuItem("Paste");
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Window"))
+			{
+				ImGui::MenuItem("World Outliner", nullptr, &m_showOutliner);
+				ImGui::MenuItem("Details", nullptr, &m_showInspector);
+				ImGui::MenuItem("Content Browser", nullptr, &m_showToolbox);
+				ImGui::Separator();
+				ImGui::MenuItem("Render Diagnostics", nullptr, &m_showRenderDebug);
+				ImGui::MenuItem("GBuffer Viewer", nullptr, &m_showGBufferDebug);
+				if (ImGui::MenuItem("Reset Editor Layout")) {
+					m_showOutliner = true;
+					m_showInspector = true;
+					m_showToolbox = false;
+					m_showRenderDebug = true;
+					m_showGBufferDebug = true;
+				}
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Create"))
+			{
+				if (ImGui::MenuItem("Directional Light")) {
+					m_requestedLightType = LightType::Directional;
+					m_requestCreateLight = true;
+				}
+				ImGui::MenuItem("Static Mesh", nullptr, false, false);
+				ImGui::MenuItem("Material", nullptr, false, false);
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Renderer"))
+			{
+				ImGui::MenuItem("Render Diagnostics", nullptr, &m_showRenderDebug);
+				ImGui::MenuItem("GBuffer Viewer", nullptr, &m_showGBufferDebug);
+				ImGui::MenuItem("Visualize Shadow Factor", nullptr, &m_visualizeDeferredShadowFactor);
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Help"))
+			{
+				ImGui::MenuItem("Documentation");
+				ImGui::MenuItem("About Wildvine Engine");
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenuBar();
 		}
 	}
@@ -533,112 +1068,525 @@ void GUI::drawStudioTopRibbon() {
 	ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, ribbonHeight), ImGuiCond_Always);
 
-	ImGuiWindowFlags ribbonFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar;
+	ImGuiWindowFlags ribbonFlags =
+		ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_NoScrollWithMouse |
+		ImGuiWindowFlags_NoScrollbar;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.11f, 0.11f, 0.12f, 1.0f)); // UE5 bgContent
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 7.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 4.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.070f, 0.074f, 0.084f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.115f, 0.122f, 0.138f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.165f, 0.180f, 0.205f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.42f, 0.16f, 0.86f, 1.0f));
 
-	if (ImGui::Begin("##StudioRibbon", nullptr, ribbonFlags)) {
-		auto ribbonButton = [&](const char* id, const char* topText, const char* bottomText, ImVec2 size, bool active = false) -> bool {
-			if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.44f, 0.87f, 1.0f)); // UE5 Blue
+	if (ImGui::Begin("##UnrealToolbar", nullptr, ribbonFlags))
+	{
+		auto toolbarButton = [&](const char* id, const char* label, const char* hint, bool active = false) -> bool
+		{
+			const ImVec2 size(74.0f, 42.0f);
+			if (active) {
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.08f, 0.36f, 0.86f, 1.0f));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.52f, 0.20f, 1.00f, 1.0f));
+			}
+
 			bool pressed = ImGui::Button(id, size);
 			ImVec2 min = ImGui::GetItemRectMin();
 			ImVec2 max = ImGui::GetItemRectMax();
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			ImVec2 topSize = ImGui::CalcTextSize(topText);
-			ImVec2 bottomSize = ImGui::CalcTextSize(bottomText);
+			ImVec2 labelSize = ImGui::CalcTextSize(label);
+			ImVec2 hintSize = ImGui::CalcTextSize(hint);
 			float centerX = (min.x + max.x) * 0.5f;
-			drawList->AddText(ImVec2(centerX - topSize.x * 0.5f, min.y + 10.0f), ImGui::GetColorU32(ImGuiCol_Text), topText);
-			drawList->AddText(ImVec2(centerX - bottomSize.x * 0.5f, min.y + 34.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), bottomText);
-			if (active) ImGui::PopStyleColor();
-			return pressed;
-			};
+			drawList->AddText(ImVec2(centerX - labelSize.x * 0.5f, min.y + 7.0f), ImGui::GetColorU32(ImGuiCol_Text), label);
+			drawList->AddText(ImVec2(centerX - hintSize.x * 0.5f, min.y + 24.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), hint);
 
-		auto separatorGroup = [&]() {
-			ImGui::SameLine();
-			ImGui::Dummy(ImVec2(6.0f, 1.0f));
+			if (active) {
+				ImGui::PopStyleColor(2);
+			}
+			return pressed;
+		};
+
+		auto groupSeparator = [&]()
+		{
 			ImGui::SameLine();
 			ImVec2 p = ImGui::GetCursorScreenPos();
-			ImDrawList* draw = ImGui::GetWindowDrawList();
-			draw->AddLine(ImVec2(p.x, p.y), ImVec2(p.x, p.y + 48.0f), IM_COL32(40, 40, 45, 255), 1.0f);
-			ImGui::Dummy(ImVec2(8.0f, 48.0f));
+			ImGui::GetWindowDrawList()->AddLine(ImVec2(p.x + 4.0f, p.y), ImVec2(p.x + 4.0f, p.y + 46.0f), IM_COL32(55, 59, 68, 255), 1.0f);
+			ImGui::Dummy(ImVec2(12.0f, 46.0f));
 			ImGui::SameLine();
-			};
+		};
 
-		const ImVec2 btnSize(72.0f, 52.0f);
+		ImGui::BeginGroup();
+		ImGui::TextDisabled("Modes");
+		if (toolbarButton("##SelectMode", "Select", "Q", !mGizmoEnabled)) {
+			mGizmoEnabled = false;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##MoveMode", "Move", "W", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::TRANSLATE)) {
+			mGizmoEnabled = true;
+			mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##RotateMode", "Rotate", "E", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::ROTATE)) {
+			mGizmoEnabled = true;
+			mCurrentGizmoOperation = ImGuizmo::ROTATE;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##ScaleMode", "Scale", "R", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::SCALE)) {
+			mGizmoEnabled = true;
+			mCurrentGizmoOperation = ImGuizmo::SCALE;
+		}
+		ImGui::EndGroup();
 
-		ribbonButton("##Select", "Select", "Cursor", btnSize, false); ImGui::SameLine();
-		if (ribbonButton("##Move", "Move", "W", btnSize, mCurrentGizmoOperation == ImGuizmo::TRANSLATE)) mCurrentGizmoOperation = ImGuizmo::TRANSLATE; ImGui::SameLine();
-		if (ribbonButton("##Rotate", "Rotate", "E", btnSize, mCurrentGizmoOperation == ImGuizmo::ROTATE)) mCurrentGizmoOperation = ImGuizmo::ROTATE; ImGui::SameLine();
-		if (ribbonButton("##Scale", "Scale", "R", btnSize, mCurrentGizmoOperation == ImGuizmo::SCALE)) mCurrentGizmoOperation = ImGuizmo::SCALE;
+		groupSeparator();
 
-		separatorGroup();
+		ImGui::BeginGroup();
+		ImGui::TextDisabled("Create");
+		if (toolbarButton("##CreateLight", "Light", "Actor", false)) {
+			m_requestedLightType = LightType::Directional;
+			m_requestCreateLight = true;
+		}
+		ImGui::SameLine();
+		toolbarButton("##CreateMesh", "Mesh", "PBR", false);
+		ImGui::SameLine();
+		toolbarButton("##MaterialEdit", "Material", "PBR", false);
+		ImGui::EndGroup();
 
-		ribbonButton("##Part", "3D Object", "Mesh", btnSize, false); ImGui::SameLine();
-		ribbonButton("##Light", "Light", "Point", btnSize, false); ImGui::SameLine();
-		ribbonButton("##Material", "Material", "Editor", btnSize, false);
+		groupSeparator();
 
-		separatorGroup();
-		ribbonButton("##Play", "Play", "Game", btnSize, false);
+		ImGui::BeginGroup();
+		ImGui::TextDisabled("Panels");
+		if (toolbarButton("##PanelWorld", "World", "Outliner", m_showOutliner)) {
+			m_showOutliner = !m_showOutliner;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##PanelDetails", "Details", "Inspector", m_showInspector)) {
+			m_showInspector = !m_showInspector;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##PanelContent", "Content", "Browser", m_showToolbox)) {
+			m_showToolbox = !m_showToolbox;
+		}
+		ImGui::EndGroup();
+
+		groupSeparator();
+
+		ImGui::BeginGroup();
+		ImGui::TextDisabled("Diagnostics");
+		if (toolbarButton("##RenderDiag", "Render", "Passes", m_showRenderDebug)) {
+			m_showRenderDebug = !m_showRenderDebug;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##GBufferDiag", "GBuffer", "Viewer", m_showGBufferDebug)) {
+			m_showGBufferDebug = !m_showGBufferDebug;
+		}
+		ImGui::SameLine();
+		if (toolbarButton("##ShadowFactor", "Shadow", "Factor", m_visualizeDeferredShadowFactor)) {
+			m_visualizeDeferredShadowFactor = !m_visualizeDeferredShadowFactor;
+		}
+		ImGui::EndGroup();
 	}
 	ImGui::End();
 
-	ImGui::PopStyleColor(1);
+	ImGui::PopStyleColor(4);
 	ImGui::PopStyleVar(3);
 }
+void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
+{
+	ImGuiWindowFlags flags =
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoScrollWithMouse | 
 
-void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV) {
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse;
+		ImGuiWindowFlags_NoCollapse;
+
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-	if (ImGui::Begin("Viewport", nullptr, flags)) {
+	if (ImGui::Begin("Viewport", nullptr, flags))
+	{
 		m_viewportDrawList = ImGui::GetWindowDrawList();
+
 		ImVec2 panelMin = ImGui::GetCursorScreenPos();
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
 
 		if (panelSize.x < 1.0f) panelSize.x = 1.0f;
 		if (panelSize.y < 1.0f) panelSize.y = 1.0f;
 
-		m_viewportPos = panelMin;
-		m_viewportSize = panelSize;
-
-		if (viewportSRV) {
+		if (viewportSRV)
+		{
 			ImGui::Image((ImTextureID)viewportSRV, panelSize);
 		}
-		else {
+		else
+		{
+			ImGui::InvisibleButton("##ViewportSurface", panelSize);
+			ImVec2 itemMin = ImGui::GetItemRectMin();
+			ImVec2 itemMax = ImGui::GetItemRectMax();
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			ImVec2 panelMax(panelMin.x + panelSize.x, panelMin.y + panelSize.y);
-			drawList->AddRectFilled(panelMin, panelMax, IM_COL32(20, 20, 22, 255)); // Gris oscuro neutral
-			drawList->AddText(ImVec2(panelMin.x + 12.0f, panelMin.y + 12.0f), IM_COL32(220, 220, 240, 255), "Viewport no renderizado");
+
+			drawList->AddRectFilled(itemMin, itemMax, IM_COL32(20, 20, 25, 255));
+			drawList->AddText(
+				ImVec2(itemMin.x + 12.0f, itemMin.y + 12.0f),
+				IM_COL32(220, 220, 220, 255),
+				"Viewport sin textura"
+			);
 		}
 
+		ImVec2 itemMin = ImGui::GetItemRectMin();
+		ImVec2 itemMax = ImGui::GetItemRectMax();
+		m_viewportPos = itemMin;
+		m_viewportSize = ImVec2(itemMax.x - itemMin.x, itemMax.y - itemMin.y);
+
+		// IMPORTANTE: el hover/active del item imagen
 		m_viewportHovered = ImGui::IsItemHovered();
 		m_viewportActive = ImGui::IsItemActive();
 		m_viewportFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 	}
 	ImGui::End();
+
 	ImGui::PopStyleVar();
 }
 
-void GUI::drawEditorDockspace() {
+void GUI::drawRenderDebugPanel(ID3D11ShaderResourceView* preShadowSRV,
+	ID3D11ShaderResourceView* finalViewportSRV,
+	ID3D11ShaderResourceView* shadowMapSRV)
+{
+	ImGui::Begin("Render Diagnostics");
+
+	DebugTextureItem items[] = {
+		{ "Scene Final", "Viewport color target", finalViewportSRV },
+		{ "Pre-Shadow", "Scene before shadow resolve", preShadowSRV },
+		{ "Shadow Map", "Directional light depth", shadowMapSRV }
+	};
+
+	static int selectedView = 0;
+	if (selectedView >= IM_ARRAYSIZE(items)) {
+		selectedView = 0;
+	}
+
+	int availableCount = 0;
+	for (int i = 0; i < IM_ARRAYSIZE(items); ++i) {
+		if (items[i].srv) {
+			availableCount++;
+		}
+	}
+
+	ImGui::TextDisabled("Renderer");
+	ImGui::SameLine();
+	ImGui::Text("Forward Renderer");
+	ImGui::SameLine();
+	ImGui::TextDisabled("| Passes: %d/%d", availableCount, IM_ARRAYSIZE(items));
+	ImGui::Separator();
+
+	const float leftWidth = 230.0f;
+	ImGui::BeginChild("##RenderPassList", ImVec2(leftWidth, 0.0f), true);
+	ImGui::TextDisabled("Pass Browser");
+	ImGui::Separator();
+
+	for (int i = 0; i < IM_ARRAYSIZE(items); ++i) {
+		ImGui::PushID(i);
+		const bool selected = (selectedView == i);
+		if (selected) {
+			ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.08f, 0.36f, 0.86f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.52f, 0.20f, 1.00f, 1.0f));
+		}
+
+		if (ImGui::Selectable("##RenderPassRow", selected, ImGuiSelectableFlags_SpanAvailWidth, ImVec2(0.0f, 132.0f))) {
+			selectedView = i;
+		}
+
+		ImVec2 rowMin = ImGui::GetItemRectMin();
+		ImVec2 rowMax = ImGui::GetItemRectMax();
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddText(ImVec2(rowMin.x + 8.0f, rowMin.y + 7.0f), ImGui::GetColorU32(ImGuiCol_Text), items[i].label);
+		drawList->AddText(ImVec2(rowMin.x + 8.0f, rowMin.y + 25.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), items[i].channels);
+
+		ImVec2 thumbMin(rowMin.x + 8.0f, rowMin.y + 48.0f);
+		ImVec2 thumbMax(rowMax.x - 8.0f, rowMax.y - 8.0f);
+		if (items[i].srv) {
+			drawList->AddRectFilled(thumbMin, thumbMax, IM_COL32(10, 11, 13, 255), 3.0f);
+			ImGui::SetCursorScreenPos(thumbMin);
+			ImGui::Image((ImTextureID)items[i].srv, ImVec2(thumbMax.x - thumbMin.x, thumbMax.y - thumbMin.y));
+		}
+		else {
+			drawList->AddRectFilled(thumbMin, thumbMax, IM_COL32(18, 20, 23, 255), 3.0f);
+			drawList->AddRect(thumbMin, thumbMax, IM_COL32(58, 62, 70, 255), 3.0f);
+			drawList->AddText(ImVec2(thumbMin.x + 8.0f, thumbMin.y + 8.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Unavailable");
+		}
+		ImGui::SetCursorScreenPos(ImVec2(rowMin.x, rowMax.y));
+
+		if (selected) {
+			ImGui::PopStyleColor(2);
+		}
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+	ImGui::BeginChild("##RenderPassPreview", ImVec2(0.0f, 0.0f), true);
+	ImGui::Text("%s", items[selectedView].label);
+	ImGui::SameLine();
+	ImGui::TextDisabled("%s", items[selectedView].channels);
+	ImGui::Separator();
+
+	ImVec2 previewSize = ImGui::GetContentRegionAvail();
+	if (previewSize.x < 1.0f) previewSize.x = 1.0f;
+	if (previewSize.y < 1.0f) previewSize.y = 1.0f;
+	if (items[selectedView].srv) {
+		ImGui::Image((ImTextureID)items[selectedView].srv, previewSize);
+	}
+	else {
+		ImVec2 min = ImGui::GetCursorScreenPos();
+		ImVec2 maxPt(min.x + previewSize.x, min.y + previewSize.y);
+		ImGui::InvisibleButton("##RenderPassMissing", previewSize);
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 23, 255));
+		drawList->AddText(ImVec2(min.x + 16.0f, min.y + 16.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "No SRV bound for this pass");
+	}
+	ImGui::EndChild();
+
+	ImGui::End();
+}
+void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
+	ID3D11ShaderResourceView* normalRoughnessSRV,
+	ID3D11ShaderResourceView* worldAoSRV,
+	ID3D11ShaderResourceView* emissiveAlphaSRV)
+{
+	DebugTextureItem items[] = {
+		{ "GB: Albedo + Metallic", "RGB Albedo | A Metallic", albedoMetallicSRV },
+		{ "GB: Normal + Roughness", "RGB Normal | A Roughness", normalRoughnessSRV },
+		{ "GB: World + AO", "RGB World | A AO", worldAoSRV },
+		{ "GB: Emissive + Alpha", "RGB Emissive | A Alpha", emissiveAlphaSRV }
+	};
+
+	static int selectedView = 0;
+	if (selectedView >= IM_ARRAYSIZE(items)) {
+		selectedView = 0;
+	}
+
+	bool hasAnyTexture = false;
+	for (int i = 0; i < IM_ARRAYSIZE(items); ++i) {
+		if (items[i].srv != nullptr) {
+			hasAnyTexture = true;
+			break;
+		}
+	}
+
+	ImGui::Begin("GBuffer Viewer");
+	ImGui::TextDisabled("Deferred Attachments");
+	ImGui::SameLine();
+	ImGui::Text("%s", hasAnyTexture ? "Available" : "ForwardRenderer: unavailable");
+	ImGui::Checkbox("Visualize Shadow Factor", &m_visualizeDeferredShadowFactor);
+	ImGui::Separator();
+
+	const float leftWidth = 245.0f;
+	ImGui::BeginChild("##GBufferList", ImVec2(leftWidth, 0.0f), true);
+	for (int i = 0; i < IM_ARRAYSIZE(items); ++i) {
+		ImGui::PushID(i);
+		if (ImGui::Selectable(items[i].label, selectedView == i, ImGuiSelectableFlags_SpanAvailWidth, ImVec2(0.0f, 24.0f))) {
+			selectedView = i;
+		}
+		ImGui::TextDisabled("%s", items[i].channels);
+		ImVec2 thumbSize(ImGui::GetContentRegionAvail().x, 92.0f);
+		if (items[i].srv) {
+			ImGui::Image((ImTextureID)items[i].srv, thumbSize);
+		}
+		else {
+			ImVec2 min = ImGui::GetCursorScreenPos();
+			ImVec2 maxPt(min.x + thumbSize.x, min.y + thumbSize.y);
+			ImGui::InvisibleButton("##MissingGBufferThumb", thumbSize);
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 23, 255), 3.0f);
+			drawList->AddRect(min, maxPt, IM_COL32(58, 62, 70, 255), 3.0f);
+			drawList->AddText(ImVec2(min.x + 8.0f, min.y + 8.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Not produced by current renderer");
+		}
+		ImGui::Separator();
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+	ImGui::BeginChild("##GBufferPreview", ImVec2(0.0f, 0.0f), true);
+	ImGui::Text("%s", items[selectedView].label);
+	ImGui::SameLine();
+	ImGui::TextDisabled("%s", items[selectedView].channels);
+	ImGui::Separator();
+	ImVec2 previewSize = ImGui::GetContentRegionAvail();
+	if (previewSize.x < 1.0f) previewSize.x = 1.0f;
+	if (previewSize.y < 1.0f) previewSize.y = 1.0f;
+	if (items[selectedView].srv) {
+		ImGui::Image((ImTextureID)items[selectedView].srv, previewSize);
+	}
+	else {
+		ImVec2 min = ImGui::GetCursorScreenPos();
+		ImVec2 maxPt(min.x + previewSize.x, min.y + previewSize.y);
+		ImGui::InvisibleButton("##MissingGBufferPreview", previewSize);
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 23, 255));
+		drawList->AddText(ImVec2(min.x + 16.0f, min.y + 16.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Switch to a deferred renderer to populate this attachment");
+	}
+	ImGui::EndChild();
+
+	ImGui::End();
+}
+
+void GUI::drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
+	ID3D11ShaderResourceView* normalSRV,
+	ID3D11ShaderResourceView* metallicSRV,
+	ID3D11ShaderResourceView* roughnessSRV,
+	ID3D11ShaderResourceView* aoSRV)
+{
+	DebugTextureItem items[] = {
+		{ "PBR Albedo", "Slot t0 | RGB base color", albedoSRV },
+		{ "PBR Normal", "Slot t1 | Tangent-space normal", normalSRV },
+		{ "PBR Metallic", "Slot t2 | Metal mask", metallicSRV },
+		{ "PBR Roughness", "Slot t3 | Micro-surface roughness", roughnessSRV },
+		{ "PBR Ambient Occlusion", "Slot t4 | Occlusion mask", aoSRV }
+	};
+
+	static int selectedView = 0;
+	if (selectedView >= IM_ARRAYSIZE(items)) {
+		selectedView = 0;
+	}
+
+	int availableCount = 0;
+	for (int i = 0; i < IM_ARRAYSIZE(items); ++i) {
+		if (items[i].srv) {
+			availableCount++;
+		}
+	}
+
+	ImGui::Begin("Material SRV Inspector");
+	ImGui::TextDisabled("Bound PBR Textures");
+	ImGui::SameLine();
+	ImGui::Text("%d/%d SRVs", availableCount, IM_ARRAYSIZE(items));
+	ImGui::Separator();
+
+	const float leftWidth = 235.0f;
+	ImGui::BeginChild("##MaterialSRVList", ImVec2(leftWidth, 0.0f), true);
+	for (int i = 0; i < IM_ARRAYSIZE(items); ++i) {
+		ImGui::PushID(i);
+		if (ImGui::Selectable(items[i].label, selectedView == i, ImGuiSelectableFlags_SpanAvailWidth, ImVec2(0.0f, 24.0f))) {
+			selectedView = i;
+		}
+		ImGui::TextDisabled("%s", items[i].channels);
+		ImVec2 thumbSize(ImGui::GetContentRegionAvail().x, 96.0f);
+		if (items[i].srv) {
+			ImGui::Image((ImTextureID)items[i].srv, thumbSize);
+		}
+		else {
+			ImVec2 min = ImGui::GetCursorScreenPos();
+			ImVec2 maxPt(min.x + thumbSize.x, min.y + thumbSize.y);
+			ImGui::InvisibleButton("##MissingMaterialSRVThumb", thumbSize);
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 28, 255), 3.0f);
+			drawList->AddRect(min, maxPt, IM_COL32(68, 72, 86, 255), 3.0f);
+			drawList->AddText(ImVec2(min.x + 8.0f, min.y + 8.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "SRV missing");
+		}
+		ImGui::Separator();
+		ImGui::PopID();
+	}
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+	ImGui::BeginChild("##MaterialSRVPreview", ImVec2(0.0f, 0.0f), true);
+	ImGui::Text("%s", items[selectedView].label);
+	ImGui::SameLine();
+	ImGui::TextDisabled("%s", items[selectedView].channels);
+	ImGui::Separator();
+	ImVec2 previewSize = ImGui::GetContentRegionAvail();
+	if (previewSize.x < 1.0f) previewSize.x = 1.0f;
+	if (previewSize.y < 1.0f) previewSize.y = 1.0f;
+	if (items[selectedView].srv) {
+		ImGui::Image((ImTextureID)items[selectedView].srv, previewSize);
+	}
+	else {
+		ImVec2 min = ImGui::GetCursorScreenPos();
+		ImVec2 maxPt(min.x + previewSize.x, min.y + previewSize.y);
+		ImGui::InvisibleButton("##MissingMaterialSRVPreview", previewSize);
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 28, 255));
+		drawList->AddText(ImVec2(min.x + 16.0f, min.y + 16.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "This material slot has no shader resource view");
+	}
+	ImGui::EndChild();
+
+	ImGui::End();
+}
+
+void GUI::drawToolboxPanel()
+{
+	ImGui::Begin("Content Browser");
+
+	ImGui::TextDisabled("Transform");
+	if (ImGui::Button("Select")) {
+		mGizmoEnabled = false;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Move")) {
+		mGizmoEnabled = true;
+		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Rotate")) {
+		mGizmoEnabled = true;
+		mCurrentGizmoOperation = ImGuizmo::ROTATE;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Scale")) {
+		mGizmoEnabled = true;
+		mCurrentGizmoOperation = ImGuizmo::SCALE;
+	}
+
+	ImGui::Separator();
+	ImGui::TextDisabled("Panels");
+	ImGui::Checkbox("Explorer", &m_showOutliner);
+	ImGui::Checkbox("Properties", &m_showInspector);
+	ImGui::Checkbox("Render Debug", &m_showRenderDebug);
+	ImGui::Checkbox("GBuffer Debug", &m_showGBufferDebug);
+
+	ImGui::Separator();
+	ImGui::TextDisabled("Renderer");
+	ImGui::Checkbox("Visualize Shadow Factor", &m_visualizeDeferredShadowFactor);
+
+	ImGui::Separator();
+	ImGui::TextDisabled("Create");
+	if (ImGui::Button("Directional Light")) {
+		m_requestedLightType = LightType::Directional;
+		m_requestCreateLight = true;
+	}
+	if (ImGui::Button("Point Light")) {
+		m_requestedLightType = LightType::Point;
+		m_requestCreateLight = true;
+	}
+	if (ImGui::Button("Spot Light")) {
+		m_requestedLightType = LightType::Spot;
+		m_requestCreateLight = true;
+	}
+
+	ImGui::End();
+}
+
+void GUI::drawEditorDockspace()
+{
 	ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-	const float topOffset = 96.0f;
+
+	// Debe coincidir con la altura total que ocupa tu ribbon superior
+	const float topOffset = 88.0f; // 24 menu + 64 toolbar
+
 	ImVec2 dockPos = ImVec2(mainViewport->Pos.x, mainViewport->Pos.y + topOffset);
 	ImVec2 dockSize = ImVec2(mainViewport->Size.x, mainViewport->Size.y - topOffset);
 
-	// ELIMINADO: ImGuiWindowFlags_MenuBar para quitar el rect醤gulo vac韔 en el Dockspace
-	ImGuiWindowFlags window_flags = 
-		ImGuiWindowFlags_NoTitleBar | 
-		ImGuiWindowFlags_NoCollapse | 
-		ImGuiWindowFlags_NoResize | 
-		ImGuiWindowFlags_NoMove | 
-		ImGuiWindowFlags_NoBringToFrontOnFocus | 
-		ImGuiWindowFlags_NoNavFocus | 
-		ImGuiWindowFlags_NoBackground | 
-		ImGuiWindowFlags_NoDecoration | 
-		ImGuiWindowFlags_NoSavedSettings;
+	ImGuiWindowFlags window_flags =
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoBringToFrontOnFocus |
+		ImGuiWindowFlags_NoNavFocus |
+		ImGuiWindowFlags_NoBackground |
+		ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_NoSavedSettings |
+		ImGuiWindowFlags_MenuBar;
 
 	ImGui::SetNextWindowPos(dockPos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(dockSize, ImGuiCond_Always);
@@ -649,9 +1597,19 @@ void GUI::drawEditorDockspace() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
 	ImGui::Begin("##MainEditorDockspace", nullptr, window_flags);
+
 	ImGuiID dockspace_id = ImGui::GetID("##EditorDockspace");
-	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+	ImGuiDockNodeFlags dockspace_flags =
+		ImGuiDockNodeFlags_None |
+		ImGuiDockNodeFlags_PassthruCentralNode;
+
+	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
 	ImGui::End();
 
 	ImGui::PopStyleVar(3);
 }
+
+
+
+

@@ -1,30 +1,26 @@
-ï»¿#pragma once
-/**
- * @file Prerequisites.h
- * @brief Central include hub, common macros, vertex formats, constant buffers, and engine
- * enums.
- */
-
-// Librerias STD
+#pragma once
+//Librerias STD
 #include <string>
 #include <sstream>
 #include <vector>
 #include <windows.h>
 #include <xnamath.h>
 #include <thread>
+#include <array>
+
 #include <memory>
 #include <unordered_map>
 #include <type_traits>
-#include <array>
 
-// Librerias DirectX
+//Librerias DirectX
 #include <d3d11.h>
 #include <d3dx11.h>
 #include <d3dcompiler.h>
 #include "Resource.h"
 #include "resource.h"
 
-// Third Party Libraries
+
+//Third Party Libraries
 #include "EngineUtilities/Vectors/Vector2.h"
 #include "EngineUtilities/Vectors/Vector3.h"
 #include "EngineUtilities\Memory\TSharedPointer.h"
@@ -33,26 +29,43 @@
 #include "EngineUtilities\Memory\TUniquePtr.h"
 
 // MACROS
-/** @brief Releases a COM pointer when non-null and resets it to @c nullptr. */
+
+/**
+ * @brief Libera de manera segura un recurso de DirectX.
+ *
+ * Si el puntero no es nulo, libera la memoria con Release()
+ * y lo asigna a nullptr para evitar accesos inválidos.
+ *
+ * @param x Puntero al recurso que se va a liberar.
+ */
 #define SAFE_RELEASE(x) if(x != nullptr) x->Release(); x = nullptr;
 
-/** @brief Writes a formatted resource-state message to the Visual Studio debug output. */
+ /**
+  * @brief Macro para mostrar mensajes de creación de recursos en la ventana de depuración.
+  *
+  * Formatea un mensaje con la clase, el método y el estado actual de la creación.
+  *
+  * @param classObj Nombre de la clase donde ocurre el evento.
+  * @param method Nombre del método donde ocurre el evento.
+  * @param state Estado del recurso (ejemplo: "OK", "FAILED").
+  */
 #define MESSAGE( classObj, method, state )   \
 {                                            \
    std::wostringstream os_;                  \
-   os_ \
-   		<< classObj \
-   		<< "::" \
-   		<< method \
-   		<< " : " \
-   		<< "[CREATION OF RESOURCE " \
-   		<< ": " \
-   		<< state \
-   		<< "] \n"; \
+   os_ << classObj << "::" << method << " : " << "[CREATION OF RESOURCE " << ": " << state << "] \n"; \
    OutputDebugStringW( os_.str().c_str() );  \
 }
 
-/** @brief Writes a formatted error message to the Visual Studio debug output. */
+  /**
+   * @brief Macro para registrar mensajes de error en la ventana de depuración.
+   *
+   * Captura información detallada de la clase, método y descripción del error.
+   * Si ocurre un fallo durante el registro, captura la excepción y notifica.
+   *
+   * @param classObj Nombre de la clase donde ocurre el error.
+   * @param method Nombre del método donde ocurre el error.
+   * @param errorMSG Mensaje descriptivo del error.
+   */
 #define ERROR(classObj, method, errorMSG)                     \
 {                                                             \
     try {                                                     \
@@ -65,131 +78,99 @@
     }                                                         \
 }
 
-//--------------------------------------------------------------------------------------
-// Structures
-//--------------------------------------------------------------------------------------
-/**
- * @struct SimpleVertex
- * @brief Standard mesh vertex containing position, basis vectors, and texture
- * coordinates.
- */
-struct
-	SimpleVertex
-{
-    /** @brief Object-space vertex position. */
-    EU::Vector3 Position;
-    /** @brief Object-space vertex normal. */
-    EU::Vector3 Normal;
-    /** @brief Object-space tangent vector. */
-    EU::Vector3 Tangent;
-    /** @brief Object-space bitangent vector. */
-    EU::Vector3 Bitangent;
-    /** @brief Vertex UV coordinate. */
-    EU::Vector2 TextureCoordinate;
+   /**
+    * @brief Representa un vértice simple con posición y coordenadas de textura.
+    */
+struct 
+SimpleVertex{
+  EU::Vector3 Position;  /**< Coordenadas de posición del vértice (x, y, z). */
+  EU::Vector3 Normal;  /**< Coordenadas de textura (u, v). */
+  EU::Vector3 Tangent; /**< Vector normal del vértice (para iluminación). */
+  EU::Vector3 Bitangent; /**< Vector tangente del vértice (para iluminación). */
+  EU::Vector2 TextureCoordinate; /**< Vector bitangente del vértice (para iluminación). */
 };
 
-/** @brief Compact position-only vertex used by skybox cube geometry. */
 struct
-	SkyboxVertex {
-    /** @brief Position components in object space. */
-    float x, y, z;
+SkyboxVertex {
+  float x, y, z;
 };
 
 
-/** @brief Legacy constant buffer for values that rarely change. */
-struct
-	CBNeverChanges
+struct CBSkybox
 {
-    /** @brief View matrix. */
-    XMMATRIX mView;
+  XMMATRIX mviewProj;
 };
 
-/** @brief Constant buffer used by skybox rendering. */
 struct
-	CBSkybox
-{
-    /** @brief Combined skybox view-projection matrix. */
-    XMMATRIX mviewProj;
-};
-
-/** @brief Constant buffer updated when swap-chain or viewport size changes. */
-struct
-	CBChangeOnResize
-{
-    /** @brief Projection matrix. */
-    XMMATRIX mProjection;
-};
-
-// Constant buffer used in the vertex and pixel shaders.  Align to
-// 16?bytes as required by Direct3D constant buffers.
-struct
-	CBMain
-{
-    //XMFLOAT4X4 World;
-    /** @brief View matrix. */
-    XMFLOAT4X4 View;
-    /** @brief Projection matrix. */
-    XMFLOAT4X4 Projection;
-    /** @brief Camera world position. */
-    EU::Vector3 CameraPos;
-    /** @brief Padding for constant-buffer alignment. */
-    float pad0;
-    /** @brief Main light direction. */
-    EU::Vector3 LightDir;
-    /** @brief Padding for constant-buffer alignment. */
-    float pad1;
-    /** @brief Main light color. */
-    EU::Vector3 LightColor;
-    /** @brief Padding for constant-buffer alignment. */
-    float pad2;
-};
-
-/** @brief Legacy per-object/per-frame constant buffer used by actor rendering. */
-struct
-	CBChangesEveryFrame
-{
-    /** @brief World matrix. */
-    XMMATRIX mWorld;
-    /** @brief Per-mesh color factor. */
-    XMFLOAT4 vMeshColor;
+LoadData {
+  std::string name;
+  std::vector <SimpleVertex> vertex;
+  std::vector <unsigned int> index;
+  int numVertex;
+  int numIndex;
 };
 
 /**
- * @enum ExtensionType
- * @brief Texture file extension identifiers used by texture loading helpers.
+ * @brief Constantes que nunca cambian: contiene la matriz de vista.
  */
+struct 
+CBNeverChanges{
+  XMMATRIX mView; /**< Matriz de vista usada en la cámara. */
+};
+
+/**
+ * @brief Constantes que cambian al redimensionar la ventana.
+ */
+struct 
+CBChangeOnResize{
+  XMMATRIX mProjection; /**< Matriz de proyección ajustada al tamaño de la ventana. */
+};
+
+struct CBMain
+{
+  //XMOFLOAT4X4 World;
+  XMFLOAT4X4 View;
+  XMFLOAT4X4 Projection;
+  EU::Vector3 CameraPos;
+  float pad0;
+  EU::Vector3 LightDir;
+  float pad1;
+  EU::Vector3 LightColor;
+  float pad2;
+};
+
+
+/**
+ * @brief Constantes que cambian en cada frame.
+ */
+struct 
+CBChangesEveryFrame{
+  XMMATRIX mWorld;      /**< Matriz de mundo para transformar los objetos. */
+  XMFLOAT4 vMeshColor;  /**< Color aplicado a la malla. */
+};
+
+/**
+ * @brief Tipos de extensión soportados para las texturas.
+ */
+enum 
+ExtensionType {
+  DDS = 0, /**< Textura en formato DDS (DirectDraw Surface). */
+  PNG = 1, /**< Textura en formato PNG (Portable Network Graphics). */
+  JPG = 2  /**< Textura en formato JPG (Joint Photographic Experts Group). */
+};
+
+enum 
+ShaderType {
+  VERTEX_SHADER = 0,
+  PIXEL_SHADER = 1
+};
+
 enum
-	ExtensionType {
-    /** @brief DirectDraw Surface texture. */
-    DDS = 0,
-    /** @brief PNG texture. */
-    PNG = 1,
-    /** @brief JPEG texture. */
-    JPG = 2
-};
-
-/**
- * @enum ShaderType
- * @brief Shader stage identifiers used by shader-program loading.
- */
-enum
-	ShaderType {
-    /** @brief Vertex shader stage. */
-    VERTEX_SHADER = 0,
-    /** @brief Pixel shader stage. */
-    PIXEL_SHADER = 1
-};
-
-/**
- * @enum ComponentType
- * @brief Tipos de componentes disponibles en el juego.
- */
-enum
-	ComponentType {
-    NONE = 0,     ///< Tipo de componente no especificado.
-    TRANSFORM = 1,///< Componente de transformaciÃ³n.
-    MESH = 2,     ///< Componente de malla.
-    MATERIAL = 3,  ///< Componente de material.
-    HIERARCHY = 4 ///< Componente de jerarquÃ­a.
+  ComponentType {
+  NONE = 0,    
+  TRANSFORM = 1,
+  MESH = 2,     
+  MATERIAL = 3, 
+  HIERARCHY = 4
 };
 

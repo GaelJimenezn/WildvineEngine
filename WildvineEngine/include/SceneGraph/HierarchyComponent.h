@@ -1,119 +1,149 @@
-Ôªø#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "ECS/Component.h"
 
-class DeviceContext;
-class Entity;
+class 
+DeviceContext;
+
+class 
+Entity;
 
 /**
  * @class HierarchyComponent
- * @brief Componente encargado de gestionar las relaciones Padre-Hijo dentro del ECS.
- * * Este componente permite construir una estructura de √°rbol (Scene Graph), facilitando
- * la organizaci√≥n de entidades y la posterior propagaci√≥n de transformaciones espaciales.
+ * @brief Componente que permite estructurar entidades en una jerarquÌa tipo Scene Graph.
+ *
+ * Gestiona relaciones padre-hijo entre entidades,
+ * permitiendo construir estructuras jer·rquicas
+ * como transformaciones encadenadas o agrupaciones lÛgicas.
  */
 class
-	HierarchyComponent : public Component {
+HierarchyComponent : public Component {
 public:
-    /**
-     * @brief Constructor que inicializa el componente con el tipo HIERARCHY.
-     */
-    HierarchyComponent() : Component(ComponentType::HIERARCHY) {}
 
-    /** @brief Destructor por defecto. */
-    ~HierarchyComponent() = default;
+	/**
+	 * @brief Constructor por defecto.
+	 *
+	 * Inicializa el componente como tipo HIERARCHY.
+	 */
+	HierarchyComponent() : Component(ComponentType::HIERARCHY) {}
 
-    /** @brief Inicializaci√≥n del componente (Sobrescrito de Component). */
-    void
-    	init() override {}
+	/**
+	 * @brief Destructor por defecto.
+	 */
+	~HierarchyComponent() = default;
 
-    /** @brief Actualizaci√≥n l√≥gica por frame. */
-    void
-    	update(float) override {}
+	/**
+	 * @brief InicializaciÛn del componente.
+	 *
+	 * Actualmente no realiza ninguna operaciÛn.
+	 */
+	void
+	init() override {}
 
-    /**
-     * @brief Renderizado de elementos relacionados con la jerarqu√≠a si fuera necesario.
-     */
-    void
-    	render(DeviceContext& deviceContext) override {}
+	/**
+	 * @brief ActualizaciÛn por frame.
+	 *
+	 * @param Tiempo delta (no utilizado).
+	 */
+	void
+	update(float) override {}
 
-    /**
-     * @brief Limpia las relaciones de jerarqu√≠a.
-     * * Desvincula al padre y vac√≠a la lista de hijos para evitar punteros colgados.
-     */
-    void
-    	destroy() override {
-        m_children.clear();
-        m_parent = nullptr;
-    }
+	/**
+	 * @brief Render del componente.
+	 *
+	 * @param deviceContext Contexto de dispositivo gr·fico.
+	 */
+	void
+	render(DeviceContext& deviceContext) override {}
 
-    /** @name API SceneGraph */
-    ///@{
+	/**
+	 * @brief Limpia la jerarquÌa del componente.
+	 *
+	 * Elimina todos los hijos y desvincula el padre.
+	 */
+	void
+	destroy() override {
+		m_children.clear();
+		m_parent = nullptr;
+	}
 
-    /**
-     * @brief Define qui√©n es el padre de esta entidad.
-     * @param parent Puntero a la entidad padre.
-     */
-    void
-    	setParent(Entity* parent) {
-        m_parent = parent;
-    }
+	// API SceneGraph
 
-    /**
-     * @brief Comprueba si la entidad es una ra√≠z (no tiene padre).
-     * @return true si m_parent es nullptr.
-     */
-    bool
-    	isRoot() const {
-        return m_parent == nullptr;
-    }
+	/**
+	 * @brief Establece el padre de la entidad actual.
+	 *
+	 * @param parent Puntero a la entidad padre.
+	 */
+	void
+	setParent(Entity* parent) {
+		m_parent = parent;
+	}
 
-    /**
-     * @brief Comprueba si la entidad tiene hijos vinculados.
-     * @return true si la lista de hijos no est√° vac√≠a.
-     */
-    bool
-    	hasChildren() const {
-        return !m_children.empty();
-    }
+	/**
+	 * @brief Indica si la entidad es raÌz en la jerarquÌa.
+	 *
+	 * @return true si no tiene padre.
+	 */
+	bool
+	isRoot() const {
+		return m_parent == nullptr;
+	}
 
-    /**
-     * @brief Agrega una entidad a la lista de hijos.
-     * @note La funci√≥n verifica si el hijo ya existe en la lista para evitar duplicados.
-     * @param child Puntero a la entidad que ser√° tratada como hijo.
-     */
-    void
-    	addChild(Entity* child) {
-        if (!child) {
-            return;
-        }
+	/**
+	 * @brief Indica si la entidad tiene hijos.
+	 *
+	 * @return true si existen entidades hijas.
+	 */
+	bool
+	hasChildren() const {
+		return !m_children.empty();
+	}
 
-        if (std::find(m_children.begin(), m_children.end(), child) != m_children.end()) {
-            return;
-        }
-        m_children.push_back(child);
-    }
+	/**
+	 * @brief Agrega una entidad como hija.
+	 *
+	 * Evita punteros nulos y duplicados.
+	 *
+	 * @param child Entidad a agregar como hija.
+	 */
+	void
+	addChild(Entity* child) {
+		if (!child) {
+			return;
+		}
 
-    /**
-     * @brief Elimina una entidad espec√≠fica de la lista de hijos.
-     * @param child Puntero a la entidad que se desea desvincular.
-     */
-    void
-    	removeChild(Entity* child) {
-        if (!child) return;
+		if (std::find(m_children.begin(), m_children.end(), child) != m_children.end()) {
+			return;
+		}
+		m_children.push_back(child);
+	}
 
-        m_children.erase(
-            std::remove(m_children.begin(), m_children.end(), child),
-            m_children.end()
-        );
-    }
-    ///@}
+	/**
+	 * @brief Elimina una entidad hija.
+	 *
+	 * @param child Entidad a remover de la lista de hijos.
+	 */
+	void
+	removeChild(Entity* child) {
+		if (!child) return;
+
+		m_children.erase(
+			std::remove(m_children.begin(), m_children.end(), child),
+			m_children.end()
+		);
+	}
 
 public:
-    /**
-     * @brief Puntero a la entidad padre. Si es nulo, esta entidad est√° en el nivel ra√≠z.
-     */
-    Entity* m_parent = nullptr;
 
-    /** @brief Lista de punteros a entidades hijas. */
-    std::vector<Entity*> m_children;
+	/**
+	 * @brief Puntero a la entidad padre.
+	 *
+	 * Es nullptr si la entidad es raÌz.
+	 */
+	Entity* m_parent = nullptr;
+
+	/**
+	 * @brief Lista de entidades hijas.
+	 */
+	std::vector<Entity*> m_children;
 };

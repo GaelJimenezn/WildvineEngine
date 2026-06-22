@@ -1,61 +1,78 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "Buffer.h"
 
 /**
  * @struct Submesh
- * @brief GPU buffer pair and draw metadata for one mesh section.
+ * @brief Representa una porción de una malla con su propio conjunto de buffers y material.
  *
- * A submesh maps a vertex/index buffer range to a material slot. Meshes with several
- * materials keep one @c Submesh per independently rendered section.
+ * Un Submesh permite dividir una malla en partes que pueden:
+ * - Usar diferentes materiales
+ * - Ser renderizadas de manera independiente
+ * - Compartir la misma geometría base
  */
 struct
-	Submesh {
-	/** @brief Vertex buffer containing this submesh vertex stream. */
-	Buffer vertexBuffer;
-	/** @brief Index buffer containing this submesh primitive indices. */
-	Buffer indexBuffer;
-	/** @brief Number of indices to draw for this submesh. */
-	unsigned int indexCount = 0;
-	/** @brief First index inside @c indexBuffer used for the draw call. */
-	unsigned int startIndex = 0;
-	/** @brief Material-instance slot used to shade this submesh. */
-	unsigned int materialSlot = 0;
+Submesh {
+  /** @brief Buffer de vértices. */
+  Buffer vertexBuffer;
+
+  /** @brief Buffer de índices. */
+  Buffer indexBuffer;
+
+  /** @brief Número total de índices. */
+  unsigned 
+  int indexCount = 0;
+
+  /** @brief Índice inicial dentro del index buffer. */
+  unsigned 
+  int startIndex = 0;
+
+  /** @brief Slot de material asociado. */
+  unsigned
+  int materialSlot = 0;
+
+  /** @brief Transform local del submesh relativo al actor. */
+  XMFLOAT4X4 localTransform = XMFLOAT4X4(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 };
 
 /**
  * @class Mesh
- * @brief Runtime mesh resource composed of one or more GPU-backed submeshes.
+ * @brief Representa una malla compuesta por múltiples submeshes.
  *
- * The mesh owns the submesh buffers stored in @c m_submeshes and is responsible for
- * destroying them before the mesh is discarded or rebuilt.
+ * Permite gestionar geometría compleja dividiéndola en submeshes,
+ * cada uno con su propio material y buffers.
  */
 class
-	Mesh {
+Mesh {
 public:
-	/** @brief Returns mutable submesh storage for mesh construction. */
-	std::vector<Submesh>&
-		getSubmeshes() { return m_submeshes; }
-	/** @brief Returns read-only submesh storage for render traversal. */
-	const std::vector<Submesh>&
-		getSubmeshes() const { return m_submeshes; }
+  /**
+   * @brief Obtiene la lista de submeshes (mutable).
+   * @return Referencia al vector de Submesh.
+   */
+  std::vector<Submesh>& getSubmeshes() { return m_submeshes; }
 
-	/**
-	 * @brief Releases all submesh buffers and clears the mesh.
-	 *
-	 * @post @c m_submeshes is empty and each previous vertex/index buffer has received
-	 * destroy().
-	 */
-	void
-		destroy() {
-		for (Submesh& submesh : m_submeshes) {
-			submesh.vertexBuffer.destroy();
-			submesh.indexBuffer.destroy();
-		}
-		m_submeshes.clear();
-	}
+  /**
+   * @brief Obtiene la lista de submeshes (const).
+   * @return Referencia constante al vector de Submesh.
+   */
+  const 
+  std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
+
+  /**
+   * @brief Libera los recursos de todos los submeshes.
+   *
+   * Destruye los buffers de vértices e índices y limpia la lista.
+   */
+  void
+    destroy() {
+    for (Submesh& submesh : m_submeshes) {
+      submesh.vertexBuffer.destroy();
+      submesh.indexBuffer.destroy();
+    }
+    m_submeshes.clear();
+  }
 
 private:
-	/** @brief Submesh sections that make up this mesh. */
-	std::vector<Submesh> m_submeshes;
+  /** @brief Lista de submeshes que componen la malla. */
+  std::vector<Submesh> m_submeshes;
 };

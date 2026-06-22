@@ -1,56 +1,66 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "IResource.h"
 
 /**
  * @class ResourceManager
- * @brief Singleton cache for loading, reusing, and unloading engine resources.
+ * @brief Gestiona la carga, almacenamiento y liberación de recursos.
  *
- * Resources are indexed by string key and stored as @c std::shared_ptr<IResource>.
- * Typed accessors use @c std::dynamic_pointer_cast so callers can request concrete
- * resource types while the manager keeps a single heterogeneous cache.
+ * Implementa el patrón Singleton y actúa como caché de recursos utilizando
+ * el patrón Flyweight para evitar duplicación de instancias.
  */
 class
-	ResourceManager {
+ResourceManager {
 public:
-	/** @brief Creates an empty resource cache. */
-	ResourceManager()  = default;
 	/**
-	 * @brief Does not automatically unload resources; call UnloadAll() for deterministic
-	 * cleanup.
+	 * @brief Constructor por defecto.
+	 */
+	ResourceManager() = default;
+
+	/**
+	 * @brief Destructor por defecto.
 	 */
 	~ResourceManager() = default;
 
 	// Singleton
-	/** @brief Returns the process-local resource manager singleton. */
-	static ResourceManager&
-		getInstance() {
+	/**
+	 * @brief Obtiene la instancia única del ResourceManager.
+	 *
+	 * @return Referencia a la instancia singleton.
+	 */
+	static ResourceManager& getInstance() {
 		static ResourceManager instance;
 		return instance;
 	}
 
-	/** @brief Copying is disabled because the manager owns a singleton cache. */
+	/**
+	 * @brief Constructor de copia eliminado.
+	 */
 	ResourceManager(const ResourceManager&) = delete;
-	/** @brief Assignment is disabled because the manager owns a singleton cache. */
-	ResourceManager& operator=(const ResourceManager&) = delete;
 
 	/**
-	 * @brief Returns an already loaded resource or creates, loads, initializes, and caches
-	 * it.
-	 * @tparam T Concrete resource type derived from @c IResource.
-	 * @tparam Args Extra constructor arguments forwarded after the key.
-	 * @param key Cache key and resource name.
-	 * @param filename Source filename passed to @c T::load().
-	 * @param args Extra construction arguments for @c T.
-	 * @return Loaded resource instance, or @c nullptr if load/init fails.
+	 * @brief Operador de asignación eliminado.
 	 */
-	template<typename T, typename... Args> std::shared_ptr<T>
-		GetOrLoad(const std::string& key,
-                               const std::string& filename,
-                               Args&&... args) {
+	ResourceManager& operator=(const ResourceManager&) = delete;
+
+	/// Obtener o cargar un recurso de tipo T (T debe heredar de IResource).
+	/**
+	 * @brief Obtiene un recurso del caché o lo carga si no existe.
+	 *
+	 * @tparam T Tipo de recurso (debe heredar de IResource).
+	 * @tparam Args Argumentos adicionales para la construcción del recurso.
+	 * @param key Identificador único del recurso.
+	 * @param filename Ruta del archivo a cargar.
+	 * @param args Argumentos adicionales.
+	 * @return std::shared_ptr<T> Recurso cargado o existente.
+	 */
+	template<typename T, typename... Args>
+	std::shared_ptr<T> GetOrLoad(const std::string& key,
+		const std::string& filename,
+		Args&&... args) {
 		static_assert(std::is_base_of<IResource, T>::value,
-                      "T debe heredar de IResource");
-		// 1. Â¿Ya existe el recurso en el cachÃ©?
+			"T debe heredar de IResource");
+		// 1. ¿Ya existe el recurso en el caché?
 		auto it = m_resources.find(key);
 		if (it != m_resources.end()) {
 			// Intentar castear al tipo correcto
@@ -60,11 +70,11 @@ public:
 			}
 		}
 
-		// 2. No existe o no estÃ¡ cargado -> crearlo y cargarlo
+		// 2. No existe o no está cargado -> crearlo y cargarlo
 		std::shared_ptr<T> resource = std::make_shared<T>(key, std::forward<Args>(args)...);
 
 		if (!resource->load(filename)) {
-			// Puedes manejar errores mÃ¡s fino aquÃ­
+			// Puedes manejar errores más fino aquí
 			return nullptr;
 		}
 
@@ -72,19 +82,21 @@ public:
 			return nullptr;
 		}
 
-		// 3. Guardar en el cachÃ© y devolver
+		// 3. Guardar en el caché y devolver
 		m_resources[key] = resource;
 		return resource;
 	}
 
+	/// Obtener un recurso ya cargado, sin cargarlo si no existe.
 	/**
-	 * @brief Returns a cached resource without loading a missing one.
-	 * @tparam T Concrete resource type expected by the caller.
-	 * @param key Cache key to search.
-	 * @return Cached resource cast to @c T, or @c nullptr if absent/incompatible.
+	 * @brief Obtiene un recurso ya cargado desde el caché.
+	 *
+	 * @tparam T Tipo de recurso.
+	 * @param key Identificador del recurso.
+	 * @return std::shared_ptr<T> Recurso encontrado o nullptr si no existe.
 	 */
-	template<typename T> std::shared_ptr<T>
-		Get(const std::string& key) const
+	template<typename T>
+	std::shared_ptr<T> Get(const std::string& key) const
 	{
 		auto it = m_resources.find(key);
 		if (it == m_resources.end()) return nullptr;
@@ -92,12 +104,14 @@ public:
 		return std::dynamic_pointer_cast<T>(it->second);
 	}
 
+	/// Liberar un recurso específico
 	/**
-	 * @brief Unloads and erases one cached resource.
-	 * @param key Cache key to remove.
+	 * @brief Libera un recurso específico del caché.
+	 *
+	 * @param key Identificador del recurso.
 	 */
 	void
-		Unload(const std::string& key)
+	Unload(const std::string& key)
 	{
 		auto it = m_resources.find(key);
 		if (it != m_resources.end()) {
@@ -106,9 +120,12 @@ public:
 		}
 	}
 
-	/** @brief Unloads every cached resource and clears the cache. */
-	void
-		UnloadAll()
+	/// Liberar todos los recursos
+	/**
+	 * @brief Libera todos los recursos almacenados en el caché.
+	 */
+	void 
+	UnloadAll()
 	{
 		for (auto& [key, res] : m_resources) {
 			if (res) {
@@ -119,6 +136,10 @@ public:
 	}
 
 private:
-	/** @brief Heterogeneous resource cache indexed by stable string key. */
+	/**
+	 * @brief Contenedor de recursos cargados.
+	 *
+	 * Mapea una clave única a una instancia compartida de IResource.
+	 */
 	std::unordered_map<std::string, std::shared_ptr<IResource>> m_resources;
 };

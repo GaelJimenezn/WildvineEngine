@@ -1,153 +1,171 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
 
 /**
  * @enum ResourceType
- * @brief Broad engine resource categories used for caches and editor filtering.
+ * @brief Define los tipos de recursos soportados por el sistema.
  */
 enum class
-	ResourceType {
-	/** @brief Resource type has not been assigned. */
-	Unknown,
-	/** @brief 3D model resource. */
-	Model3D,
-	/** @brief Texture or shader-resource-view resource. */
-	Texture,
-	/** @brief Audio resource. */
-	Sound,
-	/** @brief Shader program resource. */
-	Shader,
-	/** @brief Material resource. */
-	Material
+ResourceType {
+  Unknow,
+  Model3D,
+  Texture,
+  Sound,
+  Shader,
+  Material
 };
 
 /**
  * @enum ResourceState
- * @brief Runtime lifecycle state for loadable resources.
+ * @brief Define el estado actual de un recurso.
  */
 enum class
-	ResourceState {
-	/** @brief Resource has no loaded payload. */
-	Unloaded,
-	/** @brief Resource is currently loading. */
-	Loading,
-	/** @brief Resource has successfully loaded and initialized. */
-	Loaded,
-	/** @brief Resource failed to load or initialize. */
-	Failed
+ResourceState {
+  Unloaded,
+  Loading,
+  Loaded,
+  Failed
 };
 
 /**
  * @class IResource
- * @brief Abstract base class for named loadable engine resources.
+ * @brief Interfaz base para todos los recursos del sistema.
  *
- * Resources expose a shared lifecycle contract for disk loading, runtime initialization,
- * unloading, memory reporting, and metadata used by @c ResourceManager.
+ * Define el ciclo de vida de un recurso, incluyendo carga, inicialización,
+ * liberación y monitoreo de estado.
  */
 class
-	IResource {
+IResource {
 public:
-	/**
-	 * @brief Creates resource metadata and assigns a unique process-local id.
-	 * @param name Human-readable/cache name for the resource.
-	 */
-	IResource(const std::string& name)
-		: m_name(name)
-		/**
-		 * @brief MÃ©todo m_filePath.
-		 *
-		 * @return Retorna el resultado de la operaciÃ³n.
-		 */
-		,
-			m_filePath("")
-		/**
-		 * @brief MÃ©todo m_type.
-		 *
-		 * @param Unknown ParÃ¡metro del mÃ©todo.
-		 * @return Retorna el resultado de la operaciÃ³n.
-		 */
-		,
-			m_type(ResourceType::Unknown)
-		/**
-		 * @brief MÃ©todo m_state.
-		 *
-		 * @param Unloaded ParÃ¡metro del mÃ©todo.
-		 * @return Retorna el resultado de la operaciÃ³n.
-		 */
-		,
-			m_state(ResourceState::Unloaded)
-		/**
-		 * @brief MÃ©todo m_id.
-		 *
-		 * @param GenerateID ParÃ¡metro del mÃ©todo.
-		 * @return Retorna el resultado de la operaciÃ³n.
-		 */
-		,
-			m_id(GenerateID())
-	{
-	}
-	/** @brief Virtual destructor for polymorphic resource cleanup. */
-	virtual
-		~IResource() = default;
+  /**
+   * @brief Constructor que inicializa un recurso con un nombre.
+   *
+   * @param name Nombre del recurso.
+   */
+  IResource(const std::string& name) :
+    m_name(name),
+    m_filePath(""),
+    m_type(ResourceType::Unknow),
+    m_state(ResourceState::Unloaded),
+    m_id(GenerateID())
+  {
+  }
 
-	/** @brief Creates runtime or GPU payload after source data is loaded. */
-	virtual bool
-		init() = 0;
-	/** @brief Loads source data from disk. */
-	virtual bool
-		load(const std::string& filename) = 0;
-	/** @brief Releases CPU/GPU payload while keeping metadata valid. */
-	virtual void
-		unload() = 0;
-	/** @brief Reports approximate payload memory for profiling. */
-	virtual size_t
-		getSizeInBytes() const = 0;
+  /**
+   * @brief Destructor virtual.
+   */
+  virtual ~IResource() = default;
 
-	/** @brief Sets the canonical source path for this resource. */
-	void
-		SetPath(const std::string& path) { m_filePath = path; }
-	/** @brief Sets the resource category. */
-	void
-		SetType(ResourceType t) { m_type = t; }
-	/** @brief Sets the current lifecycle state. */
-	void
-		SetState(ResourceState s) { m_state = s; }
+  //Cargar recurso CPU
+  /**
+   * @brief Inicializa el recurso en memoria (CPU/GPU).
+   *
+   * @return true si la inicialización fue exitosa.
+   */
+  virtual bool init() = 0;
 
+  //Cargar desde disco duro
+  /**
+   * @brief Carga el recurso desde disco.
+   *
+   * @param filename Ruta del archivo.
+   * @return true si la carga fue exitosa.
+   */
+  virtual bool load(const std::string& filename) = 0;
 
-	/** @brief Returns the resource cache/display name. */
-	const std::string&
-		GetName() const { return m_name; }
-	/** @brief Returns the source path assigned to the resource. */
-	const std::string&
-		GetPath() const { return m_filePath; }
-	/** @brief Returns the resource category. */
-	ResourceType
-		GetType() const { return m_type; }
-	/** @brief Returns the current lifecycle state. */
-	ResourceState
-		GetState() const { return m_state; }
-	/** @brief Returns the unique process-local resource id. */
-	uint64_t
-		GetID() const { return m_id; }
+  //Liberar memoria
+  /**
+   * @brief Libera la memoria asociada al recurso.
+   */
+  virtual void unload() = 0;
+
+  //Para profiler
+  /**
+   * @brief Obtiene el tamaño del recurso en bytes.
+   *
+   * @return size_t Tamaño en memoria.
+   */
+  virtual size_t getSizeInBytes() const = 0;
+
+  /**
+   * @brief Establece la ruta del archivo del recurso.
+   *
+   * @param path Ruta del archivo.
+   */
+  void
+  SetPath(const std::string& path) { m_filePath = path; }
+
+  /**
+   * @brief Establece el tipo del recurso.
+   *
+   * @param t Tipo de recurso.
+   */
+  void
+  SetType(ResourceType t) { m_type = t; }
+
+  /**
+   * @brief Establece el estado del recurso.
+   *
+   * @param s Estado del recurso.
+   */
+  void
+  SetState(ResourceState s) { m_state = s; }
+
+  /**
+   * @brief Obtiene el nombre del recurso.
+   * @return Referencia constante al nombre.
+   */
+  const std::string& GetName() const { return m_name; }
+
+  /**
+   * @brief Obtiene la ruta del recurso.
+   * @return Referencia constante a la ruta.
+   */
+  const std::string& GetPath() const { return m_filePath; }
+
+  /**
+   * @brief Obtiene el tipo del recurso.
+   * @return Tipo del recurso.
+   */
+  ResourceType GetType() const { return m_type; }
+
+  /**
+   * @brief Obtiene el estado del recurso.
+   * @return Estado del recurso.
+   */
+  ResourceState GetState() const { return m_state; }
+
+  /**
+   * @brief Obtiene el identificador único del recurso.
+   * @return ID del recurso.
+   */
+  uint64_t GetID() const { return m_id; }
 
 protected:
-	/** @brief Human-readable/cache name. */
-	std::string m_name;
-	/** @brief Canonical source path, when available. */
-	std::string m_filePath;
-	/** @brief Broad resource category. */
-	ResourceType m_type;
-	/** @brief Current loading/runtime state. */
-	ResourceState m_state;
-	/** @brief Unique process-local resource id. */
-	uint64_t m_id;
+  /** @brief Nombre del recurso. */
+  std::string m_name;
+
+  /** @brief Ruta del archivo del recurso. */
+  std::string m_filePath;
+
+  /** @brief Tipo del recurso. */
+  ResourceType m_type;
+
+  /** @brief Estado actual del recurso. */
+  ResourceState m_state;
+
+  /** @brief Identificador único del recurso. */
+  uint64_t m_id;
 
 private:
-	/** @brief Generates monotonically increasing process-local ids. */
-	static uint64_t
-		GenerateID()
-	{
-		static uint64_t nextID = 1;
-		return nextID++;
-	}
+  /**
+   * @brief Genera un ID único incremental.
+   *
+   * @return uint64_t Nuevo ID generado.
+   */
+  static uint64_t GenerateID()
+  {
+    static uint64_t nextID = 1;
+    return nextID++;
+  }
 };

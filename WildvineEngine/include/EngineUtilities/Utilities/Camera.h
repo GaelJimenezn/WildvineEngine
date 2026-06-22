@@ -1,176 +1,215 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "EngineUtilities\Vectors\Vector3.h"
 
 /**
  * @class Camera
- * @brief Left-handed perspective camera with cached view/projection matrices.
+ * @brief Representa una cámara 3D para renderizado en un motor gráfico.
  *
- * Camera stores position, orthonormal basis vectors, projection parameters, and dirty
- * state
- * so movement/rotation can update the view matrix lazily before rendering.
+ * Gestiona la posición, orientación (basis ortonormal),
+ * matriz de vista y matriz de proyección.
+ * Permite movimiento tipo FPS (walk, strafe) y rotaciones
+ * mediante yaw y pitch.
  */
 class
-	Camera {
+Camera {
 public:
-	/** @brief Creates a camera with default basis and perspective settings. */
+
+	/**
+	 * @brief Constructor por defecto.
+	 */
 	Camera();
-	/** @brief Default destructor. */
+
+	/**
+	 * @brief Destructor por defecto.
+	 */
 	~Camera() = default;
 
-	/**
-		 * @brief Configura la proyecciÃ³n en perspectiva (LH).
-		 *
-		 * **Pasos**
-		 * - Calcula la matriz de proyecciÃ³n con XMMatrixPerspectiveFovLH.
-		 * - Guarda FOV, aspect, near y far para debug/inspecciÃ³n.
-		 *
-		 * **AplicaciÃ³n prÃ¡ctica**
-		 * - Llamar al inicializar ventana y al cambiar resoluciÃ³n.
-		 */
-	void
-		setLens(float fovYRadians, float aspectRatio, float nearPlane, float farPlane);
 
 	/**
-	 * @brief Define posiciÃ³n en mundo.
+	 * @brief Configura los parámetros de la proyección perspectiva.
+	 *
+	 * @param fovYRadians Campo de visión vertical en radianes.
+	 * @param aspectRatio Relación de aspecto (ancho/alto).
+	 * @param nearPlane Distancia del plano cercano.
+	 * @param farPlane Distancia del plano lejano.
 	 */
 	void
-		setPosition(float x, float y, float z);
+	setLens(float fovYRadians, 
+					float aspectRatio, 
+					float nearPlane,
+					float farPlane);
+
 
 	/**
-	 * @brief Define posiciÃ³n en mundo.
+	 * @brief Establece la posición de la cámara mediante coordenadas individuales.
+	 *
+	 * @param x Coordenada X en mundo.
+	 * @param y Coordenada Y en mundo.
+	 * @param z Coordenada Z en mundo.
 	 */
 	void
-		setPosition(const EU::Vector3& pos);
+	setPosition(float x, float y, float z);
+
 
 	/**
-	 * @brief Obtiene la posiciÃ³n en mundo.
+	 * @brief Establece la posición de la cámara.
+	 *
+	 * @param pos Vector de posición en espacio mundo.
+	 */
+	void
+	setPosition(const EU::Vector3& pos);
+
+
+	/**
+	 * @brief Obtiene la posición actual de la cámara.
+	 *
+	 * @return EU::Vector3 Posición en mundo.
 	 */
 	EU::Vector3
-		getPosition() const { return m_position; }
-	
-	/** @brief Obtiene una referencia mutable a la posicion en mundo. */
-	EU::Vector3 &
-		getPosition() { return m_position; }
+	getPosition() const { return m_position; }
+
+	EU::Vector3&
+	getPosition() { return m_position; }
+
 
 	/**
-	 * @brief Fuerza la cÃ¡mara a mirar a un objetivo (LH).
+	 * @brief Orienta la cámara hacia un objetivo.
 	 *
-	 * **Pasos**
-	 * - Calcula basis a partir de (target - pos).
-	 * - Normaliza Forward, Right y Up.
-	 * - Marca dirty para recalcular View.
-	 *
-	 * **AplicaciÃ³n prÃ¡ctica**
-	 * - CinemÃ¡ticas simples o cÃ¡maras orbit.
+	 * @param pos Posición de la cámara.
+	 * @param target Punto al que la cámara mirará.
+	 * @param up Vector arriba (por defecto eje Y positivo).
 	 */
 	void
-		lookAt(const EU::Vector3& pos,
-				 const EU::Vector3& target, const EU::Vector3& up = EU::Vector3(0, 1, 0));
+	lookAt(const EU::Vector3& pos,
+				const EU::Vector3& target,
+				const EU::Vector3& up = EU::Vector3(0, 1, 0));
+
 
 	/**
-	 * @brief Movimiento relativo a la cÃ¡mara (adelante/atrÃ¡s).
-	 */
-	void
-		walk(float d);
-
-	/**
-	 * @brief Movimiento relativo a la cÃ¡mara (izquierda/derecha).
-	 */
-	void
-		strafe(float d);
-
-	/**
-	 * @brief RotaciÃ³n sobre el eje Y global (yaw).
+	 * @brief Mueve la cámara hacia adelante o atrás en su eje forward.
 	 *
-	 * **AplicaciÃ³n prÃ¡ctica**
-	 * - Mouse X para FPS.
+	 * @param d Distancia a mover.
 	 */
 	void
-		yaw(float radians);
+	walk(float d);
+
 
 	/**
-	 * @brief RotaciÃ³n sobre el eje Right local (pitch).
+	 * @brief Mueve la cámara lateralmente en su eje right.
 	 *
-	 * **AplicaciÃ³n prÃ¡ctica**
-	 * - Mouse Y para FPS.
+	 * @param d Distancia a mover.
 	 */
 	void
-		pitch(float radians);
+	strafe(float d);
+
 
 	/**
-	 * @brief Recalcula la matriz View si es necesario.
+	 * @brief Rota la cámara alrededor del eje Y global.
 	 *
-	 * **Pasos**
-	 * - Reconstruye basis ortonormal (Right/Up/Forward).
-	 * - Calcula View con XMMatrixLookToLH.
-	 *
-	 * **AplicaciÃ³n prÃ¡ctica**
-	 * - Llamar una vez por frame antes de render.
+	 * @param radians Ángulo en radianes.
 	 */
 	void
-		updateViewMatrix();
+	yaw(float radians);
 
 	/**
-	 * @brief Matriz View (mundo->vista).
+	 * @brief Rota la cámara alrededor del eje X local.
+	 *
+	 * @param radians Ángulo en radianes.
+	 */
+	void
+	pitch(float radians);
+
+
+	/**
+	 * @brief Actualiza la matriz de vista si el estado cambió.
+	 */
+	void
+	updateViewMatrix();
+
+
+	/**
+	 * @brief Obtiene la matriz de vista.
+	 *
+	 * @return XMMATRIX Matriz de vista.
 	 */
 	XMMATRIX
-		getView() const { return XMLoadFloat4x4(&m_view); }
+	getView() const { return XMLoadFloat4x4(&m_view); }
+
 
 	/**
-	 * @brief Matriz Projection (vista->clip).
-	 */
-	XMMATRIX
-		getProj() const { return XMLoadFloat4x4(&m_proj); }
-
-	/**
-	 * @brief View sin traslaciÃ³n (solo rotaciÃ³n). Ideal para Skybox.
+	 * @brief Obtiene la matriz de proyección.
 	 *
-	 * **AplicaciÃ³n prÃ¡ctica**
-	 * - Skybox: ViewNoTranslation * Proj
+	 * @return XMMATRIX Matriz de proyección.
 	 */
 	XMMATRIX
-		GetViewNoTranslation() const {
+	getProj() const { return XMLoadFloat4x4(&m_proj); }
+
+
+	/**
+	 * @brief Obtiene la matriz de vista sin traslación.
+	 *
+	 * Útil para skyboxes u objetos que no deben trasladarse con la cámara.
+	 *
+	 * @return XMMATRIX Matriz de vista sin componente de traslación.
+	 */
+	XMMATRIX
+	GetViewNoTranslation() const {
 		XMMATRIX v = getView();
-		// Quitar traslaciÃ³n (fila 4)
+		// Quitar traslación (fila 4)
 		v.r[3] = XMVectorSet(0, 0, 0, 1);
 		return v;
 	}
 
-	/**
-	 * @brief Devuelve parÃ¡metros de proyecciÃ³n (Ãºtil para UI/debug).
-	 */
-	float
-		getFovY()   const { return m_fovY; }
-	/** @brief Devuelve el aspect ratio de proyeccion. */
-	float
-		getAspect() const { return m_aspectRatio; }
-	/** @brief Devuelve la distancia del plano cercano. */
-	float
-		getNearZ()  const { return m_nearPlane; }
-	/** @brief Devuelve la distancia del plano lejano. */
-	float
-		getFarZ()   const { return m_farPlane; }
 
 	/**
-	 * @brief Vectores base (mundo) de la cÃ¡mara.
+	 * @brief Obtiene el campo de visión vertical.
 	 */
-	EU::Vector3
-		GetRight()   const { return m_right; }
-	/** @brief Devuelve el vector up de la base de camara. */
-	EU::Vector3
-		GetUp()      const { return m_up; }
-	/** @brief Devuelve el vector forward de la base de camara. */
-	EU::Vector3
-		GetForward() const { return m_forward; }
+	float 
+	getFovY()   const { return m_fovY; }
 
 	/**
-	 * @brief Converts a DirectX vector into an @c EU::Vector3.
-	 * @param v DirectX vector value.
-	 * @return Converted engine vector.
+	 * @brief Obtiene la relación de aspecto.
+	 */
+	float 
+	getAspect() const { return m_aspectRatio; }
+
+	/**
+	 * @brief Obtiene el plano cercano.
+	 */
+	float 
+	getNearZ()  const { return m_nearPlane; }
+
+	/**
+	 * @brief Obtiene el plano lejano.
+	 */
+	float 
+	getFarZ()   const { return m_farPlane; }
+
+
+	/**
+	 * @brief Obtiene el vector Right de la cámara.
+	 */
+	EU::Vector3 GetRight()   const { return m_right; }
+
+	/**
+	 * @brief Obtiene el vector Up de la cámara.
+	 */
+	EU::Vector3 GetUp()      const { return m_up; }
+
+	/**
+	 * @brief Obtiene el vector Forward de la cámara.
+	 */
+	EU::Vector3 GetForward() const { return m_forward; }
+
+	/**
+	 * @brief Convierte un FXMVECTOR a EU::Vector3.
+	 *
+	 * @param v Vector de DirectXMath.
+	 * @return EU::Vector3 Vector convertido.
 	 */
 	inline EU::Vector3
-		FromXM(FXMVECTOR v)	{
+		FromXM(FXMVECTOR v) {
 		XMFLOAT3 t;
 		XMStoreFloat3(&t, v);
 		return EU::Vector3(t.x, t.y, t.z);
@@ -178,29 +217,63 @@ public:
 
 
 private:
-	// Estado espacial
-	EU::Vector3 m_position; /**< The position of the camera in world space. */
+	/**
+	 * @brief Posición de la cámara en espacio mundo.
+	 */
+	EU::Vector3 m_position;
 
-	// Basis Ortonormal (en mundo)
-	/// @brief The right vector of the camera's orthonormal basis.
-	EU::Vector3 m_right		{ 1.0f, 0.0f, 0.0f };
-	/// @brief The up vector of the camera's orthonormal basis.
-	EU::Vector3 m_up			{ 0.0f, 1.0f, 0.0f };
-	/// @brief The forward vector of the camera's orthonormal basis.
-	EU::Vector3 m_forward	{ 0.0f, 0.0f, 1.0f };
+	/**
+	 * @brief Vector Right (base ortonormal en mundo).
+	 */
+	EU::Vector3 m_right{ 1.0f, 0.0f, 0.0f };
 
-	// Matrices almacenadas
-	XMFLOAT4X4 m_view {};
-	XMFLOAT4X4 m_proj {};
+	/**
+	 * @brief Vector Up (base ortonormal en mundo).
+	 */
+	EU::Vector3 m_up{ 0.0f, 1.0f, 0.0f };
 
-	// Parametros de la proyeccion
-	float m_fovY { XM_PIDIV4 }; /**< The field of
-		view(FOV) angle in radians. */
-	/// @brief The aspect ratio of the camera's view (width divided by height).
-	float m_aspectRatio = 1.0f;
-	float m_nearPlane = 0.01f; /**< The distance to the near clipping plane. */
-	float m_farPlane = 1000.0f; /**< The distance to the far clipping plane. */
+	/**
+	 * @brief Vector Forward (dirección de vista).
+	 */
+	EU::Vector3 m_forward{ 0.0f, 0.0f, 1.0f };
 
-	/// @brief Flag indicating whether the view matrix needs to be recalculated.
-	bool m_viewDirty = true;
+	/**
+	 * @brief Matriz de vista almacenada.
+	 */
+	XMFLOAT4X4 m_view{};
+
+	/**
+	 * @brief Matriz de proyección almacenada.
+	 */
+	XMFLOAT4X4 m_proj{};
+
+	/**
+	 * @brief Campo de visión vertical en radianes.
+	 */
+	float 
+	m_fovY{ XM_PIDIV4 };
+
+	/**
+	 * @brief Relación de aspecto (width / height).
+	 */
+	float
+	m_aspectRatio = 1.0f;
+
+	/**
+	 * @brief Distancia del plano cercano.
+	 */
+	float
+	m_nearPlane = 0.01f;
+
+	/**
+	 * @brief Distancia del plano lejano.
+	 */
+	float
+	m_farPlane = 1000.0f;
+
+	/**
+	 * @brief Indica si la matriz de vista necesita actualizarse.
+	 */
+	bool
+	m_viewDirty = true;
 };

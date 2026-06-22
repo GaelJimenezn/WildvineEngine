@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "Texture.h"
 #include "RenderTargetView.h"
@@ -9,62 +9,105 @@ class DeviceContext;
 
 /**
  * @class EditorViewportPass
- * @brief Off-screen color/depth target used to render the scene inside the editor
- * viewport.
+ * @brief Representa un render pass utilizado para visualizar contenido en el viewport del editor.
  *
- * The pass owns a color texture/SRV, an RTV, a depth texture/DSV, and the dimensions
- * needed
- * by the GUI viewport panel. Renderers call @c begin() before drawing scene content and
- * the
- * GUI consumes @c getSRV() to show the finished image.
+ * Este pass maneja sus propios recursos de render:
+ * - Render target (color)
+ * - Depth stencil
+ * - Viewport
+ *
+ * Permite renderizar la escena a una textura que posteriormente puede ser mostrada en el editor.
  */
 class
-	EditorViewportPass {
+EditorViewportPass {
 public:
-	/** @brief Creates an empty viewport pass with no GPU resources. */
+	/** @brief Constructor por defecto. */
 	EditorViewportPass() = default;
-	/**
-	 * @brief Does not automatically release GPU resources; call destroy() during shutdown.
-	 */
+
+	/** @brief Destructor por defecto. */
 	~EditorViewportPass() = default;
 
-	/** @brief Creates color/depth resources for the requested editor viewport size. */
-	HRESULT
-		init(Device& device, unsigned int width, unsigned int height);
-	/** @brief Recreates size-dependent resources for a new editor viewport size. */
-	HRESULT
-		resize(Device& device, unsigned int width, unsigned int height);
+	/**
+	 * @brief Inicializa los recursos del viewport.
+	 * @param device Dispositivo gráfico.
+	 * @param width Ancho del viewport.
+	 * @param height Alto del viewport.
+	 * @return HRESULT indicando éxito o fallo.
+	 */
+	HRESULT 
+  init(Device& device, unsigned int width, unsigned int height);
 
-	/** @brief Binds the pass render targets and clears them for a new scene render. */
-	void
-		begin(DeviceContext& deviceContext, const float clearColor[4]);
-	/** @brief Swaps GPU resources and dimensions with another viewport pass. */
-	void
-		swap(EditorViewportPass& other);
-	/** @brief Clears only the depth target associated with this pass. */
-	void
-		clearDepth(DeviceContext& deviceContext);
-	/** @brief Applies a viewport matching this pass dimensions. */
-	void
-		setViewport(DeviceContext& deviceContext);
-	/** @brief Releases all GPU resources owned by the pass. */
-	void
-		destroy();
+	/**
+	 * @brief Redimensiona los recursos del viewport.
+	 * @param device Dispositivo gráfico.
+	 * @param width Nuevo ancho.
+	 * @param height Nuevo alto.
+	 * @return HRESULT indicando éxito o fallo.
+	 */
+	HRESULT 
+	resize(Device& device, unsigned int width, unsigned int height);
 
-	/** @brief Returns the color shader-resource view consumed by ImGui. */
-	ID3D11ShaderResourceView*
-		getSRV() const { return m_colorSRV.m_textureFromImg; }
+	/**
+	 * @brief Inicia el pass de render.
+	 * @param deviceContext Contexto del dispositivo.
+	 * @param clearColor Color de limpieza del render target.
+	 */
+	void 
+	begin(DeviceContext& deviceContext, const float clearColor[4]);
 
-	/** @brief Returns the current color/depth width in pixels. */
-	unsigned int
-		getWidth() const { return m_width; }
-	/** @brief Returns the current color/depth height in pixels. */
-	unsigned int
-		getHeight() const { return m_height; }
+	/**
+	 * @brief Intercambia los recursos con otro viewport pass.
+	 * @param other Otro EditorViewportPass.
+	 */
+	void 
+	swap(EditorViewportPass& other);
 
-	/** @brief Returns true when all required color and depth resources exist. */
+	/**
+	 * @brief Limpia el buffer de profundidad.
+	 * @param deviceContext Contexto del dispositivo.
+	 */
+	void
+	clearDepth(DeviceContext& deviceContext);
+
+	/**
+	 * @brief Configura el viewport en el pipeline.
+	 * @param deviceContext Contexto del dispositivo.
+	 */
+	void 
+	setViewport(DeviceContext& deviceContext);
+
+	/**
+	 * @brief Libera todos los recursos.
+	 */
+	void
+	destroy();
+
+	/**
+	 * @brief Obtiene el Shader Resource View del render target.
+	 * @return Puntero a ID3D11ShaderResourceView.
+	 */
+	ID3D11ShaderResourceView* getSRV() const { return m_colorSRV.m_textureFromImg; }
+
+	/**
+	 * @brief Obtiene el ancho del viewport.
+	 * @return Ancho en píxeles.
+	 */
+	unsigned 
+	int getWidth() const { return m_width; }
+
+	/**
+	 * @brief Obtiene el alto del viewport.
+	 * @return Alto en píxeles.
+	 */
+	unsigned
+	int getHeight() const { return m_height; }
+
+	/**
+	 * @brief Verifica si los recursos son válidos.
+	 * @return true si todos los recursos están correctamente inicializados.
+	 */
 	bool
-		isValid() const
+	isValid() const
 	{
 		return m_colorTexture.m_texture != nullptr &&
 			m_colorSRV.m_textureFromImg != nullptr &&
@@ -72,25 +115,36 @@ public:
 	}
 
 private:
-	/** @brief Allocates the color/depth textures and views for @p width x @p height. */
-	HRESULT
-		createResources(Device& device, unsigned int width, unsigned int height);
+	/**
+	 * @brief Crea los recursos internos del viewport.
+	 * @param device Dispositivo gráfico.
+	 * @param width Ancho.
+	 * @param height Alto.
+	 * @return HRESULT indicando éxito o fallo.
+	 */
+	HRESULT 
+	createResources(Device& device, unsigned int width, unsigned int height);
 
 private:
-	/** @brief Off-screen color render texture. */
+	/** @brief Textura de color. */
 	Texture           m_colorTexture;
-	/** @brief Shader-resource wrapper for the color texture. */
+
+	/** @brief Shader Resource View del color. */
 	Texture           m_colorSRV;
-	/** @brief Render-target view bound when drawing into the pass. */
+
+	/** @brief Render Target View. */
 	RenderTargetView  m_rtv;
 
-	/** @brief Off-screen depth texture. */
+	/** @brief Textura de profundidad. */
 	Texture           m_depthTexture;
-	/** @brief Depth-stencil view bound when drawing into the pass. */
+
+	/** @brief Depth Stencil View. */
 	DepthStencilView  m_dsv;
 
-	/** @brief Current pass width in pixels. */
+	/** @brief Ancho del viewport. */
 	unsigned int      m_width = 1;
-	/** @brief Current pass height in pixels. */
+
+	/** @brief Alto del viewport. */
 	unsigned int      m_height = 1;
+
 };

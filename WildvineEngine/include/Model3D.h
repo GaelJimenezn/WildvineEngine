@@ -1,115 +1,147 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
+#include "fbxsdk.h"
 #include "IResource.h"
 #include "MeshComponent.h"
-#include "fbxsdk.h"
 
 /**
  * @enum ModelType
- * @brief Supported source model formats for @c Model3D.
+ * @brief Tipos de modelos 3D soportados por el sistema.
  */
 enum
-	ModelType {
-	/** @brief Wavefront OBJ source. */
-	OBJ,
-	/** @brief Autodesk FBX source. */
-	FBX
+  ModelType {
+  OBJ,  ///< Modelo en formato OBJ.
+  FBX  ///< Modelo en formato FBX.
 };
 
-/**
- * @class Model3D
- * @brief Loadable 3D model resource that extracts engine mesh components.
- *
- * Model3D implements @c IResource for model files and keeps CPU-side @c MeshComponent
- * data that can later be converted into GPU @c Mesh buffers by the renderer/application.
- */
 class
-	Model3D : public IResource {
+Model3D : public IResource {
+
 public:
-	/**
-	 * @brief Creates and immediately loads a model resource from a file path/name.
-	 * @param name Resource name and source path used by the current implementation.
-	 * @param modelType Source format selector.
-	 */
-	Model3D(const std::string& name, ModelType modelType)
-		: IResource(name), m_modelType(modelType), lSdkManager(nullptr), lScene(nullptr) {
-		SetType(ResourceType::Model3D);
-		load(name);
-	}
+  /**
+   * @brief Constructor que crea un recurso de modelo 3D y lo carga automáticamente.
+   * @param name Nombre del recurso/modelo.
+   * @param modelType Tipo de modelo (OBJ o FBX).
+   */
+  Model3D(const std::string& name, ModelType modelType)
+        : IResource(name),
+        m_modelType(modelType), 
+        lSdkManager(nullptr), 
+        lScene(nullptr) {
+        SetType(ResourceType::Model3D);
+        load(name);
+  }
 
-	/**
-	 * @brief Creates an in-memory cube model from skybox vertex/index arrays.
-	 * @param name Resource name.
-	 * @param vertices Eight skybox cube vertices.
-	 * @param indices Thirty-six cube indices.
-	 */
-	Model3D(const std::string& name,
-		const SkyboxVertex vertices[], const unsigned int indices[]) : IResource(name) {
-		MeshComponent mesh;
-		mesh.m_skyVertex.assign(vertices, vertices + 8);
-		mesh.m_index.assign(indices, indices + 36);
-		mesh.m_numIndex = mesh.m_index.size();
-		SetType(ResourceType::Model3D);
-		m_meshes.push_back(mesh);
-	}
+  Model3D(const std::string& name,
+    const SkyboxVertex vertices[],
+    const unsigned int indices[]) : IResource(name) {
+    MeshComponent mesh;
+    mesh.m_skyVertex.assign(vertices, vertices + 8);
+    mesh.m_index.assign(indices, indices + 36);
+    mesh.m_numIndex = mesh.m_index.size();
+    SetType(ResourceType::Model3D);
+    m_meshes.push_back(mesh);
+  }
 
-	/** @brief Default destructor; call unload() for deterministic resource cleanup. */
-	~Model3D() = default;
+  /**
+   * @brief Destructor por defecto.
+   */
+  ~Model3D();
+  //~Model3D() = override;
 
-	/** @brief Loads model data from @p path according to @c m_modelType. */
-	bool
-		load(const std::string& path) override;
+  /**
+   * @brief Carga un modelo desde ruta especificada.
+   * @param path Ruta del archivo de modelo.
+   * @return true si se cargó correctamente, false si falló.
+   */
+  bool
+  load(const std::string& path) override;
 
-	/** @brief Initializes the model resource after loading source data. */
-	bool
-		init() override;
+  /**
+   * @brief Inicializa recursos adicionales necesarios para el modelo.
+   * @return true si la inicialización fue exitosa.
+   */
+  bool
+  init() override;
 
-	/** @brief Releases model payload and FBX-side state owned by the resource. */
-	void
-		unload() override;
+  /**
+   * @brief Descarga y libera los recursos del modelo.
+   */
+  void
+  unload() override;
 
-	/** @brief Returns approximate CPU mesh payload size in bytes. */
-	size_t
-		getSizeInBytes() const override;
+  /**
+   * @brief Obtiene el tamaño del modelo en memoria.
+   * @return Tamaño estimado en bytes.
+   */
+  size_t
+  getSizeInBytes() const override;
 
-	/** @brief Returns extracted mesh components for GPU mesh construction. */
-	const std::vector<MeshComponent>&
-		GetMeshes() const { return m_meshes; }
+  /**
+   * @brief Retorna la lista de mallas procesadas del modelo.
+   * @return Vector de MeshComponent.
+   */
+  const std::vector<MeshComponent>&
+  GetMeshes() const { return m_meshes; }
 
-	/* FBX MODEL LOADER*/
-	/** @brief Initializes the FBX SDK manager and scene objects used by FBX loading. */
-	bool
-		InitializeFBXManager();
+  /**
+   * @brief Inicializa el administrador de FBX (FbxManager).
+   * @return true si se inicializó correctamente.
+   */
+  bool
+  InitializeFBXManager();
 
-	/** @brief Loads an FBX file and returns extracted mesh components. */
-	std::vector<MeshComponent>
-		LoadFBXModel(const std::string& filePath);
+  /**
+   * @brief Carga un modelo FBX desde archivo.
+   * @param filePath Ruta del archivo FBX.
+   * @return Vector de mallas generadas.
+   */
+  std::vector<MeshComponent>
+    LoadFBXModel(const std::string& filePath);
 
-	/** @brief Recursively processes an FBX scene node and its children. */
-	void
-		ProcessFBXNode(FbxNode* node);
+  std::vector<MeshComponent>
+  LoadOBJModel(const std::string& filePath);
 
-	/** @brief Extracts mesh geometry from an FBX node into @c m_meshes. */
-	void
-		ProcessFBXMesh(FbxNode* node);
+  /**
+   * @brief Procesa un nodo del archivo FBX.
+   * @param node Nodo actual a procesar.
+   */
+  void
+  ProcessFBXNode(FbxNode* node);
 
-	/** @brief Extracts texture/material references from an FBX material. */
-	void
-		ProcessFBXMaterials(FbxSurfaceMaterial* material);
+  /**
+   * @brief Procesa una malla encontrada en un nodo FBX.
+   * @param node Nodo que contiene la malla.
+   */
+  void
+  ProcessFBXMesh(FbxNode* node);
 
-	/** @brief Returns texture file names discovered during FBX material parsing. */
-	std::vector<std::string>
-		GetTextureFileNames() const { return textureFileNames; }
+  /**
+   * @brief Procesa los materiales de una malla FBX.
+   * @param material Material de superficie FBX.
+   */
+  void
+  ProcessFBXMaterials(FbxSurfaceMaterial* material);
+
+  /**
+   * @brief Obtiene los nombres de las texturas asociadas al modelo.
+   * @return Vector de rutas/nombres de texturas.
+   */
+  std::vector<std::string>
+  GetTextureFileNames() const { return textureFileNames; }
+
 private:
-	/** @brief FBX SDK manager used while importing FBX files. */
-	FbxManager* lSdkManager;
-	/** @brief FBX scene loaded by the importer. */
-	FbxScene* lScene;
-	/** @brief Texture filenames discovered in model materials. */
-	std::vector<std::string> textureFileNames;
+  std::string GetBinaryCachePath() const;
+  bool IsBinaryCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) const;
+  bool LoadBinaryCache(const std::string& cachePath);
+  bool SaveBinaryCache(const std::string& cachePath) const;
+
+private:
+  FbxManager* lSdkManager;            ///< Administrador principal del SDK de FBX.
+  FbxScene* lScene;                   ///< Escena cargada desde el archivo FBX.
+  std::vector<std::string > textureFileNames;  ///< Lista de texturas usadas por el modelo.
+
 public:
-	/** @brief Source format selected for this model. */
-	ModelType m_modelType;
-	/** @brief CPU-side meshes extracted from the source model. */
-	std::vector<MeshComponent> m_meshes;
+  ModelType m_modelType;              ///< Tipo del modelo cargado (OBJ o FBX).
+  std::vector<MeshComponent> m_meshes; ///< Mallas extraídas del archivo del modelo.
 };

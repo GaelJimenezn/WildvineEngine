@@ -25,46 +25,6 @@ Actor::Actor(Device& device) {
 		ERROR("Actor", classNameType.c_str(), "Failed to create new SamplerState");
 	}
 
-	//hr = m_rasterizer.init(device);
-	//if (FAILED(hr)) {
-	//	ERROR("Actor", classNameType.c_str(), "Failed to create new Rasterizer");
-	//}
-
-	//hr = m_blendstate.init(device);
-	//if (FAILED(hr)) {
-	//	ERROR("Actor", classNameType.c_str(), "Failed to create new BlendState");
-	//}
-
-	//hr = m_shaderShadow.CreateShader(device, PIXEL_SHADER, "HybridEngine.fx");
-	//
-	//if (FAILED(hr)) {
-	//	ERROR("Main", "InitDevice",
-	//		("Failed to initialize Shadow Shader. HRESULT: " + std::to_string(hr)).c_str());
-	//}
-	//
-	//hr = m_shaderBuffer.init(device, sizeof(CBChangesEveryFrame));
-	//if (FAILED(hr)) {
-	//	ERROR("Main", "InitDevice",
-	//		("Failed to initialize Shadow Buffer. HRESULT: " + std::to_string(hr)).c_str());
-	//
-	//}
-	//
-	//hr = m_shadowBlendState.init(device);
-	//if (FAILED(hr)) {
-	//	ERROR("Main", "InitDevice",
-	//		("Failed to initialize Shadow Blend State. HRESULT: " + std::to_string(hr)).c_str());
-	//
-	//}
-
-	//hr = m_shadowDepthStencilState.init(device, true, false);
-	//
-	//if (FAILED(hr)) {
-	//	ERROR("Main", "InitDevice",
-	//		("Failed to initialize Depth Stencil State. HRESULT: " + std::to_string(hr)).c_str());
-	//
-	//}
-	//
-	//m_LightPos = XMFLOAT4(2.0f, 4.0f, -2.0f, 1.0f);
 }
 
 void
@@ -85,6 +45,7 @@ Actor::update(float deltaTime, DeviceContext& deviceContext) {
 
 void
 Actor::render(DeviceContext& deviceContext) {
+
 	m_sampler.render(deviceContext, 0, 1);
 
 	deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -102,7 +63,7 @@ Actor::render(DeviceContext& deviceContext) {
 		// Bind correcto por mesh
 		if (i < m_textures.size()) {
 			for (int k = 0; k < m_textures.size(); k++) {
-				m_textures[k].render(deviceContext, k, 1);   // albedo mesh i
+				m_textures[k].render(deviceContext, k, 1);
 			}
 		}
 		// else: se queda null
@@ -110,8 +71,8 @@ Actor::render(DeviceContext& deviceContext) {
 	}
 }
 
-void
-Actor::renderForSkybox(DeviceContext& deviceContext) {
+void Actor::renderForSkybox(DeviceContext& deviceContext)
+{
 	deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	// Update buffer and render all components
 	for (unsigned int i = 0; i < m_meshes.size(); i++) {

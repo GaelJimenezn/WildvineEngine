@@ -1,43 +1,64 @@
-ï»¿#pragma once
+#pragma once
 #include "Prerequisites.h"
-#include "MeshComponent.h"
-
-// Declaraciones adelantadas
-class MeshComponent;
+#include "fbxsdk.h"
 
 /**
  * @class ModelLoader
- * @brief Clase encargada de cargar modelos 3D desde archivos (OBJ Parser manual).
- * @details
- * Esta clase es responsable de la lectura, el parseo y la triangulaciÃ³n de
- * archivos de modelos OBJ para extraer la geometrÃ­a y poblar un objeto MeshComponent
- * con datos de vÃ©rtices e Ã­ndices re-indexados.
+ * @brief Clase encargada de gestionar la carga, actualización, renderizado
+ *        y destrucción de modelos 3D, permitiendo importar datos desde archivos externos.
  */
 class
-	ModelLoader {
+ModelLoader{
 public:
-  /** @brief Constructor por defecto. */
+
+  /**
+   * @brief Constructor por defecto de ModelLoader.
+   */
   ModelLoader() = default;
 
-  /** @brief Destructor por defecto. */
+  /**
+   * @brief Destructor por defecto de ModelLoader.
+   */
   ~ModelLoader() = default;
 
   /**
-   * @brief Loads an OBJ file and writes parsed geometry into @p mesh.
-   * @param mesh Destination mesh component that receives vertices and indices.
-   * @param fileName Source OBJ file path.
-   * @return @c S_OK on success; failing @c HRESULT otherwise.
+   * @brief Inicializa los recursos necesarios para el cargador de modelos.
    */
-  HRESULT
-  	init(MeshComponent& mesh, const std::string& fileName);
+  void
+  init();
 
-  /** @brief Reserved update hook for future streaming/import progress. */
+  /**
+   * @brief Actualiza el estado del cargador de modelos, si es necesario.
+   */
   void
-  	update();
-  /** @brief Reserved render hook; model loading does not draw directly. */
+  update();
+
+  /**
+   * @brief Renderiza el modelo cargado (si aplica).
+   */
   void
-  	render();
-  /** @brief Releases transient loader state, if any. */
+  render();
+
+  /**
+   * @brief Libera los recursos asociados al cargador de modelos.
+   */
   void
-  	destroy();
+  destroy();
+
+  /**
+   * @brief Carga un archivo de modelo 3D (por ejemplo, formato OBJ) y devuelve su información.
+   * @param objFileName Nombre o ruta del archivo OBJ a cargar.
+   * @return Estructura LoadData que contiene los datos del modelo cargado.
+   */
+  LoadData
+  Load(std::string objFileName);
+
+private:
+  FbxManager* lSdkManager;
+  FbxScene* lScene;
+  std::vector<std::string > textureFileName;
+public:
+  std::string modelName;
+ 
 };
+

@@ -1,67 +1,74 @@
-ï»¿#pragma once
-/**
- * @file Component.h
- * @brief Declares the abstract ECS component contract.
- */
+#pragma once
 #include "Prerequisites.h"
+
+/**
+ * @class DeviceContext
+ * @brief Declaración adelantada del contexto de dispositivo usado para operaciones de render.
+ */
 class DeviceContext;
 
 /**
  * @class Component
- * @brief Clase base abstracta para todos los componentes del juego.
+ * @brief Clase base abstracta para todos los componentes del motor.
  *
- * La clase Component define la interfaz bÃ¡sica que todos los componentes deben
- * implementar,
- * permitiendo actualizar y renderizar el componente, asÃ­ como obtener su tipo.
+ * Define la interfaz fundamental que todos los componentes deben implementar:
+ * inicialización, actualización, renderizado y destrucción.
+ * Cada componente posee un tipo definido por ComponentType.
  */
 class
-	Component {
+Component {
 public:
-	/**
-	 * @brief Constructor por defecto.
-	 */
-	Component() = default;
 
-	/**
-	 * @brief Constructor con tipo de componente.
-	 * @param type Tipo del componente.
-	 */
-	Component(const ComponentType type) : m_type(type) {}
+  /**
+   * @brief Constructor por defecto.
+   */
+  Component() = default;
 
-	/**
-	 * @brief Destructor virtual.
-	 */
-	virtual
-		~Component() = default;
+  /**
+   * @brief Constructor que asigna un tipo de componente.
+   * @param type Tipo del componente según ComponentType.
+   */
+  Component(const ComponentType type) : m_type(type) {}
 
-	/** @brief Initializes component state before update/render use. */
-	virtual void
-		init() = 0;
+  /**
+   * @brief Destructor virtual por defecto.
+   */
+  virtual
+  ~Component() = default;
 
-	/**
-	 * @brief MÃ©todo virtual puro para actualizar el componente.
-	 * @param deltaTime El tiempo transcurrido desde la Ãºltima actualizaciÃ³n.
-	 */
-	virtual void
-		update(float deltaTime) = 0;
+  /**
+   * @brief Inicializa el componente. Debe ser implementada por las clases derivadas.
+   */
+  virtual void
+  init() = 0;
 
-	/**
-	 * @brief MÃ©todo virtual puro para renderizar el componente.
-	 * @param deviceContext Contexto del dispositivo para operaciones grÃ¡ficas.
-	 */
-	virtual void
-		render(DeviceContext& deviceContext) = 0;
+  /**
+   * @brief Actualiza el componente en cada frame.
+   * @param deltaTime Tiempo transcurrido entre frames.
+   */
+  virtual void
+  update(float deltaTime) = 0;
 
-	/** @brief Releases resources owned by the component. */
-	virtual void
-		destroy() = 0;
+  /**
+   * @brief Renderiza el componente.
+   * @param deviceContext Contexto del dispositivo para operaciones gráficas.
+   */
+  virtual void
+  render(DeviceContext& deviceContext) = 0;
 
-	/**
-	 * @brief Obtiene el tipo del componente.
-	 * @return El tipo del componente.
-	 */
-	ComponentType
-		getType() const { return m_type; }
+  /**
+   * @brief Libera los recursos internos del componente.
+   */
+  virtual void
+  destroy() = 0;
+
+  /**
+   * @brief Obtiene el tipo del componente.
+   * @return Tipo del componente.
+   */
+  ComponentType
+  getType() const { return m_type; }
+
 protected:
-	ComponentType m_type; ///< Tipo del componente.
+  ComponentType m_type;  ///< Tipo del componente definido por ComponentType.
 };

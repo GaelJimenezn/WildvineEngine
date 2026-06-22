@@ -1,8 +1,3 @@
-/**
- * @file SceneGraph.cpp
- * @brief Implementa la logica de SceneGraph dentro del subsistema SceneGraph.
- * @ingroup scenegraph
- */
 #include "SceneGraph\SceneGraph.h"
 #include "SceneGraph\HierarchyComponent.h"
 #include "ECS\Entity.h"
@@ -227,13 +222,17 @@ SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
 			continue;
 		}
 
+		auto transform = entity->getComponent<Transform>();
 		auto lightComponent = entity->getComponent<LightComponent>();
 		if (lightComponent) {
-			outScene.directionalLights.push_back(lightComponent->getLightData());
+			LightData light = lightComponent->getLightData();
+			if (transform) {
+				light.position = transform->getPosition();
+			}
+			outScene.directionalLights.push_back(light);
 		}
 
 		auto meshRenderer = entity->getComponent<MeshRendererComponent>();
-		auto transform = entity->getComponent<Transform>();
 		if (!meshRenderer || !transform || !meshRenderer->isVisible()) {
 			continue;
 		}
@@ -269,3 +268,5 @@ SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
 		}
 	}
 }
+
+

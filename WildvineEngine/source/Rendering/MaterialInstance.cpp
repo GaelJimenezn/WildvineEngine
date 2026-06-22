@@ -1,9 +1,14 @@
+/**
+ * @file MaterialInstance.cpp
+ * @brief Implementa la logica de MaterialInstance dentro del subsistema Rendering.
+ * @ingroup rendering
+ */
 #include "Rendering/MaterialInstance.h"
 #include "DeviceContext.h"
 #include "Texture.h"
 
 void
-MaterialInstance::bindTextures(DeviceContext & deviceContext) const {
+MaterialInstance::bindTextures(DeviceContext& deviceContext) const {
 	ID3D11ShaderResourceView* nullTextures[6] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 	deviceContext.PSSetShaderResources(0, 6, nullTextures);
 

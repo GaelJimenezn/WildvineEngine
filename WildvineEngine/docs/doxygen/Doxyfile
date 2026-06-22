@@ -1,0 +1,83 @@
+PROJECT_NAME           = "Wildvine Engine"
+PROJECT_BRIEF          = "Referencia Doxygen del codigo propio de Wildvine Engine."
+OUTPUT_DIRECTORY       = docs/generated
+CREATE_SUBDIRS         = NO
+ALLOW_UNICODE_NAMES    = YES
+OUTPUT_LANGUAGE        = Spanish
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = NO
+ALWAYS_DETAILED_SEC    = NO
+INLINE_INHERITED_MEMB  = YES
+FULL_PATH_NAMES        = NO
+STRIP_FROM_PATH        = .
+JAVADOC_AUTOBRIEF      = YES
+MULTILINE_CPP_IS_BRIEF = YES
+TAB_SIZE               = 2
+OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_JAVA   = NO
+OPTIMIZE_FOR_FORTRAN   = NO
+OPTIMIZE_OUTPUT_VHDL   = NO
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+BUILTIN_STL_SUPPORT    = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_ANON_NSPACES   = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+HIDE_FRIEND_COMPOUNDS  = NO
+HIDE_IN_BODY_DOCS      = NO
+INTERNAL_DOCS          = NO
+CASE_SENSE_NAMES       = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+INPUT                  = WildvineEngine.cpp \
+                         include \
+                         source \
+                         docs/doxygen/mainpage.md \
+                         docs/doxygen/modules.dox
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h \
+                         *.cpp \
+                         *.md \
+                         *.dox
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = docs/doxygen/mainpage.md
+EXCLUDE                = DXUT \
+                         Imgui \
+                         include/fbx \
+                         include/stb_image.h \
+                         lib \
+                         bin \
+                         intermediate \
+                         Backup \
+                         .vs \
+                         docs/generated \
+                         temp_vela_names.cpp
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+VERBATIM_HEADERS       = YES
+CLANG_ASSISTED_PARSING = NO
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = YES
+SORT_BY_SCOPE_NAME     = YES
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE        = LIGHT
+HTML_DYNAMIC_SECTIONS  = YES
+GENERATE_TREEVIEW      = YES
+FULL_SIDEBAR           = YES
+DISABLE_INDEX          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+GENERATE_DOCSET        = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+GENERATE_PERLMOD       = NO

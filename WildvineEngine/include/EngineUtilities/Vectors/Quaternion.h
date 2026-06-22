@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 Roberto Charreton
+ * Copyright (c) 2024 Roberto Charreton
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@
 */
 #pragma once
 
-#include "Utilities/EngineMath.h"
+#include "EngineUtilities/Utilities/EngineMath.h"
 #include "Vector3.h"
 namespace EU {
 	/**
@@ -134,7 +134,7 @@ namespace EU {
 		 * @return The magnitude of the quaternion.
 		 */
 		float magnitude() const {
-			return EngineUtilities::sqrt(w * w + x * x + y * y + z * z);
+			return EU::sqrt(w * w + x * x + y * y + z * z);
 		}
 
 		/**
@@ -194,9 +194,9 @@ namespace EU {
 		 */
 		static Quaternion fromAxisAngle(const Vector3& axis, float angle) {
 			float halfAngle = angle * 0.5f;
-			float sinHalfAngle = EngineUtilities::sin(halfAngle);
+			float sinHalfAngle = EU::sin(halfAngle);
 			return Quaternion(
-				EngineUtilities::cos(halfAngle),
+				EU::cos(halfAngle),
 				axis.x * sinHalfAngle,
 				axis.y * sinHalfAngle,
 				axis.z * sinHalfAngle

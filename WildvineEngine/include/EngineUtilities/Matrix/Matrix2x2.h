@@ -26,8 +26,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
-#pragma EU
-namespace EngineUtilities {
+#pragma once
+namespace EU {
   /**
  * @brief A 2x2 matrix class.
  *
