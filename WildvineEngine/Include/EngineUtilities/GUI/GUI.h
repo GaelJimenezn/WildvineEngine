@@ -166,8 +166,9 @@ private:
   bool m_showOutliner = true;
   bool m_showInspector = true;
   bool m_showToolbox = false;
-  bool m_showRenderDebug = true;
-  bool m_showGBufferDebug = true;
+  bool m_showRenderDebug = false;
+  bool m_showGBufferDebug = false;
+  bool m_showMaterialSRVDebug = false;
   ImDrawList* m_viewportDrawList = nullptr;
   bool m_viewportActive = false;
 

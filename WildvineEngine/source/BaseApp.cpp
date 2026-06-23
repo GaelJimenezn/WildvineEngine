@@ -1,7 +1,10 @@
 ﻿#include "BaseApp.h"
 #include "ResourceManager.h"
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 // Necesario para que Win32 reenvíe los inputs a ImGui
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -119,6 +122,88 @@ BaseApp::enforceDefaultSceneLayout()
   }
 }
 
+void
+BaseApp::frameDefaultSceneCamera()
+{
+  if (m_model == nullptr || m_cyberGun.isNull()) {
+    m_camera.lookAt(EU::Vector3(0.0f, 3.0f, -12.0f), EU::Vector3(0.0f, 0.0f, 0.0f));
+    return;
+  }
+
+  EU::Vector3 minBounds(
+    (std::numeric_limits<float>::max)(),
+    (std::numeric_limits<float>::max)(),
+    (std::numeric_limits<float>::max)()
+  );
+  EU::Vector3 maxBounds(
+    -(std::numeric_limits<float>::max)(),
+    -(std::numeric_limits<float>::max)(),
+    -(std::numeric_limits<float>::max)()
+  );
+
+  bool hasVertices = false;
+  for (const MeshComponent& meshComponent : m_model->GetMeshes()) {
+    for (const SimpleVertex& vertex : meshComponent.m_vertex) {
+      const EU::Vector3& p = vertex.Position;
+      if (p.x < minBounds.x) minBounds.x = p.x;
+      if (p.y < minBounds.y) minBounds.y = p.y;
+      if (p.z < minBounds.z) minBounds.z = p.z;
+      if (p.x > maxBounds.x) maxBounds.x = p.x;
+      if (p.y > maxBounds.y) maxBounds.y = p.y;
+      if (p.z > maxBounds.z) maxBounds.z = p.z;
+      hasVertices = true;
+    }
+  }
+
+  if (!hasVertices) {
+    m_camera.lookAt(EU::Vector3(0.0f, 3.0f, -12.0f), EU::Vector3(0.0f, 0.0f, 0.0f));
+    return;
+  }
+
+  EU::Vector3 center(
+    (minBounds.x + maxBounds.x) * 0.5f,
+    (minBounds.y + maxBounds.y) * 0.5f,
+    (minBounds.z + maxBounds.z) * 0.5f
+  );
+
+  EU::Vector3 extents(
+    (maxBounds.x - minBounds.x) * 0.5f,
+    (maxBounds.y - minBounds.y) * 0.5f,
+    (maxBounds.z - minBounds.z) * 0.5f
+  );
+
+  EU::TSharedPointer<Transform> transform = m_cyberGun->getComponent<Transform>();
+  if (transform) {
+    const EU::Vector3& position = transform->getPosition();
+    const EU::Vector3& scale = transform->getScale();
+    center = EU::Vector3(
+      position.x + center.x * scale.x,
+      position.y + center.y * scale.y,
+      position.z + center.z * scale.z
+    );
+    extents = EU::Vector3(
+      std::abs(extents.x * scale.x),
+      std::abs(extents.y * scale.y),
+      std::abs(extents.z * scale.z)
+    );
+  }
+
+  const float computedRadius = std::sqrt(
+    extents.x * extents.x +
+    extents.y * extents.y +
+    extents.z * extents.z
+  );
+  const float radius = computedRadius > 1.0f ? computedRadius : 1.0f;
+
+  const float fovY = m_camera.getFovY() > 0.35f ? m_camera.getFovY() : 0.35f;
+  const float computedDistance = (radius / std::tan(fovY * 0.5f)) * 1.35f;
+  const float distance = computedDistance > 8.0f ? computedDistance : 8.0f;
+  const float computedHeight = radius * 0.18f;
+  const float height = computedHeight > 1.5f ? computedHeight : 1.5f;
+
+  EU::Vector3 cameraPosition(center.x, center.y + height, center.z - distance);
+  m_camera.lookAt(cameraPosition, center);
+}
 void
 BaseApp::selectActor(EU::TSharedPointer<Actor> actor)
 {
@@ -332,9 +417,9 @@ BaseApp::init() {
     EU::TSharedPointer<Transform> transform = m_cyberGun->getComponent<Transform>();
     if (transform) {
       transform->setTransform(
-        EU::Vector3(-2.5f, 1.0f, 27.0f),
-        EU::Vector3(-90.0f, 0.0f, 0.0f),
-        EU::Vector3(0.30f, 0.30f, 0.30f)
+        EU::Vector3(0.0f, 0.0f, 0.0f),
+        EU::Vector3(0.0f, 0.0f, 0.0f),
+        EU::Vector3(1.0f, 1.0f, 1.0f)
       );
       transform->rebuildMatrixFromVectors();
     }
@@ -488,6 +573,7 @@ BaseApp::init() {
 
   loadScene(getDefaultScenePath());
   enforceDefaultSceneLayout();
+  frameDefaultSceneCamera();
 
   // --------------------------------------------------------------------------
   // VIEWPORT PASS / FORWARD RENDERER
@@ -534,17 +620,23 @@ BaseApp::update(float deltaTime) {
       m_editorViewportPass.getSRV(),
       m_forwardRenderer.getShadowMapSRV()
     );
-    m_gui.drawMaterialSRVDebugPanel(
-      m_AlbedoSRV.m_textureFromImg,
-      m_NormalSRV.m_textureFromImg,
-      m_MetallicSRV.m_textureFromImg,
-      m_RoughnessSRV.m_textureFromImg,
-      m_AOSRV.m_textureFromImg
-    );
   }
 
+  m_gui.drawMaterialSRVDebugPanel(
+    m_AlbedoSRV.m_textureFromImg,
+    m_NormalSRV.m_textureFromImg,
+    m_MetallicSRV.m_textureFromImg,
+    m_RoughnessSRV.m_textureFromImg,
+    m_AOSRV.m_textureFromImg
+  );
+
   if (m_gui.shouldShowGBufferDebug()) {
-    m_gui.drawGBufferDebugPanel(nullptr, nullptr, nullptr, nullptr);
+    m_gui.drawGBufferDebugPanel(
+      m_AlbedoSRV.m_textureFromImg,
+      m_NormalSRV.m_textureFromImg,
+      m_AOSRV.m_textureFromImg,
+      m_RoughnessSRV.m_textureFromImg
+    );
   }
 
   if (m_gui.shouldShowOutliner()) {

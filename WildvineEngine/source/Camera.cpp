@@ -45,6 +45,7 @@ Camera::lookAt(const EU::Vector3& pos, const EU::Vector3& target, const EU::Vect
 	m_forward = FromXM(F);
 	m_right = FromXM(R);
 	m_up = FromXM(Up);
+	m_viewDirty = true;
 }
 
 void

@@ -61,6 +61,7 @@ public:
 private:
   EU::TSharedPointer<Actor> createLightActor(LightType type, const std::string& baseName);
   void enforceDefaultSceneLayout();
+  void frameDefaultSceneCamera();
   void selectActor(EU::TSharedPointer<Actor> actor);
   void syncLightActors();
   HRESULT loadPbrTexture(Texture& texture, const std::string& path, const char* debugName);

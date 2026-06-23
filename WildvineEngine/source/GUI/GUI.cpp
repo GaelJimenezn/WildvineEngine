@@ -16,7 +16,7 @@
 #include "Rendering\Material.h"
 #include "Rendering\MaterialInstance.h"
 #include "EngineUtilities\Utilities\Camera.h"
-//#include "imgui_internal.h"
+#include "imgui_internal.h"
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
 static bool mGizmoEnabled = true;
@@ -32,6 +32,21 @@ struct DebugTextureItem {
 
 ImU32 AccentU32(const ImVec4& color) {
 	return ImGui::ColorConvertFloat4ToU32(color);
+}
+
+void PushEditorPopupStyle() {
+	ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 6.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 10.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 5.0f));
+	ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.075f, 0.080f, 0.095f, 0.98f));
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.16f, 0.32f, 0.72f, 0.85f));
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.42f, 0.16f, 0.86f, 0.95f));
+}
+
+void PopEditorPopupStyle() {
+	ImGui::PopStyleColor(3);
+	ImGui::PopStyleVar(4);
 }
 
 float RadToDeg(float radians) {
@@ -269,7 +284,6 @@ GUI::update(Viewport& viewport, Window& window) {
 	drawStudioTopRibbon();
 	drawEditorDockspace();
 	closeApp();
-	drawGizmoToolbar();
 }
 
 void
@@ -560,7 +574,10 @@ GUI::closeApp() {
 
 void
 GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
-	ImGui::Begin("Details");
+	if (!ImGui::Begin("Details", &m_showInspector)) {
+		ImGui::End();
+		return;
+	}
 	if (actor.isNull()) {
 		ImGui::Dummy(ImVec2(0.0f, 12.0f));
 		ImGui::TextDisabled("No actor selected");
@@ -752,7 +769,10 @@ GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
 
 void 
 GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
-	ImGui::Begin("World Outliner");
+	if (!ImGui::Begin("World Outliner", &m_showOutliner)) {
+		ImGui::End();
+		return;
+	}
 
 	ImGui::TextDisabled("Scene");
 	static ImGuiTextFilter filter;
@@ -968,7 +988,7 @@ void GUI::drawStudioTopRibbon()
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 
 	const float menuBarHeight = 24.0f;
-	const float ribbonHeight = 64.0f;
+	const float toolbarHeight = 42.0f;
 
 	ImGui::SetNextWindowPos(viewport->Pos, ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, menuBarHeight), ImGuiCond_Always);
@@ -1002,7 +1022,6 @@ void GUI::drawStudioTopRibbon()
 				}
 				ImGui::EndMenu();
 			}
-
 			if (ImGui::BeginMenu("Edit"))
 			{
 				ImGui::MenuItem("Undo");
@@ -1013,7 +1032,6 @@ void GUI::drawStudioTopRibbon()
 				ImGui::MenuItem("Paste");
 				ImGui::EndMenu();
 			}
-
 			if (ImGui::BeginMenu("Window"))
 			{
 				ImGui::MenuItem("World Outliner", nullptr, &m_showOutliner);
@@ -1022,16 +1040,17 @@ void GUI::drawStudioTopRibbon()
 				ImGui::Separator();
 				ImGui::MenuItem("Render Diagnostics", nullptr, &m_showRenderDebug);
 				ImGui::MenuItem("GBuffer Viewer", nullptr, &m_showGBufferDebug);
+				ImGui::MenuItem("Material SRV Inspector", nullptr, &m_showMaterialSRVDebug);
 				if (ImGui::MenuItem("Reset Editor Layout")) {
 					m_showOutliner = true;
 					m_showInspector = true;
 					m_showToolbox = false;
-					m_showRenderDebug = true;
-					m_showGBufferDebug = true;
+					m_showRenderDebug = false;
+					m_showGBufferDebug = false;
+					m_showMaterialSRVDebug = false;
 				}
 				ImGui::EndMenu();
 			}
-
 			if (ImGui::BeginMenu("Create"))
 			{
 				if (ImGui::MenuItem("Directional Light")) {
@@ -1042,22 +1061,20 @@ void GUI::drawStudioTopRibbon()
 				ImGui::MenuItem("Material", nullptr, false, false);
 				ImGui::EndMenu();
 			}
-
 			if (ImGui::BeginMenu("Renderer"))
 			{
 				ImGui::MenuItem("Render Diagnostics", nullptr, &m_showRenderDebug);
 				ImGui::MenuItem("GBuffer Viewer", nullptr, &m_showGBufferDebug);
+				ImGui::MenuItem("Material SRV Inspector", nullptr, &m_showMaterialSRVDebug);
 				ImGui::MenuItem("Visualize Shadow Factor", nullptr, &m_visualizeDeferredShadowFactor);
 				ImGui::EndMenu();
 			}
-
 			if (ImGui::BeginMenu("Help"))
 			{
 				ImGui::MenuItem("Documentation");
 				ImGui::MenuItem("About Wildvine Engine");
 				ImGui::EndMenu();
 			}
-
 			ImGui::EndMenuBar();
 		}
 	}
@@ -1066,9 +1083,9 @@ void GUI::drawStudioTopRibbon()
 	ImGui::PopStyleVar(2);
 
 	ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, ribbonHeight), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarHeight), ImGuiCond_Always);
 
-	ImGuiWindowFlags ribbonFlags =
+	ImGuiWindowFlags toolbarFlags =
 		ImGuiWindowFlags_NoDecoration |
 		ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoSavedSettings |
@@ -1076,136 +1093,179 @@ void GUI::drawStudioTopRibbon()
 		ImGuiWindowFlags_NoScrollbar;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 7.0f));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 4.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.070f, 0.074f, 0.084f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.115f, 0.122f, 0.138f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.165f, 0.180f, 0.205f, 1.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 6.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(5.0f, 4.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(9.0f, 5.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.060f, 0.064f, 0.074f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.105f, 0.112f, 0.130f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.155f, 0.170f, 0.205f, 1.0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.42f, 0.16f, 0.86f, 1.0f));
 
-	if (ImGui::Begin("##UnrealToolbar", nullptr, ribbonFlags))
+	if (ImGui::Begin("##CompactEditorToolbar", nullptr, toolbarFlags))
 	{
-		auto toolbarButton = [&](const char* id, const char* label, const char* hint, bool active = false) -> bool
-		{
-			const ImVec2 size(74.0f, 42.0f);
-			if (active) {
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.08f, 0.36f, 0.86f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.52f, 0.20f, 1.00f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.095f, 0.100f, 0.118f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.145f, 0.160f, 0.200f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.08f, 0.36f, 0.86f, 1.0f));
+
+		if (ImGui::Button("Save", ImVec2(54.0f, 28.0f))) {
+			m_requestSaveScene = true;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Content", ImVec2(76.0f, 28.0f))) {
+			m_showToolbox = true;
+		}
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 1.0f));
+		ImGui::SameLine();
+
+		if (ImGui::Button("Selection Mode  v", ImVec2(148.0f, 28.0f))) {
+			ImGui::OpenPopup("##SelectionModeMenu");
+		}
+
+		PushEditorPopupStyle();
+		ImGui::SetNextWindowSize(ImVec2(260.0f, 0.0f), ImGuiCond_Appearing);
+		if (ImGui::BeginPopup("##SelectionModeMenu")) {
+			if (ImGui::MenuItem("Selection", "Shift+1", true)) {
+				mGizmoEnabled = false;
 			}
+			ImGui::MenuItem("Landscape", "Shift+2", false, false);
+			ImGui::MenuItem("Foliage", "Shift+3", false, false);
+			ImGui::MenuItem("Mesh Paint", "Shift+4", false, false);
+			ImGui::MenuItem("Modeling", "Shift+5", false, false);
+			ImGui::MenuItem("Fracture", "Shift+6", false, false);
+			ImGui::MenuItem("Brush Editing", "Shift+7", false, false);
+			ImGui::MenuItem("Animation", "Shift+8", false, false);
+			ImGui::EndPopup();
+		}
+		PopEditorPopupStyle();
 
-			bool pressed = ImGui::Button(id, size);
-			ImVec2 min = ImGui::GetItemRectMin();
-			ImVec2 max = ImGui::GetItemRectMax();
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
-			ImVec2 labelSize = ImGui::CalcTextSize(label);
-			ImVec2 hintSize = ImGui::CalcTextSize(hint);
-			float centerX = (min.x + max.x) * 0.5f;
-			drawList->AddText(ImVec2(centerX - labelSize.x * 0.5f, min.y + 7.0f), ImGui::GetColorU32(ImGuiCol_Text), label);
-			drawList->AddText(ImVec2(centerX - hintSize.x * 0.5f, min.y + 24.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), hint);
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 1.0f));
+		ImGui::SameLine();
 
-			if (active) {
-				ImGui::PopStyleColor(2);
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.10f, 0.38f, 0.13f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.16f, 0.55f, 0.20f, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.08f, 0.68f, 0.24f, 1.0f));
+		if (ImGui::Button("+  v", ImVec2(46.0f, 28.0f))) {
+			ImGui::OpenPopup("##CreateActorMenu");
+		}
+		ImGui::PopStyleColor(3);
+
+		PushEditorPopupStyle();
+		ImGui::SetNextWindowSize(ImVec2(285.0f, 0.0f), ImGuiCond_Appearing);
+		if (ImGui::BeginPopup("##CreateActorMenu")) {
+			ImGui::SetNextItemWidth(230.0f);
+			static char createSearchBuffer[64] = {};
+			ImGui::InputTextWithHint("##CreateSearch", "Start typing to search", createSearchBuffer, IM_ARRAYSIZE(createSearchBuffer));
+			ImGui::Separator();
+
+			ImGui::TextDisabled("GET CONTENT");
+			ImGui::MenuItem("Import Content...", nullptr, false, false);
+			ImGui::MenuItem("Quixel Bridge", nullptr, false, false);
+			if (ImGui::MenuItem("Content Browser", nullptr, m_showToolbox)) {
+				m_showToolbox = true;
 			}
-			return pressed;
-		};
+			ImGui::Separator();
 
-		auto groupSeparator = [&]()
-		{
-			ImGui::SameLine();
-			ImVec2 p = ImGui::GetCursorScreenPos();
-			ImGui::GetWindowDrawList()->AddLine(ImVec2(p.x + 4.0f, p.y), ImVec2(p.x + 4.0f, p.y + 46.0f), IM_COL32(55, 59, 68, 255), 1.0f);
-			ImGui::Dummy(ImVec2(12.0f, 46.0f));
-			ImGui::SameLine();
-		};
+			ImGui::TextDisabled("PLACE ACTORS");
+			if (ImGui::BeginMenu("Basic", false)) {
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Lights")) {
+				if (ImGui::MenuItem("Directional Light")) {
+					m_requestedLightType = LightType::Directional;
+					m_requestCreateLight = true;
+				}
+				ImGui::MenuItem("Point Light", nullptr, false, false);
+				ImGui::MenuItem("Spot Light", nullptr, false, false);
+				ImGui::EndMenu();
+			}
+			ImGui::MenuItem("Shapes", nullptr, false, false);
+			ImGui::MenuItem("Cinematic", nullptr, false, false);
+			ImGui::MenuItem("Media Plate", nullptr, false, false);
+			ImGui::MenuItem("Visual Effects", nullptr, false, false);
+			ImGui::MenuItem("Geometry", nullptr, false, false);
+			ImGui::MenuItem("Volumes", nullptr, false, false);
+			ImGui::MenuItem("Place Actors Panel", nullptr, false, false);
+			ImGui::Separator();
 
-		ImGui::BeginGroup();
-		ImGui::TextDisabled("Modes");
-		if (toolbarButton("##SelectMode", "Select", "Q", !mGizmoEnabled)) {
-			mGizmoEnabled = false;
+			ImGui::TextDisabled("RECENT");
+			if (ImGui::MenuItem("Directional Light")) {
+				m_requestedLightType = LightType::Directional;
+				m_requestCreateLight = true;
+			}
+			ImGui::MenuItem("Point Light", nullptr, false, false);
+			ImGui::MenuItem("Spot Light", nullptr, false, false);
+			ImGui::MenuItem("Rect Light", nullptr, false, false);
+			ImGui::EndPopup();
 		}
-		ImGui::SameLine();
-		if (toolbarButton("##MoveMode", "Move", "W", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::TRANSLATE)) {
-			mGizmoEnabled = true;
-			mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-		}
-		ImGui::SameLine();
-		if (toolbarButton("##RotateMode", "Rotate", "E", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::ROTATE)) {
-			mGizmoEnabled = true;
-			mCurrentGizmoOperation = ImGuizmo::ROTATE;
-		}
-		ImGui::SameLine();
-		if (toolbarButton("##ScaleMode", "Scale", "R", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::SCALE)) {
-			mGizmoEnabled = true;
-			mCurrentGizmoOperation = ImGuizmo::SCALE;
-		}
-		ImGui::EndGroup();
+		PopEditorPopupStyle();
 
-		groupSeparator();
-
-		ImGui::BeginGroup();
-		ImGui::TextDisabled("Create");
-		if (toolbarButton("##CreateLight", "Light", "Actor", false)) {
-			m_requestedLightType = LightType::Directional;
-			m_requestCreateLight = true;
-		}
-		ImGui::SameLine();
-		toolbarButton("##CreateMesh", "Mesh", "PBR", false);
-		ImGui::SameLine();
-		toolbarButton("##MaterialEdit", "Material", "PBR", false);
-		ImGui::EndGroup();
-
-		groupSeparator();
-
-		ImGui::BeginGroup();
-		ImGui::TextDisabled("Panels");
-		if (toolbarButton("##PanelWorld", "World", "Outliner", m_showOutliner)) {
-			m_showOutliner = !m_showOutliner;
-		}
-		ImGui::SameLine();
-		if (toolbarButton("##PanelDetails", "Details", "Inspector", m_showInspector)) {
-			m_showInspector = !m_showInspector;
-		}
-		ImGui::SameLine();
-		if (toolbarButton("##PanelContent", "Content", "Browser", m_showToolbox)) {
-			m_showToolbox = !m_showToolbox;
-		}
-		ImGui::EndGroup();
-
-		groupSeparator();
-
-		ImGui::BeginGroup();
-		ImGui::TextDisabled("Diagnostics");
-		if (toolbarButton("##RenderDiag", "Render", "Passes", m_showRenderDebug)) {
-			m_showRenderDebug = !m_showRenderDebug;
-		}
-		ImGui::SameLine();
-		if (toolbarButton("##GBufferDiag", "GBuffer", "Viewer", m_showGBufferDebug)) {
-			m_showGBufferDebug = !m_showGBufferDebug;
-		}
-		ImGui::SameLine();
-		if (toolbarButton("##ShadowFactor", "Shadow", "Factor", m_visualizeDeferredShadowFactor)) {
-			m_visualizeDeferredShadowFactor = !m_visualizeDeferredShadowFactor;
-		}
-		ImGui::EndGroup();
+		ImGui::PopStyleColor(3);
 	}
 	ImGui::End();
 
 	ImGui::PopStyleColor(4);
-	ImGui::PopStyleVar(3);
+	ImGui::PopStyleVar(4);
 }
 void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 {
 	ImGuiWindowFlags flags =
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoScrollWithMouse | 
-
-		ImGuiWindowFlags_NoCollapse;
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_MenuBar;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-	if (ImGui::Begin("Viewport", nullptr, flags))
+	if (ImGui::Begin("DefaultScene", nullptr, flags))
 	{
 		m_viewportDrawList = ImGui::GetWindowDrawList();
+
+		PushEditorPopupStyle();
+		if (ImGui::BeginMenuBar()) {
+			ImGui::SetNextWindowSize(ImVec2(285.0f, 0.0f), ImGuiCond_Appearing);
+			if (ImGui::BeginMenu("Menu")) {
+				ImGui::TextDisabled("TRANSFORM TOOLS");
+				if (ImGui::MenuItem("Select Mode", "Q", !mGizmoEnabled)) {
+					mGizmoEnabled = false;
+				}
+				if (ImGui::MenuItem("Translate Mode", "W", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::TRANSLATE)) {
+					mGizmoEnabled = true;
+					mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+				}
+				if (ImGui::MenuItem("Rotate Mode", "E", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::ROTATE)) {
+					mGizmoEnabled = true;
+					mCurrentGizmoOperation = ImGuizmo::ROTATE;
+				}
+				if (ImGui::MenuItem("Scale Mode", "R", mGizmoEnabled && mCurrentGizmoOperation == ImGuizmo::SCALE)) {
+					mGizmoEnabled = true;
+					mCurrentGizmoOperation = ImGuizmo::SCALE;
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Coordinate System", mCurrentGizmoMode == ImGuizmo::WORLD ? "World" : "Local")) {
+					mCurrentGizmoMode = (mCurrentGizmoMode == ImGuizmo::WORLD) ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+				}
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Show")) {
+					ImGui::TextDisabled("EDITOR PANELS");
+					ImGui::MenuItem("World Outliner", nullptr, &m_showOutliner);
+					ImGui::MenuItem("Details", nullptr, &m_showInspector);
+					ImGui::MenuItem("Content Browser", nullptr, &m_showToolbox);
+					ImGui::Separator();
+					ImGui::TextDisabled("DEBUG PANELS");
+					ImGui::MenuItem("Render Diagnostics", nullptr, &m_showRenderDebug);
+					ImGui::MenuItem("GBuffer Viewer", nullptr, &m_showGBufferDebug);
+					ImGui::MenuItem("Material SRV Inspector", nullptr, &m_showMaterialSRVDebug);
+					ImGui::MenuItem("Visualize Shadow Factor", nullptr, &m_visualizeDeferredShadowFactor);
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
+		PopEditorPopupStyle();
 
 		ImVec2 panelMin = ImGui::GetCursorScreenPos();
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
@@ -1251,7 +1311,10 @@ void GUI::drawRenderDebugPanel(ID3D11ShaderResourceView* preShadowSRV,
 	ID3D11ShaderResourceView* finalViewportSRV,
 	ID3D11ShaderResourceView* shadowMapSRV)
 {
-	ImGui::Begin("Render Diagnostics");
+	if (!ImGui::Begin("Render Diagnostics", &m_showRenderDebug)) {
+		ImGui::End();
+		return;
+	}
 
 	DebugTextureItem items[] = {
 		{ "Scene Final", "Viewport color target", finalViewportSRV },
@@ -1372,10 +1435,13 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
 		}
 	}
 
-	ImGui::Begin("GBuffer Viewer");
-	ImGui::TextDisabled("Deferred Attachments");
+	if (!ImGui::Begin("GBuffer Viewer", &m_showGBufferDebug)) {
+		ImGui::End();
+		return;
+	}
+	ImGui::TextDisabled("Texture Combination Preview");
 	ImGui::SameLine();
-	ImGui::Text("%s", hasAnyTexture ? "Available" : "ForwardRenderer: unavailable");
+	ImGui::Text("%s", hasAnyTexture ? "PBR fallback from loaded SRVs" : "Deferred attachments unavailable");
 	ImGui::Checkbox("Visualize Shadow Factor", &m_visualizeDeferredShadowFactor);
 	ImGui::Separator();
 
@@ -1398,7 +1464,7 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 			drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 23, 255), 3.0f);
 			drawList->AddRect(min, maxPt, IM_COL32(58, 62, 70, 255), 3.0f);
-			drawList->AddText(ImVec2(min.x + 8.0f, min.y + 8.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Not produced by current renderer");
+			drawList->AddText(ImVec2(min.x + 8.0f, min.y + 8.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "No preview SRV bound");
 		}
 		ImGui::Separator();
 		ImGui::PopID();
@@ -1423,7 +1489,7 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
 		ImGui::InvisibleButton("##MissingGBufferPreview", previewSize);
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 		drawList->AddRectFilled(min, maxPt, IM_COL32(18, 20, 23, 255));
-		drawList->AddText(ImVec2(min.x + 16.0f, min.y + 16.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Switch to a deferred renderer to populate this attachment");
+		drawList->AddText(ImVec2(min.x + 16.0f, min.y + 16.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Open a loaded material or deferred renderer output to populate this preview");
 	}
 	ImGui::EndChild();
 
@@ -1436,6 +1502,10 @@ void GUI::drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
 	ID3D11ShaderResourceView* roughnessSRV,
 	ID3D11ShaderResourceView* aoSRV)
 {
+	if (!m_showMaterialSRVDebug) {
+		return;
+	}
+
 	DebugTextureItem items[] = {
 		{ "PBR Albedo", "Slot t0 | RGB base color", albedoSRV },
 		{ "PBR Normal", "Slot t1 | Tangent-space normal", normalSRV },
@@ -1456,7 +1526,10 @@ void GUI::drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
 		}
 	}
 
-	ImGui::Begin("Material SRV Inspector");
+	if (!ImGui::Begin("Material SRV Inspector", &m_showMaterialSRVDebug)) {
+		ImGui::End();
+		return;
+	}
 	ImGui::TextDisabled("Bound PBR Textures");
 	ImGui::SameLine();
 	ImGui::Text("%d/%d SRVs", availableCount, IM_ARRAYSIZE(items));
@@ -1515,7 +1588,10 @@ void GUI::drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
 
 void GUI::drawToolboxPanel()
 {
-	ImGui::Begin("Content Browser");
+	if (!ImGui::Begin("Content Browser", &m_showToolbox)) {
+		ImGui::End();
+		return;
+	}
 
 	ImGui::TextDisabled("Transform");
 	if (ImGui::Button("Select")) {
@@ -1543,6 +1619,7 @@ void GUI::drawToolboxPanel()
 	ImGui::Checkbox("Properties", &m_showInspector);
 	ImGui::Checkbox("Render Debug", &m_showRenderDebug);
 	ImGui::Checkbox("GBuffer Debug", &m_showGBufferDebug);
+	ImGui::Checkbox("Material SRV Debug", &m_showMaterialSRVDebug);
 
 	ImGui::Separator();
 	ImGui::TextDisabled("Renderer");
@@ -1554,14 +1631,6 @@ void GUI::drawToolboxPanel()
 		m_requestedLightType = LightType::Directional;
 		m_requestCreateLight = true;
 	}
-	if (ImGui::Button("Point Light")) {
-		m_requestedLightType = LightType::Point;
-		m_requestCreateLight = true;
-	}
-	if (ImGui::Button("Spot Light")) {
-		m_requestedLightType = LightType::Spot;
-		m_requestCreateLight = true;
-	}
 
 	ImGui::End();
 }
@@ -1571,7 +1640,7 @@ void GUI::drawEditorDockspace()
 	ImGuiViewport* mainViewport = ImGui::GetMainViewport();
 
 	// Debe coincidir con la altura total que ocupa tu ribbon superior
-	const float topOffset = 88.0f; // 24 menu + 64 toolbar
+	const float topOffset = 66.0f; // 24 menu + 42 compact toolbar
 
 	ImVec2 dockPos = ImVec2(mainViewport->Pos.x, mainViewport->Pos.y + topOffset);
 	ImVec2 dockSize = ImVec2(mainViewport->Size.x, mainViewport->Size.y - topOffset);
@@ -1605,10 +1674,37 @@ void GUI::drawEditorDockspace()
 
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
+	static bool s_defaultLayoutBuilt = false;
+	if (!s_defaultLayoutBuilt) {
+		s_defaultLayoutBuilt = true;
+
+		ImGui::DockBuilderRemoveNode(dockspace_id);
+		ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspace_id, dockSize);
+
+		ImGuiID dockMain = dockspace_id;
+		ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.20f, nullptr, &dockMain);
+		ImGuiID dockBottom = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.24f, nullptr, &dockMain);
+		ImGuiID dockRightBottom = ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Down, 0.42f, nullptr, &dockRight);
+
+		ImGui::DockBuilderDockWindow("DefaultScene", dockMain);
+		ImGui::DockBuilderDockWindow("Render Diagnostics", dockMain);
+		ImGui::DockBuilderDockWindow("Material SRV Inspector", dockMain);
+		ImGui::DockBuilderDockWindow("GBuffer Viewer", dockMain);
+		ImGui::DockBuilderDockWindow("World Outliner", dockRight);
+		ImGui::DockBuilderDockWindow("Details", dockRightBottom);
+		ImGui::DockBuilderDockWindow("Content Browser", dockBottom);
+
+		ImGui::DockBuilderFinish(dockspace_id);
+	}
+
 	ImGui::End();
 
 	ImGui::PopStyleVar(3);
 }
+
+
+
 
 
 
