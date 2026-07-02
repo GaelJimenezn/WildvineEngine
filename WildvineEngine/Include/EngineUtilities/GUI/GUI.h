@@ -12,6 +12,7 @@
 #include "imgui_impl_dx11.h"
 #include "ImGuizmo.h"
 #include "Rendering/RenderTypes.h"
+#include "Logger.h"
 
 class Viewport;
 class Window;
@@ -19,6 +20,11 @@ class Device;
 class DeviceContext;
 class Actor;
 class Camera;
+
+struct AssetThumb {
+  std::string name;
+  ID3D11ShaderResourceView* srv = nullptr;
+};
 
 /**
  * @class GUI
@@ -121,6 +127,14 @@ public:
                                  ID3D11ShaderResourceView* roughnessSRV,
                                  ID3D11ShaderResourceView* aoSRV);
 
+  void drawLightingPanel(float* lightDir, float* lightColor);
+  void drawStatsPanel(float deltaTime, unsigned int drawCalls);
+  void drawConsolePanel();
+  void drawTexturePreview();
+  void drawContentBrowser(const std::vector<AssetThumb>& textureThumbs);
+  void drawSelectionOutline(Camera& cam, const EU::Vector3& localMin, const EU::Vector3& localMax, const XMMATRIX& world);
+  void drawViewportGrid(Camera& cam);
+
   void drawToolboxPanel();
 
   void drawEditorDockspace();
@@ -152,6 +166,12 @@ public:
     return true;
   }
 
+  bool consumeResetRequest() { bool r = m_resetRequested; m_resetRequested = false; return r; }
+  bool consumeFocusRequest() { bool r = m_focusRequested; m_focusRequested = false; return r; }
+  bool consumeFitRequest()   { bool r = m_fitRequested;   m_fitRequested = false; return r; }
+  bool consumeUndoRequest()  { bool r = m_undoRequested;  m_undoRequested = false; return r; }
+  bool consumeRedoRequest()  { bool r = m_redoRequested;  m_redoRequested = false; return r; }
+
 private:
 
   bool checkboxValue = true;
@@ -175,9 +195,51 @@ private:
 public:
   bool m_isUsingGizmo = false;               ///< Indica si el gizmo esta capturando entrada del usuario.
   bool m_visualizeDeferredShadowFactor = false; ///< Muestra el factor de sombra diferido en escala de grises.
+  int  m_deferredDebugViewMode = 0;          ///< Modo de debug deferred (0=Final, 1=Shadow, etc.)
   int selectedActorIndex = -1;               ///< Indice del actor seleccionado en el outliner.
   ImVec2 m_viewportPos = ImVec2(0.0f, 0.0f); ///< Posicion del panel de viewport en pantalla.
   ImVec2 m_viewportSize = ImVec2(0.0f, 0.0f);///< Tamano actual del viewport del editor.
   bool m_viewportHovered = false;            ///< Indica si el cursor esta sobre el viewport.
   bool m_viewportFocused = false;            ///< Indica si el viewport tiene foco de entrada.
+
+  // Logger / Console
+  bool m_logShowInfo = true;
+  bool m_logShowWarning = true;
+  bool m_logShowError = true;
+  bool m_logAutoScroll = true;
+  ImGuiTextFilter m_logFilter;
+
+  // Reset / Focus / Fit
+  bool m_resetRequested = false;
+  bool m_focusRequested = false;
+  bool m_fitRequested = false;
+
+  // Undo/Redo
+  bool m_undoRequested = false;
+  bool m_redoRequested = false;
+
+  // Actor operations
+  bool m_duplicateRequested = false;
+  bool m_deleteRequested = false;
+  bool m_copyRequested = false;
+  bool m_pasteRequested = false;
+  bool m_savePrefabRequested = false;
+  bool m_loadPrefabRequested = false;
+
+  // Content Browser spawn
+  std::string m_assetSpawnPath;
+  bool m_assetSpawnRequested = false;
+
+  // Texture preview
+  ID3D11ShaderResourceView* m_previewSRV = nullptr;
+  std::string m_previewLabel;
+  bool m_showPreview = false;
+
+  // Grid / Snap
+  bool  m_showGrid = true;
+  float m_gridSize = 10.0f;
+  bool  m_snapEnabled = false;
+  float m_snapTranslate = 0.5f;
+  float m_snapRotate = 15.0f;
+  float m_snapScale = 0.1f;
 };

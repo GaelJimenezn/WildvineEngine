@@ -48,7 +48,7 @@ public:
   /**
    * @brief Define los viewports activos en el rasterizador.
    *
-   * @param NumViewports Número de viewports.
+   * @param NumViewports Nï¿½mero de viewports.
    * @param pViewports Array de viewports.
    */
   void
@@ -59,7 +59,7 @@ public:
    * @brief Asigna recursos de textura a la etapa de pixel shader.
    *
    * @param StartSlot Slot inicial.
-   * @param NumViews Número de vistas.
+   * @param NumViews Nï¿½mero de vistas.
    * @param ppShaderResourceViews Array de vistas de recursos.
    */
   void
@@ -77,22 +77,22 @@ public:
 
 
   /**
-   * @brief Asigna un shader de vértices al pipeline.
+   * @brief Asigna un shader de vï¿½rtices al pipeline.
    *
-   * @param pVertexShader Shader de vértices.
+   * @param pVertexShader Shader de vï¿½rtices.
    * @param ppClassInstances Array de instancias de clase.
-   * @param NumClassInstances Número de instancias de clase.
+   * @param NumClassInstances Nï¿½mero de instancias de clase.
    */
   void
   VSSetShader(ID3D11VertexShader* pVertexShader,
               ID3D11ClassInstance* const* ppClassInstances,
              unsigned int NumClassInstances);
   /**
-   * @brief Asigna un shader de píxeles al pipeline.
+   * @brief Asigna un shader de pï¿½xeles al pipeline.
    *
-   * @param pPixelShader Shader de píxeles.
+   * @param pPixelShader Shader de pï¿½xeles.
    * @param ppClassInstances Array de instancias de clase.
-   * @param NumClassInstances Número de instancias de clase.
+   * @param NumClassInstances Nï¿½mero de instancias de clase.
    */
   void
   PSSetShader(ID3D11PixelShader* pPixelShader,
@@ -104,10 +104,10 @@ public:
    *
    * @param pDstResource Recurso de destino.
    * @param DstSubresource Subrecurso de destino.
-   * @param pDstBox Región a actualizar (puede ser nullptr).
+   * @param pDstBox Regiï¿½n a actualizar (puede ser nullptr).
    * @param pSrcData Puntero a los datos de origen.
-   * @param SrcRowPitch Número de bytes por fila de datos.
-   * @param SrcDepthPitch Número de bytes por capa de datos.
+   * @param SrcRowPitch Nï¿½mero de bytes por fila de datos.
+   * @param SrcDepthPitch Nï¿½mero de bytes por capa de datos.
    */
   void
   UpdateSubresource(ID3D11Resource* pDstResource,
@@ -118,12 +118,12 @@ public:
                     unsigned int SrcDepthPitch);
 
   /**
-   * @brief Asigna buffers de vértices al pipeline.
+   * @brief Asigna buffers de vï¿½rtices al pipeline.
    *
    * @param StartSlot Slot inicial.
-   * @param NumBuffers Número de buffers.
-   * @param ppVertexBuffers Array de buffers de vértices.
-   * @param pStrides Array con el tamaño de cada vértice.
+   * @param NumBuffers Nï¿½mero de buffers.
+   * @param ppVertexBuffers Array de buffers de vï¿½rtices.
+   * @param pStrides Array con el tamaï¿½o de cada vï¿½rtice.
    * @param pOffsets Array con los desplazamientos iniciales.
    */
   void
@@ -134,10 +134,10 @@ public:
                     const unsigned int* pOffsets);
 
   /**
-   * @brief Asigna un buffer de índices al pipeline.
+   * @brief Asigna un buffer de ï¿½ndices al pipeline.
    *
-   * @param pIndexBuffer Buffer de índices.
-   * @param Format Formato de los índices.
+   * @param pIndexBuffer Buffer de ï¿½ndices.
+   * @param Format Formato de los ï¿½ndices.
    * @param Offset Desplazamiento inicial.
    */
   void
@@ -149,7 +149,7 @@ public:
    * @brief Asigna estados de muestreo a la etapa de pixel shader.
    *
    * @param StartSlot Slot inicial.
-   * @param NumSamplers Número de samplers.
+   * @param NumSamplers Nï¿½mero de samplers.
    * @param ppSamplers Array de estados de muestreo.
    */
   void
@@ -170,7 +170,7 @@ public:
    *
    * @param pBlendState Estado de blending.
    * @param BlendFactor Factores de mezcla RGBA.
-   * @param SampleMask Máscara de muestras.
+   * @param SampleMask Mï¿½scara de muestras.
    */
   void
   OMSetBlendState(ID3D11BlendState* pBlendState,
@@ -180,7 +180,7 @@ public:
   /**
    * @brief Establece los render targets y el depth-stencil en el pipeline.
    *
-   * @param NumViews Número de vistas de render.
+   * @param NumViews Nï¿½mero de vistas de render.
    * @param ppRenderTargetViews Array de vistas de render target.
    * @param pDepthStencilView Vista de profundidad/stencil.
    */
@@ -190,16 +190,16 @@ public:
                       ID3D11DepthStencilView* pDepthStencilView);
 
   /**
-   * @brief Establece la topología de primitivas para el ensamblador de entrada.
+   * @brief Establece la topologï¿½a de primitivas para el ensamblador de entrada.
    *
-   * @param Topology Tipo de primitiva (ejemplo: triángulos, líneas).
+   * @param Topology Tipo de primitiva (ejemplo: triï¿½ngulos, lï¿½neas).
    */
   void
   IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology);
 
   
   /**
-   * @brief Limpia un render target con un color específico.
+   * @brief Limpia un render target con un color especï¿½fico.
    *
    * @param pRenderTargetView Vista del render target.
    * @param ColorRGBA Array de 4 floats con el color RGBA.
@@ -228,7 +228,7 @@ public:
    * @brief Asigna buffers constantes a la etapa de vertex shader.
    *
    * @param StartSlot Slot inicial.
-   * @param NumBuffers Número de buffers.
+   * @param NumBuffers Nï¿½mero de buffers.
    * @param ppConstantBuffers Array de buffers constantes.
    */
   void
@@ -242,7 +242,7 @@ public:
    * @brief Asigna buffers constantes a la etapa de pixel shader.
    *
    * @param StartSlot Slot inicial.
-   * @param NumBuffers Número de buffers.
+   * @param NumBuffers Nï¿½mero de buffers.
    * @param ppConstantBuffers Array de buffers constantes.
    */
   void
@@ -256,9 +256,9 @@ public:
   /**
    * @brief Dibuja primitivas indexadas.
    *
-   * @param IndexCount Número de índices a dibujar.
-   * @param StartIndexLocation Índice inicial.
-   * @param BaseVertexLocation Desplazamiento base de vértices.
+   * @param IndexCount Nï¿½mero de ï¿½ndices a dibujar.
+   * @param StartIndexLocation ï¿½ndice inicial.
+   * @param BaseVertexLocation Desplazamiento base de vï¿½rtices.
    */
   void
   DrawIndexed(unsigned int IndexCount,
@@ -269,4 +269,5 @@ public:
   
 public:
 ID3D11DeviceContext* m_deviceContext = nullptr; /**< Puntero al contexto de dispositivo de DirectX. */
+unsigned int m_drawCallCount = 0; /**< Contador de draw calls por frame. */
 };

@@ -8,6 +8,12 @@
 #include "Rendering/DeferredRenderer.h"
 
 /**
+ * @enum RendererType
+ * @brief Tipos de renderer soportados por el pipeline.
+ */
+enum class RendererType { Forward = 0, Deferred = 1 };
+
+/**
  * @class RenderPipeline
  * @brief Selecciona y ejecuta el renderer activo para el frame actual.
  */

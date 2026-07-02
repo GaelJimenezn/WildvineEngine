@@ -1275,7 +1275,15 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 
 		if (viewportSRV)
 		{
-			ImGui::Image((ImTextureID)viewportSRV, panelSize);
+			// Mantener aspect ratio del render target sin deformar
+			float panelAspect = panelSize.x / panelSize.y;
+			float renderAspect = panelSize.x / panelSize.y; // Se usa el panel para el resize
+			// La imagen se dibuja al tamano del panel (el render target se adapta al panel)
+			ImVec2 imageSize = panelSize;
+			ImVec2 imageOffset(0.0f, 0.0f);
+
+			ImGui::SetCursorScreenPos(ImVec2(panelMin.x + imageOffset.x, panelMin.y + imageOffset.y));
+			ImGui::Image((ImTextureID)viewportSRV, imageSize);
 		}
 		else
 		{
@@ -1683,16 +1691,32 @@ void GUI::drawEditorDockspace()
 		ImGui::DockBuilderSetNodeSize(dockspace_id, dockSize);
 
 		ImGuiID dockMain = dockspace_id;
-		ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.20f, nullptr, &dockMain);
-		ImGuiID dockBottom = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.24f, nullptr, &dockMain);
-		ImGuiID dockRightBottom = ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Down, 0.42f, nullptr, &dockRight);
+		ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.22f, nullptr, &dockMain);
+		ImGuiID dockBottom = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.26f, nullptr, &dockMain);
+		ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.18f, nullptr, &dockMain);
+		ImGuiID dockRightBottom = ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Down, 0.50f, nullptr, &dockRight);
 
+		// Centro: Viewport
 		ImGui::DockBuilderDockWindow("DefaultScene", dockMain);
+		ImGui::DockBuilderDockWindow("Shader Viewer", dockMain);
 		ImGui::DockBuilderDockWindow("Render Diagnostics", dockMain);
 		ImGui::DockBuilderDockWindow("Material SRV Inspector", dockMain);
 		ImGui::DockBuilderDockWindow("GBuffer Viewer", dockMain);
-		ImGui::DockBuilderDockWindow("World Outliner", dockRight);
-		ImGui::DockBuilderDockWindow("Details", dockRightBottom);
+
+		// Izquierda: Outliner + Lighting
+		ImGui::DockBuilderDockWindow("World Outliner", dockLeft);
+		ImGui::DockBuilderDockWindow("Lighting", dockLeft);
+
+		// Derecha arriba: Details
+		ImGui::DockBuilderDockWindow("Details", dockRight);
+
+		// Derecha abajo: G-Buffer debug
+		ImGui::DockBuilderDockWindow("G-Buffer", dockRightBottom);
+		ImGui::DockBuilderDockWindow("Performance", dockRightBottom);
+
+		// Abajo: Content, Console
+		ImGui::DockBuilderDockWindow("Content", dockBottom);
+		ImGui::DockBuilderDockWindow("Console", dockBottom);
 		ImGui::DockBuilderDockWindow("Content Browser", dockBottom);
 
 		ImGui::DockBuilderFinish(dockspace_id);
@@ -1709,3 +1733,222 @@ void GUI::drawEditorDockspace()
 
 
 
+
+
+void GUI::drawViewportGrid(Camera& cam) {
+	if (!m_showGrid) return;
+	if (m_viewportSize.x < 16.0f || m_viewportSize.y < 16.0f) return;
+	float view[16], proj[16], identity[16];
+	ToFloatArray(cam.getView(), view);
+	ToFloatArray(cam.getProj(), proj);
+	ToFloatArray(XMMatrixIdentity(), identity);
+	if (m_viewportDrawList) ImGuizmo::SetDrawlist(m_viewportDrawList);
+	ImGuizmo::SetRect(m_viewportPos.x, m_viewportPos.y, m_viewportSize.x, m_viewportSize.y);
+	ImGuizmo::DrawGrid(view, proj, identity, m_gridSize);
+}
+
+void GUI::drawLightingPanel(float* lightDir, float* lightColor) {
+	ImGui::Begin("Lighting");
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.72f, 0.28f, 0.40f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.85f, 0.36f, 0.48f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.60f, 0.20f, 0.32f, 1.0f));
+	if (ImGui::Button("  Reset Scene  ")) {
+		m_resetRequested = true;
+		m_deferredDebugViewMode = 0;
+		m_visualizeDeferredShadowFactor = false;
+	}
+	ImGui::PopStyleColor(3);
+	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Restaura transforms, luz y camara a sus valores originales");
+	ImGui::Separator();
+	ImGui::TextDisabled("Luz direccional principal");
+	ImGui::Spacing();
+	if (lightDir)   vec3Control("Direccion", lightDir, 0.0f, 90.0f);
+	if (lightColor) vec3Control("Color", lightColor, 1.0f, 90.0f);
+	ImGui::End();
+}
+
+void GUI::drawStatsPanel(float deltaTime, unsigned int drawCalls) {
+	ImGui::Begin("Performance");
+	static float history[120] = {};
+	static int idx = 0;
+	static float accum = 0.0f; static int frames = 0;
+	static float fps = 0.0f; static float ms = 0.0f;
+
+	float dtMs = deltaTime * 1000.0f;
+	history[idx] = dtMs; idx = (idx + 1) % IM_ARRAYSIZE(history);
+	accum += deltaTime; frames++;
+	if (accum >= 0.25f) { fps = frames / accum; ms = (accum / frames) * 1000.0f; accum = 0.0f; frames = 0; }
+
+	ImGui::SetWindowFontScale(1.7f);
+	ImGui::Text("%.0f FPS", fps);
+	ImGui::SetWindowFontScale(1.0f);
+	ImGui::SameLine();
+	ImGui::TextDisabled("  %.2f ms", ms);
+
+	ImGui::Spacing();
+	ImGui::PlotLines("##frametimes", history, IM_ARRAYSIZE(history), idx,
+		"Frame time (ms)", 0.0f, 33.3f, ImVec2(ImGui::GetContentRegionAvail().x, 80.0f));
+
+	ImGui::Spacing(); ImGui::Separator();
+	ImGui::Text("Draw calls:"); ImGui::SameLine(); ImGui::Text("%u", drawCalls);
+	ImGui::TextDisabled("Viewport: %.0f x %.0f", m_viewportSize.x, m_viewportSize.y);
+	ImGui::End();
+}
+
+void GUI::drawConsolePanel() {
+	ImGui::Begin("Console");
+	if (ImGui::Button("Clear")) Logger::get().clear();
+	ImGui::SameLine();
+	ImGui::Checkbox("Info", &m_logShowInfo); ImGui::SameLine();
+	ImGui::Checkbox("Warning", &m_logShowWarning); ImGui::SameLine();
+	ImGui::Checkbox("Error", &m_logShowError); ImGui::SameLine();
+	ImGui::Checkbox("Auto-scroll", &m_logAutoScroll); ImGui::SameLine();
+	m_logFilter.Draw("Filter", 160.0f);
+	ImGui::Separator();
+	ImGui::BeginChild("ConsoleScroll", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+	std::vector<LogEntry> entries = Logger::get().snapshot();
+	for (const LogEntry& e : entries) {
+		if (e.level == LogLevel::Info && !m_logShowInfo) continue;
+		if (e.level == LogLevel::Warning && !m_logShowWarning) continue;
+		if (e.level == LogLevel::Error && !m_logShowError) continue;
+		if (!m_logFilter.PassFilter(e.message.c_str())) continue;
+		ImVec4 col; const char* tag;
+		switch (e.level) {
+		case LogLevel::Error:   col = ImVec4(0.95f, 0.40f, 0.40f, 1.0f); tag = "[ERROR] "; break;
+		case LogLevel::Warning: col = ImVec4(0.95f, 0.78f, 0.30f, 1.0f); tag = "[WARN]  "; break;
+		default:                col = ImVec4(0.80f, 0.78f, 0.90f, 1.0f); tag = "[INFO]  "; break;
+		}
+		ImGui::PushStyleColor(ImGuiCol_Text, col);
+		ImGui::TextUnformatted(tag); ImGui::SameLine();
+		ImGui::TextUnformatted(e.message.c_str());
+		ImGui::PopStyleColor();
+	}
+	if (m_logAutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f) ImGui::SetScrollHereY(1.0f);
+	ImGui::EndChild();
+	ImGui::End();
+}
+
+void GUI::drawTexturePreview() {
+	if (!m_showPreview) return;
+	ImGui::SetNextWindowSize(ImVec2(720.0f, 480.0f), ImGuiCond_FirstUseEver);
+	if (ImGui::Begin("Texture Preview", &m_showPreview)) {
+		ImGui::TextUnformatted(m_previewLabel.c_str());
+		ImGui::Separator();
+		if (m_previewSRV) {
+			ImVec2 avail = ImGui::GetContentRegionAvail();
+			if (avail.x < 16.0f) avail.x = 16.0f;
+			if (avail.y < 16.0f) avail.y = 16.0f;
+			ImGui::Image((ImTextureID)m_previewSRV, avail);
+		}
+	}
+	ImGui::End();
+}
+
+void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
+	ImGui::Begin("Content");
+	if (ImGui::BeginTabBar("##ContentTabs")) {
+		if (ImGui::BeginTabItem("Models")) {
+			std::vector<std::string> models;
+			WIN32_FIND_DATAA fd;
+			HANDLE h = FindFirstFileA("Assets\\Models\\*", &fd);
+			if (h != INVALID_HANDLE_VALUE) {
+				do {
+					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+					std::string n = fd.cFileName;
+					std::string lo = n;
+					for (char& c : lo) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+					if (lo.size() >= 4 && (lo.compare(lo.size() - 4, 4, ".fbx") == 0 ||
+						lo.compare(lo.size() - 4, 4, ".obj") == 0))
+						models.push_back(n);
+				} while (FindNextFileA(h, &fd));
+				FindClose(h);
+			}
+			if (models.empty()) ImGui::TextDisabled("No hay modelos en Assets/Models");
+			const float cell = 90.0f;
+			float availW = ImGui::GetContentRegionAvail().x;
+			int perRow = (int)(availW / (cell + 10.0f)); if (perRow < 1) perRow = 1;
+			int col = 0;
+			for (const std::string& m : models) {
+				ImGui::PushID(m.c_str());
+				ImGui::BeginGroup();
+				ImGui::Button("FBX/OBJ", ImVec2(cell, cell));
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s (doble click para instanciar)", m.c_str());
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+					m_assetSpawnPath = "Assets/Models/" + m;
+					m_assetSpawnRequested = true;
+				}
+				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + cell);
+				ImGui::TextWrapped("%s", m.c_str());
+				ImGui::PopTextWrapPos();
+				if (ImGui::SmallButton("Spawn")) {
+					m_assetSpawnPath = "Assets/Models/" + m;
+					m_assetSpawnRequested = true;
+				}
+				ImGui::EndGroup();
+				ImGui::PopID();
+				if (++col < perRow) ImGui::SameLine(); else col = 0;
+			}
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Textures")) {
+			if (textureThumbs.empty()) ImGui::TextDisabled("No hay texturas cargadas");
+			const float cell = 84.0f;
+			float availW = ImGui::GetContentRegionAvail().x;
+			int perRow = (int)(availW / (cell + 10.0f)); if (perRow < 1) perRow = 1;
+			int col = 0;
+			for (const AssetThumb& t : textureThumbs) {
+				ImGui::PushID(t.name.c_str());
+				ImGui::BeginGroup();
+				if (t.srv) ImGui::Image((ImTextureID)t.srv, ImVec2(cell, cell));
+				else       ImGui::Dummy(ImVec2(cell, cell));
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", t.name.c_str());
+				ImGui::EndGroup();
+				ImGui::PopID();
+				if (++col < perRow) ImGui::SameLine(); else col = 0;
+			}
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
+	ImGui::End();
+}
+
+void GUI::drawSelectionOutline(Camera& cam, const EU::Vector3& mn, const EU::Vector3& mx, const XMMATRIX& world) {
+	if (!m_viewportDrawList) return;
+	if (m_viewportSize.x < 16.0f || m_viewportSize.y < 16.0f) return;
+
+	XMMATRIX vp = cam.getView() * cam.getProj();
+
+	ImVec2 pts[8];
+	bool valid[8];
+	for (int c = 0; c < 8; ++c) {
+		float cx = (c & 1) ? mx.x : mn.x;
+		float cy = (c & 2) ? mx.y : mn.y;
+		float cz = (c & 4) ? mx.z : mn.z;
+		XMVECTOR worldC = XMVector3TransformCoord(XMVectorSet(cx, cy, cz, 1.0f), world);
+		XMVECTOR clip = XMVector4Transform(
+			XMVectorSet(XMVectorGetX(worldC), XMVectorGetY(worldC), XMVectorGetZ(worldC), 1.0f), vp);
+		float w = XMVectorGetW(clip);
+		if (w <= 0.0001f) { valid[c] = false; pts[c] = ImVec2(0, 0); continue; }
+		float ndcx = XMVectorGetX(clip) / w;
+		float ndcy = XMVectorGetY(clip) / w;
+		float sx = m_viewportPos.x + (ndcx * 0.5f + 0.5f) * m_viewportSize.x;
+		float sy = m_viewportPos.y + (1.0f - (ndcy * 0.5f + 0.5f)) * m_viewportSize.y;
+		pts[c] = ImVec2(sx, sy);
+		valid[c] = true;
+	}
+
+	static const int edges[12][2] = {
+		{0,1},{2,3},{4,5},{6,7},
+		{0,2},{1,3},{4,6},{5,7},
+		{0,4},{1,5},{2,6},{3,7}
+	};
+
+	for (int e = 0; e < 12; ++e) {
+		int a = edges[e][0], b = edges[e][1];
+		if (valid[a] && valid[b]) {
+			m_viewportDrawList->AddLine(pts[a], pts[b], IM_COL32(0, 0, 0, 160), 4.0f);
+			m_viewportDrawList->AddLine(pts[a], pts[b], IM_COL32(190, 140, 255, 240), 2.0f);
+		}
+	}
+}

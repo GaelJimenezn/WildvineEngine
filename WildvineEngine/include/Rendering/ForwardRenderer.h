@@ -4,6 +4,7 @@
 #include "DepthStencilState.h"
 #include "DepthStencilView.h"
 #include "RasterizerState.h"
+#include "Rendering/ISceneRenderer.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderTypes.h"
 #include "ShaderProgram.h"
@@ -26,14 +27,14 @@ class Material;
  * - Manejar buffers y estados gráficos necesarios
  */
 class
-ForwardRenderer {
+ForwardRenderer : public ISceneRenderer {
 public:
   /**
    * @brief Inicializa el renderer y sus recursos.
    * @param device Referencia al dispositivo gráfico.
    * @return HRESULT indicando éxito o fallo.
    */
-  HRESULT init(Device& device);
+  HRESULT init(Device& device) override;
 
   /**
    * @brief Ajusta el tamaño del render target.
@@ -44,7 +45,7 @@ public:
   void 
   resize(Device& device,
     unsigned int width,
-    unsigned int height);
+    unsigned int height) override;
 
   /**
    * @brief Actualiza los datos por frame (buffers constantes).
@@ -68,25 +69,30 @@ public:
   render(DeviceContext& deviceContext,
     const Camera& camera,
     RenderScene& scene,
-    EditorViewportPass& viewportPass);
+    EditorViewportPass& viewportPass) override;
 
   /**
    * @brief Libera todos los recursos del renderer.
    */
   void 
-  destroy();
+  destroy() override;
 
   /**
    * @brief Obtiene el Shader Resource View del shadow map.
    * @return Puntero a ID3D11ShaderResourceView.
    */
-  ID3D11ShaderResourceView* getShadowMapSRV() const { return m_shadowDepthSRV.m_textureFromImg; }
+  ID3D11ShaderResourceView* getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
 
   /**
    * @brief Obtiene el SRV del pre-shadow debug pass.
    * @return Puntero a ID3D11ShaderResourceView.
    */
-  ID3D11ShaderResourceView* getPreShadowSRV() const { return m_preShadowDebugPass.getSRV(); }
+  ID3D11ShaderResourceView* getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
+
+  /**
+   * @brief Obtiene el nombre descriptivo del renderer.
+   */
+  const char* getDebugName() const override { return "ForwardRenderer"; }
 
 private:
   /**
