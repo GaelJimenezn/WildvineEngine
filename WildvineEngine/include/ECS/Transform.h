@@ -1,3 +1,12 @@
+/**
+ * @file Transform.h
+ * @brief Declara el componente de transformaci贸n TRS del sistema ECS.
+ * @ingroup ecs
+ *
+ * Transform almacena posici贸n, rotaci贸n y escala de una entidad y construye
+ * la matriz de transformaci贸n local/mundo. Es consumido por el renderer para
+ * la matriz World y por ImGuizmo para la manipulaci贸n visual de actores.
+ */
 #pragma once
 
 #include "Prerequisites.h"
@@ -6,9 +15,9 @@
 
 /**
  * @class Transform
- * @brief Componente que almacena la transformaci髇 espacial de una entidad.
+ * @brief Componente que almacena la transformaci贸n espacial de una entidad.
  *
- * Gestiona posici髇, rotaci髇 y escala, adem醩 de su matriz de transformaci髇.
+ * Gestiona posici贸n, rotaci贸n y escala, adem谩s de su matriz de transformaci贸n.
  * Puede ser controlado externamente por herramientas como ImGuizmo o
  * reconstruido manualmente desde sus vectores.
  */
@@ -41,12 +50,12 @@ public:
   }
 
   /**
-   * @brief Actualizaci髇 por frame.
+   * @brief Actualizaci贸n por frame.
    *
-   * Actualmente vac韔 intencionalmente para evitar conflictos
+   * Actualmente vac铆o intencionalmente para evitar conflictos
    * con herramientas externas como ImGuizmo que controlan la matriz.
    *
-   * @param deltaTime Tiempo transcurrido desde el 鷏timo frame.
+   * @param deltaTime Tiempo transcurrido desde el 煤ltimo frame.
    */
   void
   update(float deltaTime) override {                                                  //<----------------
@@ -67,7 +76,7 @@ public:
   /**
    * @brief Render del componente.
    *
-   * No realiza ninguna operaci髇 visual directamente.
+   * No realiza ninguna operaci贸n visual directamente.
    *
    * @param deviceContext Contexto de dispositivo DirectX.
    */
@@ -81,34 +90,34 @@ public:
   destroy() {}
 
   /**
-   * @brief Obtiene la posici髇 actual.
+   * @brief Obtiene la posici贸n actual.
    *
-   * @return Referencia constante a la posici髇.
+   * @return Referencia constante a la posici贸n.
    */
   const EU::Vector3& 
   getPosition() const { return position; }
 
   /**
-   * @brief Establece la posici髇.
+   * @brief Establece la posici贸n.
    *
-   * @param newPos Nueva posici髇 en espacio mundo.
+   * @param newPos Nueva posici贸n en espacio mundo.
    */
   void
   setPosition(const EU::Vector3& newPos) { position = newPos; }         //<---------------
 
 
   /**
-   * @brief Obtiene la rotaci髇 actual.
+   * @brief Obtiene la rotaci贸n actual.
    *
-   * @return Referencia constante a la rotaci髇 (en grados).
+   * @return Referencia constante a la rotaci贸n (en grados).
    */
   const EU::Vector3& 
   getRotation() const { return rotation; }
 
   /**
-   * @brief Establece la rotaci髇.
+   * @brief Establece la rotaci贸n.
    *
-   * @param newRot Nueva rotaci髇 en grados (Pitch, Yaw, Roll).
+   * @param newRot Nueva rotaci贸n en grados (Pitch, Yaw, Roll).
    */
   void
   setRotation(const EU::Vector3& newRot) { rotation = newRot; }        //<---------------
@@ -130,10 +139,10 @@ public:
   setScale(const EU::Vector3& newScale) { scale = newScale; }        //<---------------
 
   /**
-   * @brief Establece posici髇, rotaci髇 y escala simult醤eamente.
+   * @brief Establece posici贸n, rotaci贸n y escala simult谩neamente.
    *
-   * @param newPos Nueva posici髇.
-   * @param newRot Nueva rotaci髇.
+   * @param newPos Nueva posici贸n.
+   * @param newRot Nueva rotaci贸n.
    * @param newSca Nueva escala.
    */
   void
@@ -145,25 +154,25 @@ public:
     scale = newSca;
   }
 
-  // M閠odo para trasladar la posici髇 del objeto
+  // M茅todo para trasladar la posici贸n del objeto
   // @param translation: Vector que representa la cantidad de traslado en cada eje
   void
   translate(const EU::Vector3& translation);
 
   /**
- * @brief Reconstruye la matriz de transformaci髇 local a partir de los vectores de posici髇, rotaci髇 y escala.
+ * @brief Reconstruye la matriz de transformaci贸n local a partir de los vectores de posici贸n, rotaci贸n y escala.
  *
- * Este m閠odo compone la matriz en el orden: escala -> rotaci髇 -> traslaci髇.
- * Es 鷗il cuando se modifican los vectores manualmente y se requiere actualizar la matriz.
+ * Este m茅todo compone la matriz en el orden: escala -> rotaci贸n -> traslaci贸n.
+ * Es 煤til cuando se modifican los vectores manualmente y se requiere actualizar la matriz.
  */
   void rebuildMatrixFromVectors() {
     // Aplicar escala
     XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
 
-    // Aplicar rotaci髇 (en radianes)
+    // Aplicar rotaci贸n (en radianes)
     XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 
-    // Aplicar traslaci髇
+    // Aplicar traslaci贸n
     XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
 
     // Componer la matriz final en el orden: scale -> rotation -> translation
@@ -173,11 +182,11 @@ public:
 
 
 private:
-  EU::Vector3 position;  // Posici髇 del objeto
-  EU::Vector3 rotation;  // Rotaci髇 del objeto
+  EU::Vector3 position;  // Posici贸n del objeto
+  EU::Vector3 rotation;  // Rotaci贸n del objeto
   EU::Vector3 scale;     // Escala del objeto
 
 public:
-  XMMATRIX matrix;    // Matriz de transformaci髇 local
-  XMMATRIX worldMatrix; // Matriz de transformaci髇 world
+  XMMATRIX matrix;    // Matriz de transformaci贸n local
+  XMMATRIX worldMatrix; // Matriz de transformaci贸n world
 };

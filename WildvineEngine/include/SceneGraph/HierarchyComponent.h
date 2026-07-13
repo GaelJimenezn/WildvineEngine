@@ -1,3 +1,12 @@
+/**
+ * @file HierarchyComponent.h
+ * @brief Declara el componente de jerarquía de entidades para el SceneGraph.
+ * @ingroup scenegraph
+ *
+ * HierarchyComponent permite estructurar entidades en un árbol padre-hijo,
+ * habilitando transformaciones encadenadas, visibilidad heredada y
+ * agrupaciones lógicas de objetos de la escena.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "ECS/Component.h"
@@ -10,11 +19,11 @@ Entity;
 
 /**
  * @class HierarchyComponent
- * @brief Componente que permite estructurar entidades en una jerarqu�a tipo Scene Graph.
+ * @brief Componente que permite estructurar entidades en una jerarquía tipo Scene Graph.
  *
  * Gestiona relaciones padre-hijo entre entidades,
- * permitiendo construir estructuras jer�rquicas
- * como transformaciones encadenadas o agrupaciones l�gicas.
+ * permitiendo construir estructuras jerárquicas
+ * como transformaciones encadenadas o agrupaciones lógicas.
  */
 class
 HierarchyComponent : public Component {
@@ -33,15 +42,15 @@ public:
 	~HierarchyComponent() = default;
 
 	/**
-	 * @brief Inicializaci�n del componente.
+	 * @brief Inicialización del componente.
 	 *
-	 * Actualmente no realiza ninguna operaci�n.
+	 * Actualmente no realiza ninguna operación.
 	 */
 	void
 	init() override {}
 
 	/**
-	 * @brief Actualizaci�n por frame.
+	 * @brief Actualización por frame.
 	 *
 	 * @param Tiempo delta (no utilizado).
 	 */
@@ -51,13 +60,13 @@ public:
 	/**
 	 * @brief Render del componente.
 	 *
-	 * @param deviceContext Contexto de dispositivo gr�fico.
+	 * @param deviceContext Contexto de dispositivo gráfico.
 	 */
 	void
 	render(DeviceContext& deviceContext) override {}
 
 	/**
-	 * @brief Limpia la jerarqu�a del componente.
+	 * @brief Limpia la jerarquía del componente.
 	 *
 	 * Elimina todos los hijos y desvincula el padre.
 	 */
@@ -80,7 +89,7 @@ public:
 	}
 
 	/**
-	 * @brief Indica si la entidad es ra�z en la jerarqu�a.
+	 * @brief Indica si la entidad es raíz en la jerarquía.
 	 *
 	 * @return true si no tiene padre.
 	 */
@@ -138,7 +147,7 @@ public:
 	/**
 	 * @brief Puntero a la entidad padre.
 	 *
-	 * Es nullptr si la entidad es ra�z.
+	 * Es nullptr si la entidad es raíz.
 	 */
 	Entity* m_parent = nullptr;
 

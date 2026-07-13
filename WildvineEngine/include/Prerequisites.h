@@ -1,3 +1,12 @@
+/**
+ * @file Prerequisites.h
+ * @brief Cabecera global de dependencias y tipos base del motor WildvineEngine.
+ * @ingroup core
+ *
+ * Incluye todas las librerías de sistema, DirectX, EngineUtilities y define
+ * los tipos de datos, estructuras de constant buffers, macros de depuración
+ * y enumeraciones que todo el engine usa.
+ */
 #pragma once
 //Librerias STD
 #include <string>
@@ -93,24 +102,45 @@ SimpleVertex{
   EU::Vector2 TextureCoordinate; /**< Vector bitangente del vértice (para iluminación). */
 };
 
+/**
+ * @struct SkyboxVertex
+ * @brief Vértice mínimo para el cubo del Skybox (solo posición XYZ).
+ */
 struct
 SkyboxVertex {
-  float x, y, z;
+  float x; /**< @brief Coordenada X del vértice. */
+  float y; /**< @brief Coordenada Y del vértice. */
+  float z; /**< @brief Coordenada Z del vértice. */
 };
 
 
+/**
+ * @struct CBSkybox
+ * @brief Constant buffer del shader de Skybox.
+ *
+ * Contiene la matriz view-projection pre-multiplicada para el renderizado
+ * del Skybox. Se envía al shader de Skybox en cada frame.
+ */
 struct CBSkybox
 {
-  XMMATRIX mviewProj;
+  XMMATRIX mviewProj; /**< @brief Matriz View*Projection para el shader de Skybox. */
 };
 
+/**
+ * @struct LoadData
+ * @brief Datos de geometría en CPU listos para cargarse a la GPU.
+ *
+ * Contiene el nombre del submesh, los vértices, los índices y los contadores
+ * correspondientes. Es el formato intermedio entre el importador de modelos
+ * (OBJ/FBX) y la carga final a los buffers de DirectX.
+ */
 struct
 LoadData {
-  std::string name;
-  std::vector <SimpleVertex> vertex;
-  std::vector <unsigned int> index;
-  int numVertex;
-  int numIndex;
+  std::string name;                /**< @brief Nombre del submesh. */
+  std::vector<SimpleVertex> vertex; /**< @brief Lista de vértices. */
+  std::vector<unsigned int> index;  /**< @brief Lista de índices. */
+  int numVertex;                   /**< @brief Número total de vértices. */
+  int numIndex;                    /**< @brief Número total de índices. */
 };
 
 /**
@@ -129,17 +159,23 @@ CBChangeOnResize{
   XMMATRIX mProjection; /**< Matriz de proyección ajustada al tamaño de la ventana. */
 };
 
+/**
+ * @struct CBMain
+ * @brief Constant buffer del shader PBR forward (legacy).
+ *
+ * Contiene las matrices de vista y proyección, la posición de la cámara
+ * y los parámetros de la luz principal directional para el forward renderer.
+ */
 struct CBMain
 {
-  //XMOFLOAT4X4 World;
-  XMFLOAT4X4 View;
-  XMFLOAT4X4 Projection;
-  EU::Vector3 CameraPos;
-  float pad0;
-  EU::Vector3 LightDir;
-  float pad1;
-  EU::Vector3 LightColor;
-  float pad2;
+  XMFLOAT4X4 View;        /**< @brief Matriz de vista de la cámara. */
+  XMFLOAT4X4 Projection;  /**< @brief Matriz de proyección de la cámara. */
+  EU::Vector3 CameraPos;  /**< @brief Posición de la cámara en espacio mundo. */
+  float pad0;             /**< @brief Padding para alineación a 16 bytes. */
+  EU::Vector3 LightDir;   /**< @brief Dirección de la luz direccional principal. */
+  float pad1;             /**< @brief Padding para alineación a 16 bytes. */
+  EU::Vector3 LightColor; /**< @brief Color de la luz direccional principal. */
+  float pad2;             /**< @brief Padding para alineación a 16 bytes. */
 };
 
 
@@ -162,18 +198,26 @@ ExtensionType {
   JPG = 2  /**< Textura en formato JPG (Joint Photographic Experts Group). */
 };
 
+/**
+ * @enum ShaderType
+ * @brief Identifica el tipo de shader en el pipeline.
+ */
 enum 
 ShaderType {
-  VERTEX_SHADER = 0,
-  PIXEL_SHADER = 1
+  VERTEX_SHADER = 0, /**< @brief Vertex Shader (VS). */
+  PIXEL_SHADER  = 1  /**< @brief Pixel Shader (PS). */
 };
 
+/**
+ * @enum ComponentType
+ * @brief Tipos de componentes ECS reconocidos por el motor.
+ */
 enum
   ComponentType {
-  NONE = 0,    
-  TRANSFORM = 1,
-  MESH = 2,     
-  MATERIAL = 3, 
-  HIERARCHY = 4
+  NONE      = 0, /**< @brief Sin tipo de componente asignado. */
+  TRANSFORM = 1, /**< @brief Componente de transformación (posición, rotación, escala). */
+  MESH      = 2, /**< @brief Componente de malla (MeshRendererComponent). */
+  MATERIAL  = 3, /**< @brief Componente de material. */
+  HIERARCHY = 4  /**< @brief Componente de jerarquía de escena. */
 };
 
