@@ -65,7 +65,13 @@ namespace {
 		const EU::Vector3 lightColor = light.color * light.intensity;
 		buffer.LightPositionsRanges[lightIndex] = XMFLOAT4(light.position.x, light.position.y, light.position.z, range);
 		buffer.LightColorsTypes[lightIndex] = XMFLOAT4(lightColor.x, lightColor.y, lightColor.z, static_cast<float>(static_cast<int>(light.type)));
-		buffer.LightDirectionsIntensities[lightIndex] = XMFLOAT4(light.direction.x, light.direction.y, light.direction.z, light.intensity);
+		// For spot lights, pack cosine of half-angle in w so the shader can use it
+		float wChannel = light.intensity;
+		if (light.type == LightType::Spot) {
+			const float halfAngleRad = light.spotAngle * 3.14159265f / 180.0f;
+			wChannel = cosf(halfAngleRad > 0.0f ? halfAngleRad : 0.436f); // default ~25 deg
+		}
+		buffer.LightDirectionsIntensities[lightIndex] = XMFLOAT4(light.direction.x, light.direction.y, light.direction.z, wChannel);
 	}
 }
 
@@ -267,26 +273,52 @@ DeferredRenderer::updatePerFrame(const Camera& camera,
 		m_cbPerFrame.LightDirectionsIntensities[lightIndex] = XMFLOAT4(0.0f, -1.0f, 0.0f, 0.0f);
 	}
 
-	if (!scene.directionalLights.empty()) {
-		const LightData* primaryShadowLight = findPrimaryShadowLight(scene);
+	// --- Fill all lights into the per-frame buffer ---
+	{
 		int lightCount = 0;
-		if (primaryShadowLight) {
-			writeLightToFrameBuffer(m_cbPerFrame, lightCount++, *primaryShadowLight);
-		}
-		for (const LightData& light : scene.directionalLights) {
-			if (&light == primaryShadowLight || lightCount >= kMaxSceneLights) {
-				continue;
+		const LightData* primaryShadowLight = nullptr;
+
+		// Directional lights first (shadow caster priority)
+		if (!scene.directionalLights.empty()) {
+			primaryShadowLight = findPrimaryShadowLight(scene);
+			if (primaryShadowLight && lightCount < kMaxSceneLights) {
+				writeLightToFrameBuffer(m_cbPerFrame, lightCount++, *primaryShadowLight);
 			}
+			for (const LightData& light : scene.directionalLights) {
+				if (&light == primaryShadowLight || lightCount >= kMaxSceneLights) continue;
+				writeLightToFrameBuffer(m_cbPerFrame, lightCount++, light);
+			}
+		}
+
+		// Point lights
+		for (const LightData& light : scene.pointLights) {
+			if (lightCount >= kMaxSceneLights) break;
 			writeLightToFrameBuffer(m_cbPerFrame, lightCount++, light);
 		}
+
+		// Spot lights
+		for (const LightData& light : scene.spotLights) {
+			if (lightCount >= kMaxSceneLights) break;
+			writeLightToFrameBuffer(m_cbPerFrame, lightCount++, light);
+		}
+
+		// Rect lights
+		for (const LightData& light : scene.rectLights) {
+			if (lightCount >= kMaxSceneLights) break;
+			writeLightToFrameBuffer(m_cbPerFrame, lightCount++, light);
+		}
+
 		m_cbPerFrame.LightCount = lightCount;
 
-		const LightData& mainLight = primaryShadowLight ? *primaryShadowLight : scene.directionalLights[0];
-		m_cbPerFrame.LightDir = mainLight.direction;
-		m_cbPerFrame.LightColor = mainLight.color * mainLight.intensity;
-		m_cbPerFrame.LightPosition = mainLight.position;
-		m_cbPerFrame.LightRange = mainLight.range > 0.0f ? mainLight.range : 10.0f;
-		m_cbPerFrame.LightType = static_cast<int>(mainLight.type);
+		// Set primary directional light for shadow pass
+		if (!scene.directionalLights.empty()) {
+			const LightData& mainLight = primaryShadowLight ? *primaryShadowLight : scene.directionalLights[0];
+			m_cbPerFrame.LightDir = mainLight.direction;
+			m_cbPerFrame.LightColor = mainLight.color * mainLight.intensity;
+			m_cbPerFrame.LightPosition = mainLight.position;
+			m_cbPerFrame.LightRange = mainLight.range > 0.0f ? mainLight.range : 10.0f;
+			m_cbPerFrame.LightType = static_cast<int>(mainLight.type);
+		}
 	}
 
 	m_perFrameBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerFrame, 0, 0);

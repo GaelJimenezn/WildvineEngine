@@ -11,8 +11,8 @@ class
  * @class Texture
  * @brief Representa una textura en DirectX 11.
  *
- * Esta clase encapsula la creaciÛn, gestiÛn y destrucciÛn de texturas 2D
- * en DirectX, asÌ como su vinculaciÛn al pipeline gr·fico. Puede inicializarse
+ * Esta clase encapsula la creaci√≥n, gesti√≥n y destrucci√≥n de texturas 2D
+ * en DirectX, as√≠ como su vinculaci√≥n al pipeline gr√°fico. Puede inicializarse
  * desde archivo, como un recurso en memoria, o copiando otra textura.
  */
 class
@@ -25,7 +25,7 @@ public:
 
   /**
    * @brief Destructor por defecto.
-   * @details No libera autom·ticamente los recursos COM; llamar a destroy().
+   * @details No libera autom√°ticamente los recursos COM; llamar a destroy().
    */
   ~Texture() = default;
 
@@ -34,8 +34,8 @@ public:
    *
    * @param device Referencia al dispositivo de DirectX.
    * @param textureName Nombre o ruta del archivo de la textura.
-   * @param extensionType Tipo de extensiÛn de la textura (ej. PNG, JPG).
-   * @return HRESULT CÛdigo de resultado (S_OK si se cargÛ correctamente).
+   * @param extensionType Tipo de extensi√≥n de la textura (ej. PNG, JPG).
+   * @return HRESULT C√≥digo de resultado (S_OK si se carg√≥ correctamente).
    *
    * @post Si retorna @c S_OK, @c m_texture y
    *       @c m_textureFromImg != nullptr.
@@ -45,17 +45,23 @@ public:
       const std::string& textureName,
       ExtensionType extensionType);
 
+  HRESULT
+    initFromMemory(Device& device,
+      const unsigned char* data,
+      size_t size,
+      const std::string& textureName);
+
   /**
-   * @brief Inicializa la textura como un recurso vacÌo en memoria.
+   * @brief Inicializa la textura como un recurso vac√≠o en memoria.
    *
    * @param device Referencia al dispositivo de DirectX.
    * @param width Ancho de la textura.
    * @param height Alto de la textura.
    * @param Format Formato de la textura (DXGI_FORMAT).
    * @param BindFlags Banderas de enlace (ej. render target, shader resource).
-   * @param sampleCount N˙mero de muestras para multisampling (default = 1).
+   * @param sampleCount N√∫mero de muestras para multisampling (default = 1).
    * @param qualityLevels Niveles de calidad para multisampling (default = 0).
-   * @return HRESULT CÛdigo de resultado (S_OK si se creÛ correctamente).
+   * @return HRESULT C√≥digo de resultado (S_OK si se cre√≥ correctamente).
    */
   HRESULT
     init(Device& device,
@@ -72,7 +78,7 @@ public:
    * @param device Referencia al dispositivo de DirectX.
    * @param textureRef Textura de referencia para crear la nueva.
    * @param format Formato de la textura (DXGI_FORMAT).
-   * @return HRESULT CÛdigo de resultado.
+   * @return HRESULT C√≥digo de resultado.
    */
   HRESULT
     init(Device& device,
@@ -82,19 +88,19 @@ public:
   /**
    * @brief Actualiza el estado de la textura.
    *
-   * MÈtodo de marcador para lÛgica de actualizaciÛn de texturas.
+   * M√©todo de marcador para l√≥gica de actualizaci√≥n de texturas.
    *
-   * @note Actualmente no realiza ninguna operaciÛn.
+   * @note Actualmente no realiza ninguna operaci√≥n.
    */
   void
     update();
 
   /**
-   * @brief Renderiza la textura en el pipeline gr·fico.
+   * @brief Renderiza la textura en el pipeline gr√°fico.
    *
    * @param deviceContext Contexto del dispositivo de DirectX.
-   * @param StartSlot Slot de inicio donde se asignar· la textura.
-   * @param NumViews N˙mero de vistas de recurso de shader a asignar.
+   * @param StartSlot Slot de inicio donde se asignar√° la textura.
+   * @param NumViews N√∫mero de vistas de recurso de shader a asignar.
    *
    * @pre @c m_textureFromImg debe haberse creado con init().
    */
@@ -113,13 +119,13 @@ public:
     destroy();
 
   /**
-   * @brief Crea un cubemap utilizando seis im·genes.
+   * @brief Crea un cubemap utilizando seis im√°genes.
    *
    * @param device Referencia al dispositivo de DirectX.
    * @param deviceContext Contexto del dispositivo.
    * @param facePaths Arreglo con las rutas de las seis caras del cubemap.
    * @param generateMips Indica si se deben generar mipmaps.
-   * @return HRESULT CÛdigo de resultado.
+   * @return HRESULT C√≥digo de resultado.
    */
   HRESULT
     CreateCubemap(Device& device,
@@ -128,13 +134,13 @@ public:
       bool generateMips /*= false*/);
 
   /**
-   * @brief Crea una Shader Resource View para una cara especÌfica del cubemap.
+   * @brief Crea una Shader Resource View para una cara espec√≠fica del cubemap.
    *
    * @param device Dispositivo de DirectX utilizado para crear la vista.
    * @param cubemapTex Textura del cubemap.
    * @param format Formato DXGI de la textura.
-   * @param faceIndex Õndice de la cara del cubemap.
-   * @param mipLevels N˙mero de mip levels.
+   * @param faceIndex √çndice de la cara del cubemap.
+   * @param mipLevels N√∫mero de mip levels.
    * @return ID3D11ShaderResourceView* Vista creada; nullptr en caso de error.
    */
   ID3D11ShaderResourceView*

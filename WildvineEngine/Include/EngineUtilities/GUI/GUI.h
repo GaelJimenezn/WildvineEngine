@@ -229,6 +229,13 @@ public:
   // Content Browser spawn
   std::string m_assetSpawnPath;
   bool m_assetSpawnRequested = false;
+  
+  // Texture drop
+  std::string m_textureDropPath;
+  bool m_textureDropRequested = false;
+  
+  // Import request
+  bool m_importContentRequested = false;
 
   // Texture preview
   ID3D11ShaderResourceView* m_previewSRV = nullptr;

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include "Window.h"
 #include "Device.h"
@@ -45,6 +45,11 @@ struct ActorClipboard {
   EU::Vector3 position;
   EU::Vector3 rotation;
   EU::Vector3 scale;
+  Mesh* mesh = nullptr;
+  LightData lightData;
+  MaterialInstance materialInstance;
+  bool hasLight = false;
+  bool hasMesh = false;
 };
 
 struct LoadedModel {
@@ -157,8 +162,9 @@ private:
   void savePrefabSelected();
   void loadPrefab();
 
-  // Content Browser / Modelos dinamicos
   std::vector<std::unique_ptr<LoadedModel>> m_loadedModels;
+  std::vector<std::unique_ptr<MaterialInstance>> m_dynamicMaterials;
+  std::vector<std::unique_ptr<Texture>> m_dynamicTextures;
   std::vector<Texture> m_thumbTextures;
   std::vector<AssetThumb> m_thumbnails;
 

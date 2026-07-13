@@ -1,4 +1,4 @@
-﻿#include "BaseApp.h"
+#include "BaseApp.h"
 #include "ResourceManager.h"
 #include <algorithm>
 #include <cmath>
@@ -132,7 +132,8 @@ BaseApp::awake() {
 
 EU::TSharedPointer<Actor>
 BaseApp::createLightActor(LightType type, const std::string& baseName) {
-	if (!m_directionalLightActor.isNull()) {
+	// Solo reusar la directional si ya existe una Y se pide crear otra directional
+	if (type == LightType::Directional && !m_directionalLightActor.isNull()) {
 		return m_directionalLightActor;
 	}
 
@@ -141,7 +142,6 @@ BaseApp::createLightActor(LightType type, const std::string& baseName) {
 		return lightActor;
 	}
 
-	type = LightType::Directional;
 	lightActor->setName(baseName);
 
 	EU::TSharedPointer<LightComponent> lightComponent = lightActor->getComponent<LightComponent>();
@@ -155,10 +155,29 @@ BaseApp::createLightActor(LightType type, const std::string& baseName) {
 	light.color = EU::Vector3(1.0f, 1.0f, 1.0f);
 	light.intensity = 3.0f;
 	light.direction = EU::Vector3(-0.35f, -1.0f, 0.25f);
-	light.position = EU::Vector3(-4.0f, 6.0f, -4.0f);
-	light.range = 0.0f;
-	light.spotAngle = 0.0f;
-	lightComponent->setCastShadow(true);
+	light.position = EU::Vector3(0.0f, 3.0f, 0.0f);
+
+	// Defaults per type
+	if (type == LightType::Point) {
+		light.range = 10.0f;
+		light.intensity = 5.0f;
+		light.spotAngle = 0.0f;
+	} else if (type == LightType::Spot) {
+		light.range = 15.0f;
+		light.intensity = 5.0f;
+		light.spotAngle = 30.0f; // grados
+	} else if (type == LightType::Rect) {
+		light.range = 10.0f;
+		light.intensity = 5.0f;
+		light.spotAngle = 0.0f;
+	} else {
+		// Directional
+		light.range = 0.0f;
+		light.spotAngle = 0.0f;
+		light.position = EU::Vector3(-4.0f, 6.0f, -4.0f);
+	}
+
+	lightComponent->setCastShadow(type == LightType::Directional);
 
 	m_actors.push_back(lightActor);
 	m_sceneGraph.addEntity(lightActor.get());
@@ -172,7 +191,9 @@ BaseApp::createLightActor(LightType type, const std::string& baseName) {
 		transform->rebuildMatrixFromVectors();
 	}
 
-	m_directionalLightActor = lightActor;
+	if (type == LightType::Directional && m_directionalLightActor.isNull()) {
+		m_directionalLightActor = lightActor;
+	}
 	selectActor(lightActor);
 	return lightActor;
 }
@@ -671,6 +692,39 @@ BaseApp::update(float deltaTime) {
 		}
 	}
 
+	// Aplicar textura desde el Content Browser
+	if (m_gui.m_textureDropRequested) {
+		m_gui.m_textureDropRequested = false;
+		if (m_gui.selectedActorIndex >= 0 && m_gui.selectedActorIndex < (int)m_actors.size()) {
+			EU::TSharedPointer<Actor> selected = m_actors[m_gui.selectedActorIndex];
+			if (!selected.isNull()) {
+				EU::TSharedPointer<MeshRendererComponent> mr = selected->getComponent<MeshRendererComponent>();
+				if (mr && mr->getMaterialInstance()) {
+					Texture* newTex = new Texture();
+					HRESULT hr = loadPbrTexture(*newTex, m_gui.m_textureDropPath, "DynamicTexture");
+					if (SUCCEEDED(hr)) {
+						m_dynamicTextures.push_back(std::unique_ptr<Texture>(newTex));
+						mr->getMaterialInstance()->setAlbedo(newTex);
+						MESSAGE("BaseApp", "update", "Textura aplicada al actor seleccionado");
+					} else {
+						delete newTex;
+						ERROR("BaseApp", "update", "Fallo al cargar la textura");
+					}
+				} else {
+					MESSAGE("BaseApp", "update", "Actor sin material");
+				}
+			}
+		} else {
+			MESSAGE("BaseApp", "update", "No hay actor seleccionado");
+		}
+	}
+
+	// Recargar miniaturas si se importó contenido
+	if (m_gui.m_importContentRequested) {
+		m_gui.m_importContentRequested = false;
+		buildTextureThumbnails();
+	}
+
 	if (m_gui.consumeResetRequest()) {
 		resetSceneToDefaults();
 	}
@@ -681,7 +735,16 @@ BaseApp::update(float deltaTime) {
 
 	LightType requestedLightType = LightType::Directional;
 	if (m_gui.consumeCreateLightRequest(requestedLightType)) {
-		selectActor(m_directionalLightActor);
+		std::string name = "Light";
+		if (requestedLightType == LightType::Point) name = "PointLight";
+		if (requestedLightType == LightType::Spot) name = "SpotLight";
+		if (requestedLightType == LightType::Directional) name = "DirectionalLight";
+		if (requestedLightType == LightType::Rect) name = "RectLight";
+
+		EU::TSharedPointer<Actor> newLight = createLightActor(requestedLightType, name);
+		if (!newLight.isNull()) {
+			m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, newLight)));
+		}
 	}
 
 	// --- Undo/Redo: registrar movimientos del gizmo ---
@@ -778,10 +841,28 @@ BaseApp::update(float deltaTime) {
 		ImGuiIO& io = ImGui::GetIO();
 		if (m_gui.m_viewportHovered) {
 			if (io.MouseWheel != 0.0f) m_camera.walk(io.MouseWheel * 0.7f);
-			if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+
+			const bool rightHeld = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+
+			if (rightHeld) {
+				// Rotar camara con mouse
 				m_camera.yaw(io.MouseDelta.x * 0.004f);
 				m_camera.pitch(io.MouseDelta.y * 0.004f);
+
+				// WASD + QE como Unreal Engine (solo activo con click derecho)
+				const float speed = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? 0.15f : 0.05f;
+				if (GetAsyncKeyState('W') & 0x8000) m_camera.walk( speed);
+				if (GetAsyncKeyState('S') & 0x8000) m_camera.walk(-speed);
+				if (GetAsyncKeyState('A') & 0x8000) m_camera.strafe(-speed);
+				if (GetAsyncKeyState('D') & 0x8000) m_camera.strafe( speed);
+				if (GetAsyncKeyState('E') & 0x8000) {
+					EU::Vector3 p = m_camera.getPosition(); p.y += speed; m_camera.setPosition(p);
+				}
+				if (GetAsyncKeyState('Q') & 0x8000) {
+					EU::Vector3 p = m_camera.getPosition(); p.y -= speed; m_camera.setPosition(p);
+				}
 			}
+
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
 				m_camera.strafe(-io.MouseDelta.x * 0.02f);
 				EU::Vector3 p = m_camera.getPosition();
@@ -1239,16 +1320,38 @@ BaseApp::duplicateSelected() {
 		return;
 	}
 	EU::TSharedPointer<Actor> src = m_actors[idx];
-	if (src->getComponent<MeshRendererComponent>().isNull()) {
-		MESSAGE("BaseApp", "duplicateSelected", "El actor seleccionado NO tiene malla");
-		return;
-	}
 	EU::TSharedPointer<Transform> t = src->getComponent<Transform>();
 	EU::Vector3 pos = t ? t->getPosition() : EU::Vector3(0, 0, 0);
 	EU::Vector3 rot = t ? t->getRotation() : EU::Vector3(0, 0, 0);
 	EU::Vector3 sca = t ? t->getScale() : EU::Vector3(1, 1, 1);
 	pos.x += 1.5f;
-	EU::TSharedPointer<Actor> a = spawnPistol(src->getName() + "_copy", pos, rot, sca);
+
+	EU::TSharedPointer<Actor> a = EU::MakeShared<Actor>(m_device);
+	a->setName(src->getName() + "_copy");
+	EU::TSharedPointer<Transform> nt = a->getComponent<Transform>();
+	if (nt) nt->setTransform(pos, rot, sca);
+
+	EU::TSharedPointer<MeshRendererComponent> srcMr = src->getComponent<MeshRendererComponent>();
+	if (srcMr) {
+		EU::TSharedPointer<MeshRendererComponent> mr = EU::MakeShared<MeshRendererComponent>();
+		a->addComponent(mr);
+		mr->setMesh(srcMr->getMesh());
+		if (srcMr->getMaterialInstance()) {
+			MaterialInstance* newMat = new MaterialInstance(*srcMr->getMaterialInstance());
+			m_dynamicMaterials.push_back(std::unique_ptr<MaterialInstance>(newMat));
+			mr->setMaterialInstance(newMat);
+		}
+		mr->setVisible(srcMr->isVisible());
+		mr->setCastShadow(srcMr->canCastShadow());
+	}
+
+	EU::TSharedPointer<LightComponent> srcLc = src->getComponent<LightComponent>();
+	if (srcLc) {
+		EU::TSharedPointer<LightComponent> lc = EU::MakeShared<LightComponent>();
+		a->addComponent(lc);
+		lc->getLightData() = srcLc->getLightData();
+	}
+
 	addActorToScene(a);
 	m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, a)));
 	m_gui.selectedActorIndex = (int)m_actors.size() - 1;
@@ -1276,15 +1379,29 @@ BaseApp::copySelected() {
 		return;
 	}
 	EU::TSharedPointer<Actor> src = m_actors[idx];
-	if (src->getComponent<MeshRendererComponent>().isNull()) {
-		MESSAGE("BaseApp", "copySelected", "El actor seleccionado NO tiene malla");
-		return;
-	}
 	EU::TSharedPointer<Transform> t = src->getComponent<Transform>();
 	m_clipboard.name = src->getName();
 	m_clipboard.position = t ? t->getPosition() : EU::Vector3(0, 0, 0);
 	m_clipboard.rotation = t ? t->getRotation() : EU::Vector3(0, 0, 0);
 	m_clipboard.scale = t ? t->getScale() : EU::Vector3(1, 1, 1);
+	
+	m_clipboard.hasMesh = false;
+	m_clipboard.hasLight = false;
+	
+	EU::TSharedPointer<MeshRendererComponent> srcMr = src->getComponent<MeshRendererComponent>();
+	if (srcMr) {
+		m_clipboard.hasMesh = true;
+		m_clipboard.mesh = srcMr->getMesh();
+		if (srcMr->getMaterialInstance()) {
+			m_clipboard.materialInstance = *srcMr->getMaterialInstance();
+		}
+	}
+	EU::TSharedPointer<LightComponent> srcLc = src->getComponent<LightComponent>();
+	if (srcLc) {
+		m_clipboard.hasLight = true;
+		m_clipboard.lightData = srcLc->getLightData();
+	}
+
 	m_hasClipboard = true;
 	MESSAGE("BaseApp", "copySelected", "Actor copiado al portapapeles");
 }
@@ -1297,7 +1414,29 @@ BaseApp::pasteClipboard() {
 	}
 	EU::Vector3 pos = m_clipboard.position;
 	pos.x += 1.5f;
-	EU::TSharedPointer<Actor> a = spawnPistol(m_clipboard.name + "_paste", pos, m_clipboard.rotation, m_clipboard.scale);
+
+	EU::TSharedPointer<Actor> a = EU::MakeShared<Actor>(m_device);
+	a->setName(m_clipboard.name + "_paste");
+	EU::TSharedPointer<Transform> nt = a->getComponent<Transform>();
+	if (nt) nt->setTransform(pos, m_clipboard.rotation, m_clipboard.scale);
+
+	if (m_clipboard.hasMesh) {
+		EU::TSharedPointer<MeshRendererComponent> mr = EU::MakeShared<MeshRendererComponent>();
+		a->addComponent(mr);
+		mr->setMesh(m_clipboard.mesh);
+		MaterialInstance* newMat = new MaterialInstance(m_clipboard.materialInstance);
+		m_dynamicMaterials.push_back(std::unique_ptr<MaterialInstance>(newMat));
+		mr->setMaterialInstance(newMat);
+		mr->setVisible(true);
+		mr->setCastShadow(true);
+	}
+	
+	if (m_clipboard.hasLight) {
+		EU::TSharedPointer<LightComponent> lc = EU::MakeShared<LightComponent>();
+		a->addComponent(lc);
+		lc->getLightData() = m_clipboard.lightData;
+	}
+
 	addActorToScene(a);
 	m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, a)));
 	m_gui.selectedActorIndex = (int)m_actors.size() - 1;
@@ -1418,6 +1557,7 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 	std::string lower = toLowerCopy(modelPath);
 	ModelType type = FBX;
 	if (endsWith(lower, ".obj")) type = OBJ;
+	else if (endsWith(lower, ".glb") || endsWith(lower, ".gltf")) type = GLTF;
 
 	Model3D model(modelPath, type);
 	const std::vector<MeshComponent>& meshes = model.GetMeshes();
@@ -1471,6 +1611,29 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 
 	std::string modelName = fileBaseName(modelPath);
 	loadModelTextures(*lm, "Assets/Textures/" + modelName);
+
+	if (type == GLTF) {
+		const auto& embTextures = model.GetEmbeddedTextures();
+		for (const auto& emb : embTextures) {
+			auto tex = std::make_unique<Texture>();
+			HRESULT hrTex = tex->initFromMemory(m_device, emb.data.data(), emb.data.size(), emb.name);
+			if (SUCCEEDED(hrTex)) {
+				std::string lowerName = toLowerCopy(emb.name);
+				if (lowerName.find("normal") != std::string::npos) {
+					lm->materialInstance.setNormal(tex.get());
+				} else if (lowerName.find("metallic") != std::string::npos || lowerName.find("orm") != std::string::npos || lowerName.find("roughness") != std::string::npos) {
+					// GLTF usually combines metallic and roughness. We just assign to both if needed.
+					lm->materialInstance.setMetallic(tex.get());
+					lm->materialInstance.setRoughness(tex.get());
+				} else if (lowerName.find("emissive") != std::string::npos) {
+					lm->materialInstance.setEmissive(tex.get());
+				} else {
+					lm->materialInstance.setAlbedo(tex.get());
+				}
+				m_dynamicTextures.push_back(std::move(tex));
+			}
+		}
+	}
 
 	EU::TSharedPointer<Actor> a = EU::MakeShared<Actor>(m_device);
 	if (a.isNull()) return a;

@@ -174,6 +174,39 @@ namespace {
 }
 
 HRESULT
+Texture::initFromMemory(Device& device,
+	const unsigned char* data,
+	size_t size,
+	const std::string& textureName) {
+
+	if (!device.m_device) {
+		ERROR("Texture", "initFromMemory", "Device is null.");
+		return E_POINTER;
+	}
+	m_textureName = textureName;
+
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	unsigned char* decodedData = stbi_load_from_memory(data, (int)size, &width, &height, &channels, 4);
+	if (!decodedData) {
+		ERROR("Texture", "initFromMemory", ("Failed to load texture from memory: " + std::string(stbi_failure_reason())).c_str());
+		return E_FAIL;
+	}
+
+	HRESULT hr = CreateTextureFromRGBA(device, width, height, decodedData, &m_texture, &m_textureFromImg);
+	stbi_image_free(decodedData);
+
+	if (FAILED(hr)) {
+		SAFE_RELEASE(m_texture);
+		SAFE_RELEASE(m_textureFromImg);
+		ERROR("Texture", "initFromMemory", "Failed to create shader resource view");
+		return hr;
+	}
+	return S_OK;
+}
+
+HRESULT
 Texture::init(Device& device,
   const std::string& textureName,
   ExtensionType extensionType) {

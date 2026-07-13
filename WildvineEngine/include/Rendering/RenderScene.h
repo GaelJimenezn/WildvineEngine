@@ -21,7 +21,7 @@ public:
   /**
    * @brief Limpia todos los elementos de la escena.
    *
-   * Vacía las listas de objetos y luces, y reinicia referencias.
+   * VacÃ­a las listas de objetos y luces, y reinicia referencias.
    */
   void 
   clear();
@@ -35,6 +35,15 @@ public:
 
   /** @brief Lista de luces direccionales. */
   std::vector<LightData> directionalLights;
+
+  /** @brief Lista de luces puntuales. */
+  std::vector<LightData> pointLights;
+
+  /** @brief Lista de luces tipo spotlight. */
+  std::vector<LightData> spotLights;
+
+  /** @brief Lista de luces rectangulares. */
+  std::vector<LightData> rectLights;
 
   /** @brief Skybox de la escena. */
   Skybox* skybox = nullptr;

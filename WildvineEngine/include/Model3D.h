@@ -11,7 +11,13 @@
 enum
   ModelType {
   OBJ,  ///< Modelo en formato OBJ.
-  FBX  ///< Modelo en formato FBX.
+  FBX,  ///< Modelo en formato FBX.
+  GLTF  ///< Modelo en formato GLTF / GLB.
+};
+
+struct EmbeddedTexture {
+    std::string name;
+    std::vector<unsigned char> data;
 };
 
 class
@@ -19,7 +25,7 @@ Model3D : public IResource {
 
 public:
   /**
-   * @brief Constructor que crea un recurso de modelo 3D y lo carga autom·ticamente.
+   * @brief Constructor que crea un recurso de modelo 3D y lo carga autom√°ticamente.
    * @param name Nombre del recurso/modelo.
    * @param modelType Tipo de modelo (OBJ o FBX).
    */
@@ -52,14 +58,14 @@ public:
   /**
    * @brief Carga un modelo desde ruta especificada.
    * @param path Ruta del archivo de modelo.
-   * @return true si se cargÛ correctamente, false si fallÛ.
+   * @return true si se carg√≥ correctamente, false si fall√≥.
    */
   bool
   load(const std::string& path) override;
 
   /**
    * @brief Inicializa recursos adicionales necesarios para el modelo.
-   * @return true si la inicializaciÛn fue exitosa.
+   * @return true si la inicializaci√≥n fue exitosa.
    */
   bool
   init() override;
@@ -71,8 +77,8 @@ public:
   unload() override;
 
   /**
-   * @brief Obtiene el tamaÒo del modelo en memoria.
-   * @return TamaÒo estimado en bytes.
+   * @brief Obtiene el tama√±o del modelo en memoria.
+   * @return Tama√±o estimado en bytes.
    */
   size_t
   getSizeInBytes() const override;
@@ -86,7 +92,7 @@ public:
 
   /**
    * @brief Inicializa el administrador de FBX (FbxManager).
-   * @return true si se inicializÛ correctamente.
+   * @return true si se inicializ√≥ correctamente.
    */
   bool
   InitializeFBXManager();
@@ -101,6 +107,9 @@ public:
 
   std::vector<MeshComponent>
   LoadOBJModel(const std::string& filePath);
+
+  std::vector<MeshComponent>
+  LoadGLTFModel(const std::string& filePath);
 
   /**
    * @brief Procesa un nodo del archivo FBX.
@@ -130,6 +139,9 @@ public:
   std::vector<std::string>
   GetTextureFileNames() const { return textureFileNames; }
 
+  const std::vector<EmbeddedTexture>&
+  GetEmbeddedTextures() const { return m_embeddedTextures; }
+
 private:
   std::string GetBinaryCachePath() const;
   bool IsBinaryCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) const;
@@ -140,8 +152,9 @@ private:
   FbxManager* lSdkManager;            ///< Administrador principal del SDK de FBX.
   FbxScene* lScene;                   ///< Escena cargada desde el archivo FBX.
   std::vector<std::string > textureFileNames;  ///< Lista de texturas usadas por el modelo.
+  std::vector<EmbeddedTexture> m_embeddedTextures;
 
 public:
   ModelType m_modelType;              ///< Tipo del modelo cargado (OBJ o FBX).
-  std::vector<MeshComponent> m_meshes; ///< Mallas extraÌdas del archivo del modelo.
+  std::vector<MeshComponent> m_meshes; ///< Mallas extra√≠das del archivo del modelo.
 };

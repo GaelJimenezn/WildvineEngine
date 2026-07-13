@@ -229,7 +229,12 @@ SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
 			if (transform) {
 				light.position = transform->getPosition();
 			}
-			outScene.directionalLights.push_back(light);
+			switch (light.type) {
+			case LightType::Point: outScene.pointLights.push_back(light); break;
+			case LightType::Spot:  outScene.spotLights.push_back(light);  break;
+			case LightType::Rect:  outScene.rectLights.push_back(light);  break;
+			default:               outScene.directionalLights.push_back(light); break;
+			}
 		}
 
 		auto meshRenderer = entity->getComponent<MeshRendererComponent>();

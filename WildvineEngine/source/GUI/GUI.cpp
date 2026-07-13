@@ -4,6 +4,8 @@
  * @ingroup gui
  */
 #include "EngineUtilities\GUI\GUI.h"
+#include <commdlg.h>
+#include <iostream>
 #include "Viewport.h"
 #include "Window.h"
 #include "Device.h"
@@ -211,6 +213,7 @@ const char* GetLightTypeLabel(LightType type) {
 	case LightType::Directional: return "Directional";
 	case LightType::Point: return "Point";
 	case LightType::Spot: return "Spot";
+	case LightType::Rect: return "Rect";
 	default: return "Unknown";
 	}
 }
@@ -750,6 +753,16 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
 				DrawPropertyLabel("Range");
 				ImGui::SliderFloat("##LightRange", &light.range, 0.0f, 100.0f);
 			}
+			if (light.type == LightType::Spot) {
+				DrawPropertyLabel("Spot Angle");
+				ImGui::SliderFloat("##LightSpotAngle", &light.spotAngle, 0.0f, 90.0f);
+			}
+			if (light.type == LightType::Rect) {
+				DrawPropertyLabel("Width");
+				ImGui::SliderFloat("##LightWidth", &light.width, 0.1f, 100.0f);
+				DrawPropertyLabel("Height");
+				ImGui::SliderFloat("##LightHeight", &light.height, 0.1f, 100.0f);
+			}
 			ImGui::EndTable();
 		}
 	}
@@ -1176,8 +1189,18 @@ void GUI::drawStudioTopRibbon()
 					m_requestedLightType = LightType::Directional;
 					m_requestCreateLight = true;
 				}
-				ImGui::MenuItem("Point Light", nullptr, false, false);
-				ImGui::MenuItem("Spot Light", nullptr, false, false);
+				if (ImGui::MenuItem("Point Light")) {
+					m_requestedLightType = LightType::Point;
+					m_requestCreateLight = true;
+				}
+				if (ImGui::MenuItem("Spot Light")) {
+					m_requestedLightType = LightType::Spot;
+					m_requestCreateLight = true;
+				}
+				if (ImGui::MenuItem("Rect Light")) {
+					m_requestedLightType = LightType::Rect;
+					m_requestCreateLight = true;
+				}
 				ImGui::EndMenu();
 			}
 			ImGui::MenuItem("Shapes", nullptr, false, false);
@@ -1194,9 +1217,18 @@ void GUI::drawStudioTopRibbon()
 				m_requestedLightType = LightType::Directional;
 				m_requestCreateLight = true;
 			}
-			ImGui::MenuItem("Point Light", nullptr, false, false);
-			ImGui::MenuItem("Spot Light", nullptr, false, false);
-			ImGui::MenuItem("Rect Light", nullptr, false, false);
+			if (ImGui::MenuItem("Point Light")) {
+				m_requestedLightType = LightType::Point;
+				m_requestCreateLight = true;
+			}
+			if (ImGui::MenuItem("Spot Light")) {
+				m_requestedLightType = LightType::Spot;
+				m_requestCreateLight = true;
+			}
+			if (ImGui::MenuItem("Rect Light")) {
+				m_requestedLightType = LightType::Rect;
+				m_requestCreateLight = true;
+			}
 			ImGui::EndPopup();
 		}
 		PopEditorPopupStyle();
@@ -1298,6 +1330,20 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 				IM_COL32(220, 220, 220, 255),
 				"Viewport sin textura"
 			);
+		}
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_MODEL_PATH")) {
+				const char* path = (const char*)payload->Data;
+				m_assetSpawnPath = path;
+				m_assetSpawnRequested = true;
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_TEXTURE_PATH")) {
+				const char* path = (const char*)payload->Data;
+				m_textureDropPath = path;
+				m_textureDropRequested = true;
+			}
+			ImGui::EndDragDropTarget();
 		}
 
 		ImVec2 itemMin = ImGui::GetItemRectMin();
@@ -1683,7 +1729,7 @@ void GUI::drawEditorDockspace()
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
 	static bool s_defaultLayoutBuilt = false;
-	if (!s_defaultLayoutBuilt) {
+	if (!s_defaultLayoutBuilt || ImGui::DockBuilderGetNode(dockspace_id) == nullptr) {
 		s_defaultLayoutBuilt = true;
 
 		ImGui::DockBuilderRemoveNode(dockspace_id);
@@ -1696,16 +1742,16 @@ void GUI::drawEditorDockspace()
 		ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.18f, nullptr, &dockMain);
 		ImGuiID dockRightBottom = ImGui::DockBuilderSplitNode(dockRight, ImGuiDir_Down, 0.50f, nullptr, &dockRight);
 
-		// Centro: Viewport
-		ImGui::DockBuilderDockWindow("DefaultScene", dockMain);
-		ImGui::DockBuilderDockWindow("Shader Viewer", dockMain);
-		ImGui::DockBuilderDockWindow("Render Diagnostics", dockMain);
-		ImGui::DockBuilderDockWindow("Material SRV Inspector", dockMain);
+		// Centro: Viewport — DefaultScene va al último para quedar activo
 		ImGui::DockBuilderDockWindow("GBuffer Viewer", dockMain);
+		ImGui::DockBuilderDockWindow("Material SRV Inspector", dockMain);
+		ImGui::DockBuilderDockWindow("Render Diagnostics", dockMain);
+		ImGui::DockBuilderDockWindow("Shader Viewer", dockMain);
+		ImGui::DockBuilderDockWindow("DefaultScene", dockMain);
 
-		// Izquierda: Outliner + Lighting
-		ImGui::DockBuilderDockWindow("World Outliner", dockLeft);
+		// Izquierda: Lighting primero, World Outliner al último para quedar activo
 		ImGui::DockBuilderDockWindow("Lighting", dockLeft);
+		ImGui::DockBuilderDockWindow("World Outliner", dockLeft);
 
 		// Derecha arriba: Details
 		ImGui::DockBuilderDockWindow("Details", dockRight);
@@ -1762,8 +1808,14 @@ void GUI::drawLightingPanel(float* lightDir, float* lightColor) {
 	ImGui::Separator();
 	ImGui::TextDisabled("Luz direccional principal");
 	ImGui::Spacing();
-	if (lightDir)   vec3Control("Direccion", lightDir, 0.0f, 90.0f);
-	if (lightColor) vec3Control("Color", lightColor, 1.0f, 90.0f);
+	if (lightDir) {
+		ImGui::Text("Direccion");
+		ImGui::SliderFloat3("##LightingDir", lightDir, -1.0f, 1.0f);
+	}
+	if (lightColor) {
+		ImGui::Text("Color");
+		ImGui::ColorEdit3("##LightingColor", lightColor);
+	}
 	ImGui::End();
 }
 
@@ -1846,6 +1898,41 @@ void GUI::drawTexturePreview() {
 
 void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 	ImGui::Begin("Content");
+	
+	if (ImGui::Button("Import Content...")) {
+		OPENFILENAMEA ofn;
+		char szFile[260] = {0};
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFile = szFile;
+		ofn.nMaxFile = sizeof(szFile);
+		ofn.lpstrFilter = "All Supported\0*.fbx;*.obj;*.glb;*.gltf;*.png;*.jpg;*.tga\0Models (*.fbx;*.obj;*.glb;*.gltf)\0*.fbx;*.obj;*.glb;*.gltf\0Textures (*.png;*.jpg;*.tga)\0*.png;*.jpg;*.tga\0All\0*.*\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFileTitle = NULL;
+		ofn.nMaxFileTitle = 0;
+		ofn.lpstrInitialDir = NULL;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+		if (GetOpenFileNameA(&ofn) == TRUE) {
+			std::string srcPath = ofn.lpstrFile;
+			std::string lo = srcPath;
+			for (char& c : lo) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+			std::string destDir = "Assets/";
+			if (lo.size() >= 4 && (lo.compare(lo.size() - 4, 4, ".fbx") == 0 || lo.compare(lo.size() - 4, 4, ".obj") == 0 || lo.compare(lo.size() - 4, 4, ".glb") == 0 || (lo.size() >= 5 && lo.compare(lo.size() - 5, 5, ".gltf") == 0))) {
+				destDir += "Models/";
+			} else {
+				destDir += "Textures/";
+			}
+			std::string fileName = srcPath.substr(srcPath.find_last_of("/\\") + 1);
+			std::string destPath = destDir + fileName;
+			CreateDirectoryA("Assets", NULL);
+			CreateDirectoryA(destDir.c_str(), NULL);
+			CopyFileA(srcPath.c_str(), destPath.c_str(), FALSE);
+			m_importContentRequested = true;
+		}
+	}
+	ImGui::Separator();
+	
 	if (ImGui::BeginTabBar("##ContentTabs")) {
 		if (ImGui::BeginTabItem("Models")) {
 			std::vector<std::string> models;
@@ -1858,7 +1945,9 @@ void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 					std::string lo = n;
 					for (char& c : lo) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
 					if (lo.size() >= 4 && (lo.compare(lo.size() - 4, 4, ".fbx") == 0 ||
-						lo.compare(lo.size() - 4, 4, ".obj") == 0))
+						lo.compare(lo.size() - 4, 4, ".obj") == 0 ||
+						lo.compare(lo.size() - 4, 4, ".glb") == 0 ||
+						(lo.size() >= 5 && lo.compare(lo.size() - 5, 5, ".gltf") == 0)))
 						models.push_back(n);
 				} while (FindNextFileA(h, &fd));
 				FindClose(h);
@@ -1871,8 +1960,16 @@ void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 			for (const std::string& m : models) {
 				ImGui::PushID(m.c_str());
 				ImGui::BeginGroup();
-				ImGui::Button("FBX/OBJ", ImVec2(cell, cell));
-				if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s (doble click para instanciar)", m.c_str());
+				ImGui::Button("3D Model", ImVec2(cell, cell));
+
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+					std::string fullPath = "Assets/Models/" + m;
+					ImGui::SetDragDropPayload("DND_MODEL_PATH", fullPath.c_str(), fullPath.size() + 1);
+					ImGui::Text("Spawning %s", m.c_str());
+					ImGui::EndDragDropSource();
+				}
+
+				if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s (arrastrar al Viewport o doble clic)", m.c_str());
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 					m_assetSpawnPath = "Assets/Models/" + m;
 					m_assetSpawnRequested = true;
@@ -1901,6 +1998,14 @@ void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 				ImGui::BeginGroup();
 				if (t.srv) ImGui::Image((ImTextureID)t.srv, ImVec2(cell, cell));
 				else       ImGui::Dummy(ImVec2(cell, cell));
+				
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+					std::string fullPath = "Assets/Textures/" + t.name;
+					ImGui::SetDragDropPayload("DND_TEXTURE_PATH", fullPath.c_str(), fullPath.size() + 1);
+					ImGui::Text("Applying %s", t.name.c_str());
+					ImGui::EndDragDropSource();
+				}
+				
 				if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", t.name.c_str());
 				ImGui::EndGroup();
 				ImGui::PopID();

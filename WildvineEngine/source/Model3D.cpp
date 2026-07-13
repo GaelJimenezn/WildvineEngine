@@ -11,6 +11,9 @@
 #include <unordered_map>
 #include <sstream>
 
+#define CGLTF_IMPLEMENTATION
+#include "cgltf.h"
+
 namespace {
 	constexpr uint32_t kModelCacheMagic = 0x48564D57; // WMVH
 	constexpr uint32_t kModelCacheVersion = 1;
@@ -99,6 +102,9 @@ bool Model3D::init()
 	}
 	else if (m_modelType == ModelType::OBJ) {
 		loadedMeshes = LoadOBJModel(m_filePath);
+	}
+	else if (m_modelType == ModelType::GLTF) {
+		loadedMeshes = LoadGLTFModel(m_filePath);
 	}
 	const auto end = std::chrono::high_resolution_clock::now();
 	const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
@@ -457,6 +463,220 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 	return loadedMeshes;
 }
 
+std::vector<MeshComponent>
+Model3D::LoadGLTFModel(const std::string& filePath) {
+	std::vector<MeshComponent> loadedMeshes;
+	cgltf_options options = {};
+	cgltf_data* data = NULL;
+	cgltf_result result = cgltf_parse_file(&options, filePath.c_str(), &data);
+	if (result != cgltf_result_success) {
+		ERROR("ModelLoader", "LoadGLTFModel", ("Unable to parse GLTF file: " + filePath).c_str());
+		return loadedMeshes;
+	}
+
+	result = cgltf_load_buffers(&options, data, filePath.c_str());
+	if (result != cgltf_result_success) {
+		ERROR("ModelLoader", "LoadGLTFModel", ("Unable to load buffers for GLTF file: " + filePath).c_str());
+		cgltf_free(data);
+		return loadedMeshes;
+	}
+
+	// Evaluate materials and tag images so BaseApp can correctly identify them
+	for (cgltf_size m = 0; m < data->materials_count; ++m) {
+		cgltf_material& mat = data->materials[m];
+		if (mat.has_pbr_metallic_roughness) {
+			if (mat.pbr_metallic_roughness.base_color_texture.texture && mat.pbr_metallic_roughness.base_color_texture.texture->image) {
+				mat.pbr_metallic_roughness.base_color_texture.texture->image->name = (char*)"albedo";
+			}
+			if (mat.pbr_metallic_roughness.metallic_roughness_texture.texture && mat.pbr_metallic_roughness.metallic_roughness_texture.texture->image) {
+				mat.pbr_metallic_roughness.metallic_roughness_texture.texture->image->name = (char*)"metallic_roughness";
+			}
+		}
+		if (mat.normal_texture.texture && mat.normal_texture.texture->image) {
+			mat.normal_texture.texture->image->name = (char*)"normal";
+		}
+		if (mat.emissive_texture.texture && mat.emissive_texture.texture->image) {
+			mat.emissive_texture.texture->image->name = (char*)"emissive";
+		}
+	}
+
+	// Load embedded textures
+	for (cgltf_size i = 0; i < data->images_count; ++i) {
+		cgltf_image& image = data->images[i];
+		if (image.buffer_view && image.buffer_view->buffer && image.buffer_view->buffer->data) {
+			EmbeddedTexture emb;
+			emb.name = image.name ? image.name : ("embedded_tex_" + std::to_string(i));
+			if (!image.uri && image.mime_type) {
+				if (std::string(image.mime_type) == "image/jpeg") emb.name += ".jpg";
+				else if (std::string(image.mime_type) == "image/png") emb.name += ".png";
+			}
+			else if (image.uri) {
+				emb.name = image.uri;
+			}
+			
+			unsigned char* bufferData = (unsigned char*)image.buffer_view->buffer->data + image.buffer_view->offset;
+			emb.data.assign(bufferData, bufferData + image.buffer_view->size);
+			m_embeddedTextures.push_back(emb);
+		}
+	}
+
+	for (cgltf_size i = 0; i < data->nodes_count; ++i) {
+		cgltf_node& node = data->nodes[i];
+		if (!node.mesh) continue;
+
+		cgltf_float world_transform[16];
+		cgltf_node_transform_world(&node, world_transform);
+		cgltf_mesh& mesh = *node.mesh;
+
+		for (cgltf_size j = 0; j < mesh.primitives_count; ++j) {
+			cgltf_primitive& primitive = mesh.primitives[j];
+			if (primitive.type != cgltf_primitive_type_triangles) continue;
+
+			MeshComponent mc;
+			mc.m_name = mesh.name ? mesh.name : "unnamed_mesh";
+
+			// Parse indices
+			if (primitive.indices) {
+				cgltf_accessor* accessor = primitive.indices;
+				mc.m_numIndex = (int)accessor->count;
+				for (cgltf_size k = 0; k < accessor->count; ++k) {
+					mc.m_index.push_back((unsigned int)cgltf_accessor_read_index(accessor, k));
+				}
+			}
+
+			// Parse vertices
+			cgltf_size vertexCount = 0;
+			if (primitive.attributes_count > 0) {
+				vertexCount = primitive.attributes[0].data->count;
+				mc.m_numVertex = (int)vertexCount;
+				mc.m_vertex.resize(vertexCount);
+				memset(mc.m_vertex.data(), 0, vertexCount * sizeof(SimpleVertex));
+			}
+
+			for (cgltf_size a = 0; a < primitive.attributes_count; ++a) {
+				cgltf_attribute& attr = primitive.attributes[a];
+				for (cgltf_size v = 0; v < vertexCount; ++v) {
+					SimpleVertex& vertex = mc.m_vertex[v];
+					if (attr.type == cgltf_attribute_type_position) {
+						cgltf_accessor_read_float(attr.data, v, &vertex.Position.x, 3);
+					} else if (attr.type == cgltf_attribute_type_normal) {
+						cgltf_accessor_read_float(attr.data, v, &vertex.Normal.x, 3);
+					} else if (attr.type == cgltf_attribute_type_texcoord) {
+						cgltf_accessor_read_float(attr.data, v, &vertex.TextureCoordinate.x, 2);
+						vertex.TextureCoordinate.y = 1.0f - vertex.TextureCoordinate.y; // Flip V for DirectX
+					} else if (attr.type == cgltf_attribute_type_tangent) {
+						cgltf_accessor_read_float(attr.data, v, &vertex.Tangent.x, 3);
+					}
+				}
+			}
+			
+			// Apply node global transform
+			cgltf_float* mtx = world_transform;
+			for (cgltf_size v = 0; v < vertexCount; ++v) {
+				SimpleVertex& vertex = mc.m_vertex[v];
+				float x = vertex.Position.x;
+				float y = vertex.Position.y;
+				float z = vertex.Position.z;
+				vertex.Position.x = mtx[0] * x + mtx[4] * y + mtx[8] * z + mtx[12];
+				vertex.Position.y = mtx[1] * x + mtx[5] * y + mtx[9] * z + mtx[13];
+				vertex.Position.z = mtx[2] * x + mtx[6] * y + mtx[10] * z + mtx[14];
+
+				float nx = vertex.Normal.x;
+				float ny = vertex.Normal.y;
+				float nz = vertex.Normal.z;
+				vertex.Normal.x = mtx[0] * nx + mtx[4] * ny + mtx[8] * nz;
+				vertex.Normal.y = mtx[1] * nx + mtx[5] * ny + mtx[9] * nz;
+				vertex.Normal.z = mtx[2] * nx + mtx[6] * ny + mtx[10] * nz;
+				
+				float tx = vertex.Tangent.x;
+				float ty = vertex.Tangent.y;
+				float tz = vertex.Tangent.z;
+				vertex.Tangent.x = mtx[0] * tx + mtx[4] * ty + mtx[8] * tz;
+				vertex.Tangent.y = mtx[1] * tx + mtx[5] * ty + mtx[9] * tz;
+				vertex.Tangent.z = mtx[2] * tx + mtx[6] * ty + mtx[10] * tz;
+			}
+			
+			// Si no hay m_index, generamos secuencialmente
+			if (mc.m_index.empty()) {
+				for (cgltf_size v = 0; v < vertexCount; ++v) {
+					mc.m_index.push_back((unsigned int)v);
+				}
+				mc.m_numIndex = (int)mc.m_index.size();
+			}
+
+			// Invertir winding order para DirectX (GLTF usa counter-clockwise)
+			for (size_t k = 0; k + 2 < mc.m_index.size(); k += 3) {
+				std::swap(mc.m_index[k + 1], mc.m_index[k + 2]);
+			}
+
+			// Generate tangents and bitangents if they are missing
+			auto normalizeVec = [](EU::Vector3& value) {
+				const float lengthSq = value.x * value.x + value.y * value.y + value.z * value.z;
+				if (lengthSq <= 1e-20f) {
+					value = EU::Vector3(0.0f, 1.0f, 0.0f);
+					return;
+				}
+				const float invLength = 1.0f / std::sqrt(lengthSq);
+				value.x *= invLength;
+				value.y *= invLength;
+				value.z *= invLength;
+			};
+
+			for (size_t k = 0; k + 2 < mc.m_index.size(); k += 3) {
+				SimpleVertex& v0 = mc.m_vertex[mc.m_index[k + 0]];
+				SimpleVertex& v1 = mc.m_vertex[mc.m_index[k + 1]];
+				SimpleVertex& v2 = mc.m_vertex[mc.m_index[k + 2]];
+
+				const EU::Vector3 edge1 = v1.Position - v0.Position;
+				const EU::Vector3 edge2 = v2.Position - v0.Position;
+				const float du1 = v1.TextureCoordinate.x - v0.TextureCoordinate.x;
+				const float dv1 = v1.TextureCoordinate.y - v0.TextureCoordinate.y;
+				const float du2 = v2.TextureCoordinate.x - v0.TextureCoordinate.x;
+				const float dv2 = v2.TextureCoordinate.y - v0.TextureCoordinate.y;
+				const float denominator = du1 * dv2 - du2 * dv1;
+				const float invDenominator = std::fabs(denominator) < 1e-8f ? 0.0f : 1.0f / denominator;
+
+				const EU::Vector3 tangent(
+					(edge1.x * dv2 - edge2.x * dv1) * invDenominator,
+					(edge1.y * dv2 - edge2.y * dv1) * invDenominator,
+					(edge1.z * dv2 - edge2.z * dv1) * invDenominator);
+				const EU::Vector3 bitangent(
+					(edge2.x * du1 - edge1.x * du2) * invDenominator,
+					(edge2.y * du1 - edge1.y * du2) * invDenominator,
+					(edge2.z * du1 - edge1.z * du2) * invDenominator);
+
+				v0.Tangent += tangent;
+				v1.Tangent += tangent;
+				v2.Tangent += tangent;
+				v0.Bitangent += bitangent;
+				v1.Bitangent += bitangent;
+				v2.Bitangent += bitangent;
+			}
+
+			for (SimpleVertex& vertex : mc.m_vertex) {
+				normalizeVec(vertex.Normal);
+				const float tangentDotNormal =
+					vertex.Tangent.x * vertex.Normal.x +
+					vertex.Tangent.y * vertex.Normal.y +
+					vertex.Tangent.z * vertex.Normal.z;
+				vertex.Tangent = vertex.Tangent - (vertex.Normal * tangentDotNormal);
+				normalizeVec(vertex.Tangent);
+
+				vertex.Bitangent = EU::Vector3(
+					vertex.Normal.y * vertex.Tangent.z - vertex.Normal.z * vertex.Tangent.y,
+					vertex.Normal.z * vertex.Tangent.x - vertex.Normal.x * vertex.Tangent.z,
+					vertex.Normal.x * vertex.Tangent.y - vertex.Normal.y * vertex.Tangent.x);
+				normalizeVec(vertex.Bitangent);
+			}
+
+			loadedMeshes.push_back(mc);
+		}
+	}
+
+	cgltf_free(data);
+	return loadedMeshes;
+}
+
 void
 Model3D::ProcessFBXNode(FbxNode* node) {
 	if (node->GetNodeAttribute()) {
@@ -474,6 +694,8 @@ void
 Model3D::ProcessFBXMesh(FbxNode* node) {
 	FbxMesh* mesh = node->GetMesh();
 	if (!mesh) return;
+	if (mesh->GetPolygonCount() == 0) return; // Prevent empty vertex buffer error
+
 
 	if (mesh->GetElementNormalCount() == 0)
 		mesh->GenerateNormals(true, true);

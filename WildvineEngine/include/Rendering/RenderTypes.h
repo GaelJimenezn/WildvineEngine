@@ -16,7 +16,7 @@ MaterialDomain {
   Opaque = 0,
 
   /**
-   * @brief Material con descarte de p韝eles mediante alpha cutoff.
+   * @brief Material con descarte de p铆xeles mediante alpha cutoff.
    */
   Masked,
 
@@ -34,7 +34,7 @@ enum class
 BlendMode {
 
   /**
-   * @brief Sin mezcla. El p韝el sobrescribe el contenido existente.
+   * @brief Sin mezcla. El p铆xel sobrescribe el contenido existente.
    */
   Opaque = 0,
 
@@ -44,7 +44,7 @@ BlendMode {
   Alpha,
 
   /**
-   * @brief Mezcla aditiva utilizada en efectos de energ韆, fuego o part韈ulas.
+   * @brief Mezcla aditiva utilizada en efectos de energ铆a, fuego o part铆culas.
    */
   Additive,
 
@@ -62,12 +62,12 @@ enum class
 RenderPassType {
 
   /**
-   * @brief Pase de generaci髇 de sombras.
+   * @brief Pase de generaci贸n de sombras.
    */
   Shadow = 0,
 
   /**
-   * @brief Pase principal para geometr韆 opaca.
+   * @brief Pase principal para geometr铆a opaca.
    */
   Opaque,
 
@@ -77,7 +77,7 @@ RenderPassType {
   Skybox,
 
   /**
-   * @brief Pase para geometr韆 transparente.
+   * @brief Pase para geometr铆a transparente.
    */
   Transparent,
 
@@ -100,18 +100,23 @@ LightType {
   Directional = 0,
 
   /**
-   * @brief Luz puntual con posici髇 y rango.
+   * @brief Luz puntual con posici贸n y rango.
    */
   Point,
 
   /**
    * @brief Luz tipo spotlight con cono de influencia.
    */
-  Spot
+  Spot,
+
+  /**
+   * @brief Luz rectangular o de 谩rea.
+   */
+  Rect
 };
 
 /**
- * @brief N鷐ero m醲imo de luces soportadas por escena.
+ * @brief N煤mero m谩ximo de luces soportadas por escena.
  */
 constexpr int kMaxSceneLights = 8;
 
@@ -133,34 +138,44 @@ LightData {
   EU::Vector3 color = EU::Vector3(1.0f, 1.0f, 1.0f);
 
   /**
-   * @brief Intensidad de emisi髇.
+   * @brief Intensidad de emisi贸n.
    */
   float intensity = 1.0f;
 
   /**
-   * @brief Direcci髇 utilizada por luces direccionales y spot.
+   * @brief Direcci贸n utilizada por luces direccionales y spot.
    */
   EU::Vector3 direction = EU::Vector3(0.0f, -1.0f, 0.0f);
 
   /**
-   * @brief Distancia m醲ima de influencia.
+   * @brief Distancia m谩xima de influencia.
    */
   float range = 0.0f;
 
   /**
-   * @brief Posici髇 de la luz.
+   * @brief Posici贸n de la luz.
    */
   EU::Vector3 position = EU::Vector3(0.0f, 0.0f, 0.0f);
 
   /**
-   * @brief 羘gulo del cono para luces Spot.
+   * @brief 脕ngulo del cono para luces Spot.
    */
   float spotAngle = 0.0f;
+
+  /**
+   * @brief Ancho para luz Rectangular.
+   */
+  float width = 1.0f;
+
+  /**
+   * @brief Alto para luz Rectangular.
+   */
+  float height = 1.0f;
 };
 
 /**
  * @struct MaterialParams
- * @brief Par醡etros f韘icos utilizados por materiales PBR.
+ * @brief Par谩metros f铆sicos utilizados por materiales PBR.
  */
 struct
 MaterialParams {
@@ -191,7 +206,7 @@ MaterialParams {
   float normalScale = 1.0f;
 
   /**
-   * @brief Intensidad de emisi髇.
+   * @brief Intensidad de emisi贸n.
    */
   float emissiveStrength = 1.0f;
 
@@ -205,19 +220,19 @@ MaterialParams {
  * @struct CBPerFrame
  * @brief Constant Buffer actualizado una vez por frame.
  *
- * Contiene informaci髇 global utilizada por shaders de v閞tices
- * y p韝eles durante el renderizado.
+ * Contiene informaci贸n global utilizada por shaders de v茅rtices
+ * y p铆xeles durante el renderizado.
  */
 struct
 CBPerFrame {
 
   /**
-   * @brief Matriz de vista de la c醡ara.
+   * @brief Matriz de vista de la c谩mara.
    */
   XMFLOAT4X4 View{};
 
   /**
-   * @brief Matriz de proyecci髇.
+   * @brief Matriz de proyecci贸n.
    */
   XMFLOAT4X4 Projection{};
 
@@ -227,14 +242,14 @@ CBPerFrame {
   XMFLOAT4X4 LightViewProjection{};
 
   /**
-   * @brief Posici髇 de la c醡ara en espacio mundial.
+   * @brief Posici贸n de la c谩mara en espacio mundial.
    */
   EU::Vector3 CameraPos{};
 
   float pad0 = 0.0f;
 
   /**
-   * @brief Direcci髇 de la luz principal.
+   * @brief Direcci贸n de la luz principal.
    */
   EU::Vector3 LightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
 
@@ -251,7 +266,7 @@ CBPerFrame {
   float LightRange = 10.0f;
 
   /**
-   * @brief Posici髇 de la luz principal.
+   * @brief Posici贸n de la luz principal.
    */
   EU::Vector3 LightPosition = EU::Vector3(0.0f, 3.0f, 0.0f);
 
@@ -291,14 +306,14 @@ struct
 CBPerObject {
 
   /**
-   * @brief Transformaci髇 World del objeto.
+   * @brief Transformaci贸n World del objeto.
    */
   XMFLOAT4X4 World{};
 };
 
 /**
  * @struct CBPerMaterial
- * @brief Constant Buffer con par醡etros de material.
+ * @brief Constant Buffer con par谩metros de material.
  */
 struct
 CBPerMaterial {
@@ -313,7 +328,7 @@ CBPerMaterial {
   float AlphaCutoff = 0.0f;
 
   /**
-   * @brief Variables de padding para alineaci髇 de memoria GPU.
+   * @brief Variables de padding para alineaci贸n de memoria GPU.
    */
   float pad0 = 0.0f;
   float pad1 = 0.0f;
@@ -327,7 +342,7 @@ CBPerMaterial {
  * @struct RenderObject
  * @brief Representa un objeto preparado para ser renderizado.
  *
- * Contiene referencias a la geometr韆, materiales y datos
+ * Contiene referencias a la geometr铆a, materiales y datos
  * auxiliares utilizados por el pipeline de renderizado.
  */
 struct
@@ -349,7 +364,7 @@ RenderObject {
   std::vector<MaterialInstance*> materialInstances;
 
   /**
-   * @brief Transformaci髇 mundial del objeto.
+   * @brief Transformaci贸n mundial del objeto.
    */
   XMMATRIX world = XMMatrixIdentity();
 
@@ -364,7 +379,7 @@ RenderObject {
   bool transparent = false;
 
   /**
-   * @brief Distancia desde la c醡ara.
+   * @brief Distancia desde la c谩mara.
    *
    * Utilizada principalmente para ordenamiento de transparencias.
    */

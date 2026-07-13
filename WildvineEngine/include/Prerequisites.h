@@ -27,6 +27,7 @@
 #include "EngineUtilities\Memory\TWeakPointer.h"
 #include "EngineUtilities\Memory\TStaticPtr.h"
 #include "EngineUtilities\Memory\TUniquePtr.h"
+#include "Logger.h"
 
 // MACROS
 
@@ -34,19 +35,19 @@
  * @brief Libera de manera segura un recurso de DirectX.
  *
  * Si el puntero no es nulo, libera la memoria con Release()
- * y lo asigna a nullptr para evitar accesos inv醠idos.
+ * y lo asigna a nullptr para evitar accesos inv谩lidos.
  *
  * @param x Puntero al recurso que se va a liberar.
  */
 #define SAFE_RELEASE(x) if(x != nullptr) x->Release(); x = nullptr;
 
  /**
-  * @brief Macro para mostrar mensajes de creaci髇 de recursos en la ventana de depuraci髇.
+  * @brief Macro para mostrar mensajes de creaci贸n de recursos en la ventana de depuraci贸n.
   *
-  * Formatea un mensaje con la clase, el m閠odo y el estado actual de la creaci髇.
+  * Formatea un mensaje con la clase, el m茅todo y el estado actual de la creaci贸n.
   *
   * @param classObj Nombre de la clase donde ocurre el evento.
-  * @param method Nombre del m閠odo donde ocurre el evento.
+  * @param method Nombre del m茅todo donde ocurre el evento.
   * @param state Estado del recurso (ejemplo: "OK", "FAILED").
   */
 #define MESSAGE( classObj, method, state )   \
@@ -54,16 +55,17 @@
    std::wostringstream os_;                  \
    os_ << classObj << "::" << method << " : " << "[CREATION OF RESOURCE " << ": " << state << "] \n"; \
    OutputDebugStringW( os_.str().c_str() );  \
+   Logger::get().addW(LogLevel::Info, os_.str()); \
 }
 
   /**
-   * @brief Macro para registrar mensajes de error en la ventana de depuraci髇.
+   * @brief Macro para registrar mensajes de error en la ventana de depuraci贸n.
    *
-   * Captura informaci髇 detallada de la clase, m閠odo y descripci髇 del error.
-   * Si ocurre un fallo durante el registro, captura la excepci髇 y notifica.
+   * Captura informaci贸n detallada de la clase, m茅todo y descripci贸n del error.
+   * Si ocurre un fallo durante el registro, captura la excepci贸n y notifica.
    *
    * @param classObj Nombre de la clase donde ocurre el error.
-   * @param method Nombre del m閠odo donde ocurre el error.
+   * @param method Nombre del m茅todo donde ocurre el error.
    * @param errorMSG Mensaje descriptivo del error.
    */
 #define ERROR(classObj, method, errorMSG)                     \
@@ -73,21 +75,22 @@
         os_ << L"ERROR : " << classObj << L"::" << method     \
             << L" : " << errorMSG << L"\n";                   \
         OutputDebugStringW(os_.str().c_str());                \
+        Logger::get().addW(LogLevel::Error, os_.str());       \
     } catch (...) {                                           \
         OutputDebugStringW(L"Failed to log error message.\n");\
     }                                                         \
 }
 
    /**
-    * @brief Representa un v閞tice simple con posici髇 y coordenadas de textura.
+    * @brief Representa un v茅rtice simple con posici贸n y coordenadas de textura.
     */
 struct 
 SimpleVertex{
-  EU::Vector3 Position;  /**< Coordenadas de posici髇 del v閞tice (x, y, z). */
+  EU::Vector3 Position;  /**< Coordenadas de posici贸n del v茅rtice (x, y, z). */
   EU::Vector3 Normal;  /**< Coordenadas de textura (u, v). */
-  EU::Vector3 Tangent; /**< Vector normal del v閞tice (para iluminaci髇). */
-  EU::Vector3 Bitangent; /**< Vector tangente del v閞tice (para iluminaci髇). */
-  EU::Vector2 TextureCoordinate; /**< Vector bitangente del v閞tice (para iluminaci髇). */
+  EU::Vector3 Tangent; /**< Vector normal del v茅rtice (para iluminaci贸n). */
+  EU::Vector3 Bitangent; /**< Vector tangente del v茅rtice (para iluminaci贸n). */
+  EU::Vector2 TextureCoordinate; /**< Vector bitangente del v茅rtice (para iluminaci贸n). */
 };
 
 struct
@@ -115,7 +118,7 @@ LoadData {
  */
 struct 
 CBNeverChanges{
-  XMMATRIX mView; /**< Matriz de vista usada en la c醡ara. */
+  XMMATRIX mView; /**< Matriz de vista usada en la c谩mara. */
 };
 
 /**
@@ -123,7 +126,7 @@ CBNeverChanges{
  */
 struct 
 CBChangeOnResize{
-  XMMATRIX mProjection; /**< Matriz de proyecci髇 ajustada al tama駉 de la ventana. */
+  XMMATRIX mProjection; /**< Matriz de proyecci贸n ajustada al tama帽o de la ventana. */
 };
 
 struct CBMain
@@ -150,7 +153,7 @@ CBChangesEveryFrame{
 };
 
 /**
- * @brief Tipos de extensi髇 soportados para las texturas.
+ * @brief Tipos de extensi贸n soportados para las texturas.
  */
 enum 
 ExtensionType {
