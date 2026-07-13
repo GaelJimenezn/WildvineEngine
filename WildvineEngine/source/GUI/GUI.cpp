@@ -2022,6 +2022,8 @@ void GUI::drawSelectionOutline(Camera& cam, const EU::Vector3& mn, const EU::Vec
 	if (!m_viewportDrawList) return;
 	if (m_viewportSize.x < 16.0f || m_viewportSize.y < 16.0f) return;
 
+	m_viewportDrawList->PushClipRect(m_viewportPos, ImVec2(m_viewportPos.x + m_viewportSize.x, m_viewportPos.y + m_viewportSize.y), true);
+
 	XMMATRIX vp = cam.getView() * cam.getProj();
 
 	ImVec2 pts[8];
@@ -2056,4 +2058,6 @@ void GUI::drawSelectionOutline(Camera& cam, const EU::Vector3& mn, const EU::Vec
 			m_viewportDrawList->AddLine(pts[a], pts[b], IM_COL32(190, 140, 255, 240), 2.0f);
 		}
 	}
+	
+	m_viewportDrawList->PopClipRect();
 }

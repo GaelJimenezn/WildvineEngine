@@ -4,7 +4,7 @@
 
 
 /**
- * @brief DeclaraciÛn adelantada de la clase DeviceContext.
+ * @brief Declaraci√≥n adelantada de la clase DeviceContext.
  */
 class 
 DeviceContext;
@@ -12,8 +12,8 @@ DeviceContext;
 /**
  * @class MeshComponent
  * @brief Clase encargada de almacenar y manejar los datos de una malla,
- *        incluyendo sus vÈrtices e Ìndices, asÌ como su inicializaciÛn,
- *        actualizaciÛn y renderizado.
+ *        incluyendo sus v√©rtices e √≠ndices, as√≠ como su inicializaci√≥n,
+ *        actualizaci√≥n y renderizado.
  */
 class
 MeshComponent: 
@@ -23,7 +23,7 @@ public:
 
   /**
    * @brief Constructor por defecto de MeshComponent.
-   *        Inicializa el n˙mero de vÈrtices e Ìndices en cero.
+   *        Inicializa el n√∫mero de v√©rtices e √≠ndices en cero.
    */
   MeshComponent() : m_numVertex(0), m_numIndex(0), Component(ComponentType::MESH) {}
   /**
@@ -39,8 +39,8 @@ public:
   init() override {};
 
   /**
-   * @brief Actualiza el estado de la malla seg˙n el tiempo transcurrido.
-   * @param deltaTime Tiempo en segundos desde el ˙ltimo frame.
+   * @brief Actualiza el estado de la malla seg√∫n el tiempo transcurrido.
+   * @param deltaTime Tiempo en segundos desde el √∫ltimo frame.
    */
   void
   update(float deltaTime) override {};
@@ -63,16 +63,22 @@ public:
   /** @brief Nombre identificador de la malla. */
   std::string m_name;
 
-  /** @brief Vector que contiene los vÈrtices de la malla. */
+  /** @brief Vector que contiene los v√©rtices de la malla. */
   std::vector<SimpleVertex> m_vertex;
   std::vector<SkyboxVertex> m_skyVertex;
 
-  /** @brief Vector que contiene los Ìndices de la malla. */
+  /** @brief Vector que contiene los √≠ndices de la malla. */
   std::vector<unsigned int> m_index;
 
-  /** @brief N˙mero total de vÈrtices de la malla. */
+  /** @brief N√∫mero total de v√©rtices de la malla. */
   int m_numVertex;
 
-  /** @brief N˙mero total de Ìndices de la malla. */
+  /** @brief N√∫mero total de √≠ndices de la malla. */
   int m_numIndex;
+
+  /** @brief √çndice de material usado por esta malla. */
+  int m_materialIndex = 0;
+
+  /** @brief Transform local original del nodo. */
+  XMFLOAT4X4 m_localTransform = XMFLOAT4X4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 };

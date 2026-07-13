@@ -76,16 +76,12 @@ struct ActorClipboard {
  * metallic, roughness, AO). También guarda el AABB local para picking y fit.
  */
 struct LoadedModel {
-  Mesh             mesh;              /**< @brief Malla de vértices en GPU. */
-  Material         material;          /**< @brief Material PBR base. */
-  MaterialInstance materialInstance;  /**< @brief Instancia de material con texturas. */
-  Texture          albedo;            /**< @brief Textura de color base (Albedo/Diffuse). */
-  Texture          normal;            /**< @brief Mapa de normales tangentes. */
-  Texture          metallic;          /**< @brief Mapa de metalicidad. */
-  Texture          roughness;         /**< @brief Mapa de rugosidad. */
-  Texture          ao;                /**< @brief Textura de oclusión ambiental (AO). */
-  EU::Vector3      localMin;          /**< @brief Esquina mínima del AABB local. */
-  EU::Vector3      localMax;          /**< @brief Esquina máxima del AABB local. */
+  Mesh                                           mesh;
+  std::vector<std::unique_ptr<Material>>         materials;
+  std::vector<std::unique_ptr<MaterialInstance>> materialInstances;
+  std::vector<std::unique_ptr<Texture>>          externalTextures;
+  EU::Vector3                                    localMin = EU::Vector3(0.0f, 0.0f, 0.0f);
+  EU::Vector3                                    localMax = EU::Vector3(0.0f, 0.0f, 0.0f);
 };
 
 /**

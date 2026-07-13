@@ -482,23 +482,7 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 	}
 
 	// Evaluate materials and tag images so BaseApp can correctly identify them
-	for (cgltf_size m = 0; m < data->materials_count; ++m) {
-		cgltf_material& mat = data->materials[m];
-		if (mat.has_pbr_metallic_roughness) {
-			if (mat.pbr_metallic_roughness.base_color_texture.texture && mat.pbr_metallic_roughness.base_color_texture.texture->image) {
-				mat.pbr_metallic_roughness.base_color_texture.texture->image->name = (char*)"albedo";
-			}
-			if (mat.pbr_metallic_roughness.metallic_roughness_texture.texture && mat.pbr_metallic_roughness.metallic_roughness_texture.texture->image) {
-				mat.pbr_metallic_roughness.metallic_roughness_texture.texture->image->name = (char*)"metallic_roughness";
-			}
-		}
-		if (mat.normal_texture.texture && mat.normal_texture.texture->image) {
-			mat.normal_texture.texture->image->name = (char*)"normal";
-		}
-		if (mat.emissive_texture.texture && mat.emissive_texture.texture->image) {
-			mat.emissive_texture.texture->image->name = (char*)"emissive";
-		}
-	}
+	// We no longer modify image->name here because it corrupts memory when cgltf_free is called!
 
 	// Load embedded textures
 	for (cgltf_size i = 0; i < data->images_count; ++i) {
@@ -516,6 +500,18 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 			
 			unsigned char* bufferData = (unsigned char*)image.buffer_view->buffer->data + image.buffer_view->offset;
 			emb.data.assign(bufferData, bufferData + image.buffer_view->size);
+			
+			// Find which material uses this image
+			for (cgltf_size m = 0; m < data->materials_count; ++m) {
+				cgltf_material& mat = data->materials[m];
+				if (mat.has_pbr_metallic_roughness) {
+					if (mat.pbr_metallic_roughness.base_color_texture.texture && mat.pbr_metallic_roughness.base_color_texture.texture->image == &image) emb.materialIndex = (int)m;
+					if (mat.pbr_metallic_roughness.metallic_roughness_texture.texture && mat.pbr_metallic_roughness.metallic_roughness_texture.texture->image == &image) emb.materialIndex = (int)m;
+				}
+				if (mat.normal_texture.texture && mat.normal_texture.texture->image == &image) emb.materialIndex = (int)m;
+				if (mat.emissive_texture.texture && mat.emissive_texture.texture->image == &image) emb.materialIndex = (int)m;
+			}
+			
 			m_embeddedTextures.push_back(emb);
 		}
 	}
@@ -534,6 +530,7 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 
 			MeshComponent mc;
 			mc.m_name = mesh.name ? mesh.name : "unnamed_mesh";
+			mc.m_materialIndex = primitive.material ? (int)(primitive.material - data->materials) : 0;
 
 			// Parse indices
 			if (primitive.indices) {
@@ -570,31 +567,14 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 				}
 			}
 			
-			// Apply node global transform
+			// Apply node global transform (saved to localTransform instead of baking)
 			cgltf_float* mtx = world_transform;
-			for (cgltf_size v = 0; v < vertexCount; ++v) {
-				SimpleVertex& vertex = mc.m_vertex[v];
-				float x = vertex.Position.x;
-				float y = vertex.Position.y;
-				float z = vertex.Position.z;
-				vertex.Position.x = mtx[0] * x + mtx[4] * y + mtx[8] * z + mtx[12];
-				vertex.Position.y = mtx[1] * x + mtx[5] * y + mtx[9] * z + mtx[13];
-				vertex.Position.z = mtx[2] * x + mtx[6] * y + mtx[10] * z + mtx[14];
-
-				float nx = vertex.Normal.x;
-				float ny = vertex.Normal.y;
-				float nz = vertex.Normal.z;
-				vertex.Normal.x = mtx[0] * nx + mtx[4] * ny + mtx[8] * nz;
-				vertex.Normal.y = mtx[1] * nx + mtx[5] * ny + mtx[9] * nz;
-				vertex.Normal.z = mtx[2] * nx + mtx[6] * ny + mtx[10] * nz;
-				
-				float tx = vertex.Tangent.x;
-				float ty = vertex.Tangent.y;
-				float tz = vertex.Tangent.z;
-				vertex.Tangent.x = mtx[0] * tx + mtx[4] * ty + mtx[8] * tz;
-				vertex.Tangent.y = mtx[1] * tx + mtx[5] * ty + mtx[9] * tz;
-				vertex.Tangent.z = mtx[2] * tx + mtx[6] * ty + mtx[10] * tz;
-			}
+			mc.m_localTransform = XMFLOAT4X4(
+				mtx[0], mtx[1], mtx[2], mtx[3],
+				mtx[4], mtx[5], mtx[6], mtx[7],
+				mtx[8], mtx[9], mtx[10], mtx[11],
+				mtx[12], mtx[13], mtx[14], mtx[15]
+			);
 			
 			// Si no hay m_index, generamos secuencialmente
 			if (mc.m_index.empty()) {

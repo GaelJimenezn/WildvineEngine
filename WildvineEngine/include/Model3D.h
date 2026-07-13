@@ -18,6 +18,7 @@ enum
 struct EmbeddedTexture {
     std::string name;
     std::vector<unsigned char> data;
+    int materialIndex = 0;
 };
 
 class

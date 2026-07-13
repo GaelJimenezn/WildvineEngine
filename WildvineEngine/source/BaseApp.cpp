@@ -1002,8 +1002,9 @@ BaseApp::destroy() {
 	for (auto& lm : m_loadedModels) {
 		if (lm) {
 			lm->mesh.destroy();
-			lm->albedo.destroy(); lm->normal.destroy(); lm->metallic.destroy();
-			lm->roughness.destroy(); lm->ao.destroy();
+			for (auto& tex : lm->externalTextures) {
+				if (tex) tex->destroy();
+			}
 		}
 	}
 	m_loadedModels.clear();
@@ -1517,7 +1518,16 @@ BaseApp::buildTextureThumbnails() {
 
 void
 BaseApp::loadModelTextures(LoadedModel& lm, const std::string& folder) {
-	std::vector<std::string> files = listImageFiles(folder);
+	if (lm.materialInstances.empty()) return;
+	MaterialInstance* primaryMat = lm.materialInstances[0].get();
+
+	std::string folderStr = folder;
+	std::vector<std::string> files = listImageFiles(folderStr);
+	if (files.empty()) {
+		primaryMat->setAlbedo(&m_AlbedoSRV);
+		MESSAGE("BaseApp", "loadModelTextures", "Carpeta no encontrada; usando textura fallback");
+		return;
+	}
 	for (const std::string& f : files) {
 		std::string lower = toLowerCopy(f);
 		std::string baseNoExt = toLowerCopy(stripExt(f));
@@ -1537,17 +1547,22 @@ BaseApp::loadModelTextures(LoadedModel& lm, const std::string& folder) {
 		else if (endsWith(baseNoExt, "_ao") || endsWith(baseNoExt, "_o")) slot = 4;
 
 		HRESULT hr;
-		switch (slot) {
-		case 0: hr = lm.albedo.init(m_device, path, ext);    if (SUCCEEDED(hr)) lm.materialInstance.setAlbedo(&lm.albedo); break;
-		case 1: hr = lm.normal.init(m_device, path, ext);    if (SUCCEEDED(hr)) lm.materialInstance.setNormal(&lm.normal); break;
-		case 2: hr = lm.metallic.init(m_device, path, ext);  if (SUCCEEDED(hr)) lm.materialInstance.setMetallic(&lm.metallic); break;
-		case 3: hr = lm.roughness.init(m_device, path, ext); if (SUCCEEDED(hr)) lm.materialInstance.setRoughness(&lm.roughness); break;
-		case 4: hr = lm.ao.init(m_device, path, ext);        if (SUCCEEDED(hr)) lm.materialInstance.setAO(&lm.ao); break;
-		default: break;
+		auto tex = std::make_unique<Texture>();
+		hr = tex->init(m_device, path, ext);
+		if (SUCCEEDED(hr)) {
+			switch (slot) {
+			case 0: primaryMat->setAlbedo(tex.get()); break;
+			case 1: primaryMat->setNormal(tex.get()); break;
+			case 2: primaryMat->setMetallic(tex.get()); break;
+			case 3: primaryMat->setRoughness(tex.get()); break;
+			case 4: primaryMat->setAO(tex.get()); break;
+			default: break;
+			}
+			lm.externalTextures.push_back(std::move(tex));
 		}
 	}
-	if (!lm.albedo.m_textureFromImg) {
-		lm.materialInstance.setAlbedo(&m_AlbedoSRV);
+	if (!primaryMat->getAlbedo()) {
+		primaryMat->setAlbedo(&m_AlbedoSRV);
 		MESSAGE("BaseApp", "loadModelTextures", "Sin albedo en la carpeta; usando textura fallback");
 	}
 }
@@ -1569,6 +1584,7 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 	std::unique_ptr<LoadedModel> lm(new LoadedModel());
 
 	HRESULT hr;
+	int numMaterials = 1;
 	for (const MeshComponent& mc : meshes) {
 		Submesh sm{};
 		hr = sm.vertexBuffer.init(m_device, mc, D3D11_BIND_VERTEX_BUFFER);
@@ -1577,37 +1593,51 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 		if (FAILED(hr)) { ERROR("BaseApp", "loadModelActor", "Fallo index buffer"); return EU::TSharedPointer<Actor>(); }
 		sm.indexCount = mc.m_numIndex;
 		sm.startIndex = 0;
-		sm.materialSlot = 0;
+		sm.materialSlot = mc.m_materialIndex;
+		sm.localTransform = mc.m_localTransform;
 		lm->mesh.getSubmeshes().push_back(std::move(sm));
+
+		if (mc.m_materialIndex >= numMaterials) numMaterials = mc.m_materialIndex + 1;
 	}
+
 	lm->localMin = EU::Vector3(1e9f, 1e9f, 1e9f);
 	lm->localMax = EU::Vector3(-1e9f, -1e9f, -1e9f);
 	for (const MeshComponent& mc : meshes) {
+		XMMATRIX localMat = XMLoadFloat4x4(&mc.m_localTransform);
 		for (const SimpleVertex& v : mc.m_vertex) {
-			lm->localMin.x = fminf(lm->localMin.x, v.Position.x);
-			lm->localMin.y = fminf(lm->localMin.y, v.Position.y);
-			lm->localMin.z = fminf(lm->localMin.z, v.Position.z);
-			lm->localMax.x = fmaxf(lm->localMax.x, v.Position.x);
-			lm->localMax.y = fmaxf(lm->localMax.y, v.Position.y);
-			lm->localMax.z = fmaxf(lm->localMax.z, v.Position.z);
+			XMVECTOR p = XMVector3TransformCoord(XMVectorSet(v.Position.x, v.Position.y, v.Position.z, 1.0f), localMat);
+			XMFLOAT3 fpos; XMStoreFloat3(&fpos, p);
+			lm->localMin.x = fminf(lm->localMin.x, fpos.x);
+			lm->localMin.y = fminf(lm->localMin.y, fpos.y);
+			lm->localMin.z = fminf(lm->localMin.z, fpos.z);
+			lm->localMax.x = fmaxf(lm->localMax.x, fpos.x);
+			lm->localMax.y = fmaxf(lm->localMax.y, fpos.y);
+			lm->localMax.z = fmaxf(lm->localMax.z, fpos.z);
 		}
 	}
 
-	lm->material.setShader(&m_shaderProgram);
-	lm->material.setRasterizerState(&m_defaultRasterizer);
-	lm->material.setDepthStencilState(&m_defaultDepthStencil);
-	lm->material.setSamplerState(&m_defaultSampler);
-	lm->material.setDomain(MaterialDomain::Opaque);
-	lm->material.setBlendMode(BlendMode::Opaque);
+	for (int i = 0; i < numMaterials; ++i) {
+		auto mat = std::make_unique<Material>();
+		mat->setShader(&m_shaderProgram);
+		mat->setRasterizerState(&m_defaultRasterizer);
+		mat->setDepthStencilState(&m_defaultDepthStencil);
+		mat->setSamplerState(&m_defaultSampler);
+		mat->setDomain(MaterialDomain::Opaque);
+		mat->setBlendMode(BlendMode::Opaque);
 
-	lm->materialInstance.setMaterial(&lm->material);
-	lm->materialInstance.getParams().baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	lm->materialInstance.getParams().metallic = 1.0f;
-	lm->materialInstance.getParams().roughness = 1.0f;
-	lm->materialInstance.getParams().ao = 1.0f;
-	lm->materialInstance.getParams().normalScale = 1.0f;
-	lm->materialInstance.getParams().emissiveStrength = 1.0f;
-	lm->materialInstance.getParams().alphaCutoff = 0.5f;
+		auto inst = std::make_unique<MaterialInstance>();
+		inst->setMaterial(mat.get());
+		inst->getParams().baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		inst->getParams().metallic = 1.0f;
+		inst->getParams().roughness = 1.0f;
+		inst->getParams().ao = 1.0f;
+		inst->getParams().normalScale = 1.0f;
+		inst->getParams().emissiveStrength = 1.0f;
+		inst->getParams().alphaCutoff = 0.5f;
+
+		lm->materials.push_back(std::move(mat));
+		lm->materialInstances.push_back(std::move(inst));
+	}
 
 	std::string modelName = fileBaseName(modelPath);
 	loadModelTextures(*lm, "Assets/Textures/" + modelName);
@@ -1619,18 +1649,20 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 			HRESULT hrTex = tex->initFromMemory(m_device, emb.data.data(), emb.data.size(), emb.name);
 			if (SUCCEEDED(hrTex)) {
 				std::string lowerName = toLowerCopy(emb.name);
+				int targetMat = (emb.materialIndex >= 0 && emb.materialIndex < numMaterials) ? emb.materialIndex : 0;
+				MaterialInstance* mInst = lm->materialInstances[targetMat].get();
+				
 				if (lowerName.find("normal") != std::string::npos) {
-					lm->materialInstance.setNormal(tex.get());
+					mInst->setNormal(tex.get());
 				} else if (lowerName.find("metallic") != std::string::npos || lowerName.find("orm") != std::string::npos || lowerName.find("roughness") != std::string::npos) {
-					// GLTF usually combines metallic and roughness. We just assign to both if needed.
-					lm->materialInstance.setMetallic(tex.get());
-					lm->materialInstance.setRoughness(tex.get());
+					mInst->setMetallic(tex.get());
+					mInst->setRoughness(tex.get());
 				} else if (lowerName.find("emissive") != std::string::npos) {
-					lm->materialInstance.setEmissive(tex.get());
+					mInst->setEmissive(tex.get());
 				} else {
-					lm->materialInstance.setAlbedo(tex.get());
+					mInst->setAlbedo(tex.get());
 				}
-				m_dynamicTextures.push_back(std::move(tex));
+				lm->externalTextures.push_back(std::move(tex));
 			}
 		}
 	}
@@ -1642,8 +1674,12 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 	if (t) t->setTransform(EU::Vector3(0.0f, 2.92f, 5.60f), EU::Vector3(0.0f, 0.0f, 0.0f), EU::Vector3(1.0f, 1.0f, 1.0f));
 	EU::TSharedPointer<MeshRendererComponent> mr = a->getComponent<MeshRendererComponent>();
 	if (!mr) { mr = EU::MakeShared<MeshRendererComponent>(); a->addComponent(mr); }
-	mr->setMesh(&lm->mesh);
-	mr->setMaterialInstance(&lm->materialInstance);
+	if (mr) {
+		mr->setMesh(&lm->mesh);
+		std::vector<MaterialInstance*> insts;
+		for (auto& inst : lm->materialInstances) insts.push_back(inst.get());
+		mr->setMaterialInstances(insts);
+	}
 	mr->setVisible(true);
 	mr->setCastShadow(true);
 
