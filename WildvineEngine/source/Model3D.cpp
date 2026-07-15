@@ -16,16 +16,20 @@
 
 namespace {
 	constexpr uint32_t kModelCacheMagic = 0x48564D57; // WMVH
-	constexpr uint32_t kModelCacheVersion = 1;
+	constexpr uint32_t kModelCacheVersion = 11;
 
-	struct ModelCacheEntry {
+	struct
+	ModelCacheEntry {
 		std::vector<MeshComponent> meshes;
 		std::vector<std::string> textureFileNames;
+		std::vector<EmbeddedTexture> embeddedTextures;
+		std::vector<ImportedMaterialInfo> materialInfos;
 	};
 
 	std::unordered_map<std::string, ModelCacheEntry> g_modelCache;
 
-	bool GetFileWriteTime(const std::string& path, ULONGLONG& outWriteTime) {
+	bool
+	GetFileWriteTime(const std::string& path, ULONGLONG& outWriteTime) {
 		WIN32_FILE_ATTRIBUTE_DATA attributes{};
 		if (!GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attributes)) {
 			return false;
@@ -38,7 +42,8 @@ namespace {
 		return true;
 	}
 
-	bool WriteString(std::ofstream& stream, const std::string& value) {
+	bool
+	WriteString(std::ofstream& stream, const std::string& value) {
 		const uint32_t length = static_cast<uint32_t>(value.size());
 		stream.write(reinterpret_cast<const char*>(&length), sizeof(length));
 		if (length > 0) {
@@ -47,7 +52,8 @@ namespace {
 		return stream.good();
 	}
 
-	bool ReadString(std::ifstream& stream, std::string& value) {
+	bool
+	ReadString(std::ifstream& stream, std::string& value) {
 		uint32_t length = 0;
 		stream.read(reinterpret_cast<char*>(&length), sizeof(length));
 		if (!stream.good()) {
@@ -59,6 +65,84 @@ namespace {
 			stream.read(&value[0], length);
 		}
 		return stream.good();
+	}
+
+	std::string
+	ToLowerCopy(std::string value) {
+		for (char& c : value) {
+			if (c >= 'A' && c <= 'Z') c = static_cast<char>(c + 32);
+		}
+		return value;
+	}
+
+	bool
+	EndsWith(const std::string& value, const std::string& suffix) {
+		return value.size() >= suffix.size() &&
+			value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+	}
+
+	void
+	NormalizeVector(EU::Vector3& value) {
+		const float lengthSq = value.x * value.x + value.y * value.y + value.z * value.z;
+		if (lengthSq <= 1e-20f) {
+			value = EU::Vector3(0.0f, 0.0f, 1.0f);
+			return;
+		}
+		const float invLength = 1.0f / std::sqrt(lengthSq);
+		value.x *= invLength;
+		value.y *= invLength;
+		value.z *= invLength;
+	}
+
+	EU::Vector3
+	TransformGLTFPoint(const cgltf_float* m, const EU::Vector3& p) {
+		return EU::Vector3(
+			p.x * m[0] + p.y * m[4] + p.z * m[8] + m[12],
+			p.x * m[1] + p.y * m[5] + p.z * m[9] + m[13],
+			p.x * m[2] + p.y * m[6] + p.z * m[10] + m[14]);
+	}
+
+	EU::Vector3
+	TransformGLTFDirection(const cgltf_float* m, const EU::Vector3& v) {
+		return EU::Vector3(
+			v.x * m[0] + v.y * m[4] + v.z * m[8],
+			v.x * m[1] + v.y * m[5] + v.z * m[9],
+			v.x * m[2] + v.y * m[6] + v.z * m[10]);
+	}
+
+	EU::Vector3
+	GLTFToEnginePoint(const EU::Vector3& p) {
+		return EU::Vector3(p.x, p.y, -p.z);
+	}
+
+	EU::Vector3
+	GLTFToEngineDirection(const EU::Vector3& v) {
+		return EU::Vector3(v.x, v.y, -v.z);
+	}
+
+	EU::Vector3
+	YUpToZUp(const EU::Vector3& v) {
+		return EU::Vector3(v.x, -v.z, v.y);
+	}
+
+	EU::Vector3
+	TransformFBXPoint(const FbxAMatrix& m, const FbxVector4& p) {
+		const FbxVector4 transformed = m.MultT(p);
+		return YUpToZUp(EU::Vector3(
+			static_cast<float>(transformed[0]),
+			static_cast<float>(transformed[1]),
+			static_cast<float>(transformed[2])));
+	}
+
+	EU::Vector3
+	TransformFBXDirection(const FbxAMatrix& m, const FbxVector4& v) {
+		const FbxVector4 transformed = m.MultR(v);
+		EU::Vector3 result = YUpToZUp(EU::Vector3(
+			static_cast<float>(transformed[0]),
+			static_cast<float>(transformed[1]),
+			static_cast<float>(transformed[2])));
+		NormalizeVector(result);
+		return result;
 	}
 }
 
@@ -75,6 +159,8 @@ Model3D::load(const std::string& path) {
 	if (cacheIt != g_modelCache.end()) {
 		m_meshes = cacheIt->second.meshes;
 		textureFileNames = cacheIt->second.textureFileNames;
+		m_embeddedTextures = cacheIt->second.embeddedTextures;
+		m_materialInfos = cacheIt->second.materialInfos;
 		SetState(ResourceState::Loaded);
 		return true;
 	}
@@ -84,14 +170,22 @@ Model3D::load(const std::string& path) {
 	return success;
 }
 
-bool Model3D::init()
+bool
+Model3D::init()
 {
 	m_meshes.clear();
 	textureFileNames.clear();
+	m_embeddedTextures.clear();
+	m_materialInfos.clear();
 
 	const std::string cachePath = GetBinaryCachePath();
 	if (IsBinaryCacheUpToDate(m_filePath, cachePath) && LoadBinaryCache(cachePath)) {
-		g_modelCache[m_filePath] = ModelCacheEntry{ m_meshes, textureFileNames };
+		g_modelCache[m_filePath] = ModelCacheEntry{
+			m_meshes,
+			textureFileNames,
+			m_embeddedTextures,
+			m_materialInfos
+		};
 		return true;
 	}
 
@@ -107,23 +201,31 @@ bool Model3D::init()
 		loadedMeshes = LoadGLTFModel(m_filePath);
 	}
 	const auto end = std::chrono::high_resolution_clock::now();
-	const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+	const auto elapsedMs =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
 	if (loadedMeshes.empty()) {
 		return false;
 	}
 
 	m_meshes = loadedMeshes;
-	g_modelCache[m_filePath] = ModelCacheEntry{ m_meshes, textureFileNames };
+	g_modelCache[m_filePath] = ModelCacheEntry{
+		m_meshes,
+		textureFileNames,
+		m_embeddedTextures,
+		m_materialInfos
+	};
 	SaveBinaryCache(cachePath);
 
 	const std::wstring modelPathW(m_filePath.begin(), m_filePath.end());
 	MESSAGE("ModelLoader", "ModelLoader",
-		L"Loaded model '" << modelPathW << L"' in " << elapsedMs << L" ms. Meshes: " << m_meshes.size())
+		L"Loaded model '" << modelPathW << L"' in " << elapsedMs <<
+		L" ms. Meshes: " << m_meshes.size())
 		return true;
 }
 
-void Model3D::unload()
+void
+Model3D::unload()
 {
 	if (lScene) {
 		lScene->Destroy();
@@ -137,7 +239,8 @@ void Model3D::unload()
 	SetState(ResourceState::Unloaded);
 }
 
-size_t Model3D::getSizeInBytes() const
+size_t
+Model3D::getSizeInBytes() const
 {
 	size_t totalSize = 0;
 	for (const auto& mesh : m_meshes) {
@@ -179,7 +282,8 @@ Model3D::LoadFBXModel(const std::string& filePath) {
 
 		if (!lImporter->Initialize(filePath.c_str(), -1, lSdkManager->GetIOSettings())) {
 			ERROR("ModelLoader", "FbxImporter::Initialize()",
-				"Unable to initialize FBX Importer! Error: " << lImporter->GetStatus().GetErrorString());
+				"Unable to initialize FBX Importer! Error: " <<
+				lImporter->GetStatus().GetErrorString());
 			lImporter->Destroy();
 			return loadedMeshes;
 		}
@@ -195,7 +299,6 @@ Model3D::LoadFBXModel(const std::string& filePath) {
 		}
 
 		FbxAxisSystem::DirectX.ConvertScene(lScene);
-		FbxSystemUnit::m.ConvertScene(lScene);
 		FbxGeometryConverter gc(lSdkManager);
 		gc.Triangulate(lScene, true);
 
@@ -221,7 +324,8 @@ Model3D::LoadFBXModel(const std::string& filePath) {
 
 std::vector<MeshComponent>
 Model3D::LoadOBJModel(const std::string& filePath) {
-	struct ObjIndex {
+	struct
+	ObjIndex {
 		int position = -1;
 		int texcoord = -1;
 		int normal = -1;
@@ -233,16 +337,22 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 		}
 	};
 
-	struct ObjIndexHasher {
-		size_t operator()(const ObjIndex& index) const {
+	struct
+	ObjIndexHasher {
+		size_t
+		operator()(const ObjIndex& index) const {
 			size_t seed = static_cast<size_t>(index.position + 1);
-			seed ^= static_cast<size_t>(index.texcoord + 1) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			seed ^= static_cast<size_t>(index.texcoord + 1) +
+				0x9e3779b9 +
+				(seed << 6) +
+				(seed >> 2);
 			seed ^= static_cast<size_t>(index.normal + 1) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 			return seed;
 		}
 	};
 
-	struct ObjMeshBuilder {
+	struct
+	ObjMeshBuilder {
 		std::string name = "default";
 		std::vector<SimpleVertex> vertices;
 		std::vector<unsigned int> indices;
@@ -256,11 +366,11 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 		};
 
 	auto normalize = [](EU::Vector3& value) {
-		const float lengthSq = value.x * value.x + value.y * value.y + value.z * value.z;
-		if (lengthSq <= 1e-20f) {
-			value = EU::Vector3(0.0f, 1.0f, 0.0f);
-			return;
-		}
+				const float lengthSq = value.x * value.x + value.y * value.y + value.z * value.z;
+				if (lengthSq <= 1e-20f) {
+					value = EU::Vector3(0.0f, 0.0f, 1.0f);
+					return;
+				}
 		const float invLength = 1.0f / std::sqrt(lengthSq);
 		value.x *= invLength;
 		value.y *= invLength;
@@ -273,17 +383,29 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 		int normalCount) -> ObjIndex {
 			ObjIndex result{};
 			size_t firstSlash = token.find('/');
-			size_t secondSlash = token.find('/', firstSlash == std::string::npos ? token.size() : firstSlash + 1);
+			size_t secondSlash = token.find('/',
+				firstSlash == std::string::npos ? token.size() : firstSlash + 1);
 
 			const std::string positionToken = token.substr(0, firstSlash);
 			const std::string texcoordToken =
 				(firstSlash == std::string::npos) ? std::string() :
-				(secondSlash == std::string::npos ? token.substr(firstSlash + 1) : token.substr(firstSlash + 1, secondSlash - firstSlash - 1));
-			const std::string normalToken = (secondSlash == std::string::npos) ? std::string() : token.substr(secondSlash + 1);
+				(secondSlash == std::string::npos ?
+					token.substr(firstSlash + 1) :
+					token.substr(firstSlash + 1, secondSlash - firstSlash - 1));
+			const std::string normalToken =
+				(secondSlash == std::string::npos) ?
+				std::string() :
+				token.substr(secondSlash + 1);
 
-			if (!positionToken.empty()) result.position = fixIndex(std::stoi(positionToken), positionCount);
-			if (!texcoordToken.empty()) result.texcoord = fixIndex(std::stoi(texcoordToken), texcoordCount);
-			if (!normalToken.empty()) result.normal = fixIndex(std::stoi(normalToken), normalCount);
+			if (!positionToken.empty()) {
+				result.position = fixIndex(std::stoi(positionToken), positionCount);
+			}
+			if (!texcoordToken.empty()) {
+				result.texcoord = fixIndex(std::stoi(texcoordToken), texcoordCount);
+			}
+			if (!normalToken.empty()) {
+				result.normal = fixIndex(std::stoi(normalToken), normalCount);
+			}
 
 			return result;
 		};
@@ -301,7 +423,8 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 			const float du2 = v2.TextureCoordinate.x - v0.TextureCoordinate.x;
 			const float dv2 = v2.TextureCoordinate.y - v0.TextureCoordinate.y;
 			const float denominator = du1 * dv2 - du2 * dv1;
-			const float invDenominator = std::fabs(denominator) < 1e-8f ? 0.0f : 1.0f / denominator;
+			const float invDenominator =
+				std::fabs(denominator) < 1e-8f ? 0.0f : 1.0f / denominator;
 
 			const EU::Vector3 tangent(
 				(edge1.x * dv2 - edge2.x * dv1) * invDenominator,
@@ -423,10 +546,12 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 				auto it = currentMesh.vertexLookup.find(objIndex);
 				if (it == currentMesh.vertexLookup.end()) {
 					SimpleVertex vertex{};
-					if (objIndex.position >= 0 && objIndex.position < static_cast<int>(positions.size())) {
+					if (objIndex.position >= 0 &&
+						objIndex.position < static_cast<int>(positions.size())) {
 						vertex.Position = positions[objIndex.position];
 					}
-					if (objIndex.texcoord >= 0 && objIndex.texcoord < static_cast<int>(texcoords.size())) {
+					if (objIndex.texcoord >= 0 &&
+						objIndex.texcoord < static_cast<int>(texcoords.size())) {
 						vertex.TextureCoordinate = texcoords[objIndex.texcoord];
 					}
 					else {
@@ -436,7 +561,7 @@ Model3D::LoadOBJModel(const std::string& filePath) {
 						vertex.Normal = normals[objIndex.normal];
 					}
 					else {
-						vertex.Normal = EU::Vector3(0.0f, 1.0f, 0.0f);
+						vertex.Normal = EU::Vector3(0.0f, 0.0f, 1.0f);
 					}
 					vertex.Tangent = EU::Vector3(0.0f, 0.0f, 0.0f);
 					vertex.Bitangent = EU::Vector3(0.0f, 0.0f, 0.0f);
@@ -470,50 +595,99 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 	cgltf_data* data = NULL;
 	cgltf_result result = cgltf_parse_file(&options, filePath.c_str(), &data);
 	if (result != cgltf_result_success) {
-		ERROR("ModelLoader", "LoadGLTFModel", ("Unable to parse GLTF file: " + filePath).c_str());
+		ERROR("ModelLoader",
+			"LoadGLTFModel",
+			("Unable to parse GLTF file: " + filePath).c_str());
 		return loadedMeshes;
 	}
 
 	result = cgltf_load_buffers(&options, data, filePath.c_str());
 	if (result != cgltf_result_success) {
-		ERROR("ModelLoader", "LoadGLTFModel", ("Unable to load buffers for GLTF file: " + filePath).c_str());
+		ERROR("ModelLoader",
+			"LoadGLTFModel",
+			("Unable to load buffers for GLTF file: " + filePath).c_str());
 		cgltf_free(data);
 		return loadedMeshes;
 	}
 
-	// Evaluate materials and tag images so BaseApp can correctly identify them
-	// We no longer modify image->name here because it corrupts memory when cgltf_free is called!
-
-	// Load embedded textures
-	for (cgltf_size i = 0; i < data->images_count; ++i) {
-		cgltf_image& image = data->images[i];
-		if (image.buffer_view && image.buffer_view->buffer && image.buffer_view->buffer->data) {
-			EmbeddedTexture emb;
-			emb.name = image.name ? image.name : ("embedded_tex_" + std::to_string(i));
-			if (!image.uri && image.mime_type) {
-				if (std::string(image.mime_type) == "image/jpeg") emb.name += ".jpg";
-				else if (std::string(image.mime_type) == "image/png") emb.name += ".png";
-			}
-			else if (image.uri) {
-				emb.name = image.uri;
-			}
-			
-			unsigned char* bufferData = (unsigned char*)image.buffer_view->buffer->data + image.buffer_view->offset;
-			emb.data.assign(bufferData, bufferData + image.buffer_view->size);
-			
-			// Find which material uses this image
-			for (cgltf_size m = 0; m < data->materials_count; ++m) {
-				cgltf_material& mat = data->materials[m];
-				if (mat.has_pbr_metallic_roughness) {
-					if (mat.pbr_metallic_roughness.base_color_texture.texture && mat.pbr_metallic_roughness.base_color_texture.texture->image == &image) emb.materialIndex = (int)m;
-					if (mat.pbr_metallic_roughness.metallic_roughness_texture.texture && mat.pbr_metallic_roughness.metallic_roughness_texture.texture->image == &image) emb.materialIndex = (int)m;
-				}
-				if (mat.normal_texture.texture && mat.normal_texture.texture->image == &image) emb.materialIndex = (int)m;
-				if (mat.emissive_texture.texture && mat.emissive_texture.texture->image == &image) emb.materialIndex = (int)m;
-			}
-			
-			m_embeddedTextures.push_back(emb);
+	auto appendEmbeddedTexture = [&](cgltf_texture* texture,
+		int materialIndex,
+		int textureSlot,
+		const char* slotName) {
+		if (!texture || !texture->image) return;
+		cgltf_image* image = texture->image;
+		if (!image->buffer_view ||
+			!image->buffer_view->buffer ||
+			!image->buffer_view->buffer->data) {
+			return;
 		}
+
+		EmbeddedTexture emb;
+		emb.materialIndex = materialIndex;
+		emb.textureSlot = textureSlot;
+		emb.name = image->uri ? image->uri :
+			(image->name ?
+				image->name :
+				("embedded_" + std::string(slotName) + "_" +
+					std::to_string(m_embeddedTextures.size())));
+
+		const std::string lowerName = ToLowerCopy(emb.name);
+		if (!image->uri && image->mime_type &&
+			!EndsWith(lowerName, ".png") &&
+			!EndsWith(lowerName, ".jpg") &&
+			!EndsWith(lowerName, ".jpeg")) {
+			if (std::string(image->mime_type) == "image/jpeg") emb.name += ".jpg";
+			else if (std::string(image->mime_type) == "image/png") {
+				emb.name += ".png";
+			}
+		}
+
+		unsigned char* bufferData =
+			static_cast<unsigned char*>(image->buffer_view->buffer->data) +
+			image->buffer_view->offset;
+		emb.data.assign(bufferData, bufferData + image->buffer_view->size);
+		m_embeddedTextures.push_back(std::move(emb));
+	};
+
+	m_materialInfos.clear();
+	m_materialInfos.resize(data->materials_count);
+	for (cgltf_size m = 0; m < data->materials_count; ++m) {
+		cgltf_material& mat = data->materials[m];
+		ImportedMaterialInfo& materialInfo = m_materialInfos[m];
+		if (mat.has_pbr_metallic_roughness) {
+			const cgltf_pbr_metallic_roughness& pbr =
+				mat.pbr_metallic_roughness;
+			materialInfo.baseColor = XMFLOAT4(
+				pbr.base_color_factor[0],
+				pbr.base_color_factor[1],
+				pbr.base_color_factor[2],
+				pbr.base_color_factor[3]);
+			materialInfo.metallic = pbr.metallic_factor;
+			materialInfo.roughness = pbr.roughness_factor;
+			appendEmbeddedTexture(
+				pbr.base_color_texture.texture,
+				static_cast<int>(m),
+				0,
+				"basecolor");
+			appendEmbeddedTexture(
+				pbr.metallic_roughness_texture.texture,
+				static_cast<int>(m),
+				6,
+				"metallicroughness");
+		}
+		materialInfo.alphaBlend = mat.alpha_mode == cgltf_alpha_mode_blend;
+		appendEmbeddedTexture(mat.normal_texture.texture,
+			static_cast<int>(m),
+			1,
+			"normal");
+		appendEmbeddedTexture(mat.occlusion_texture.texture,
+			static_cast<int>(m),
+			4,
+			"occlusion");
+		appendEmbeddedTexture(mat.emissive_texture.texture,
+			static_cast<int>(m),
+			5,
+			"emissive");
 	}
 
 	for (cgltf_size i = 0; i < data->nodes_count; ++i) {
@@ -530,7 +704,9 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 
 			MeshComponent mc;
 			mc.m_name = mesh.name ? mesh.name : "unnamed_mesh";
-			mc.m_materialIndex = primitive.material ? (int)(primitive.material - data->materials) : 0;
+			mc.m_materialIndex = primitive.material ?
+				(int)(primitive.material - data->materials) :
+				0;
 
 			// Parse indices
 			if (primitive.indices) {
@@ -560,21 +736,20 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 						cgltf_accessor_read_float(attr.data, v, &vertex.Normal.x, 3);
 					} else if (attr.type == cgltf_attribute_type_texcoord) {
 						cgltf_accessor_read_float(attr.data, v, &vertex.TextureCoordinate.x, 2);
-						vertex.TextureCoordinate.y = 1.0f - vertex.TextureCoordinate.y; // Flip V for DirectX
 					} else if (attr.type == cgltf_attribute_type_tangent) {
 						cgltf_accessor_read_float(attr.data, v, &vertex.Tangent.x, 3);
 					}
 				}
 			}
 			
-			// Apply node global transform (saved to localTransform instead of baking)
-			cgltf_float* mtx = world_transform;
-			mc.m_localTransform = XMFLOAT4X4(
-				mtx[0], mtx[1], mtx[2], mtx[3],
-				mtx[4], mtx[5], mtx[6], mtx[7],
-				mtx[8], mtx[9], mtx[10], mtx[11],
-				mtx[12], mtx[13], mtx[14], mtx[15]
-			);
+			for (SimpleVertex& vertex : mc.m_vertex) {
+				vertex.Position =
+					YUpToZUp(GLTFToEnginePoint(TransformGLTFPoint(world_transform, vertex.Position)));
+				vertex.Normal = YUpToZUp(GLTFToEngineDirection(
+					TransformGLTFDirection(world_transform, vertex.Normal)));
+				vertex.Tangent = YUpToZUp(GLTFToEngineDirection(
+					TransformGLTFDirection(world_transform, vertex.Tangent)));
+			}
 			
 			// Si no hay m_index, generamos secuencialmente
 			if (mc.m_index.empty()) {
@@ -590,18 +765,6 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 			}
 
 			// Generate tangents and bitangents if they are missing
-			auto normalizeVec = [](EU::Vector3& value) {
-				const float lengthSq = value.x * value.x + value.y * value.y + value.z * value.z;
-				if (lengthSq <= 1e-20f) {
-					value = EU::Vector3(0.0f, 1.0f, 0.0f);
-					return;
-				}
-				const float invLength = 1.0f / std::sqrt(lengthSq);
-				value.x *= invLength;
-				value.y *= invLength;
-				value.z *= invLength;
-			};
-
 			for (size_t k = 0; k + 2 < mc.m_index.size(); k += 3) {
 				SimpleVertex& v0 = mc.m_vertex[mc.m_index[k + 0]];
 				SimpleVertex& v1 = mc.m_vertex[mc.m_index[k + 1]];
@@ -614,7 +777,8 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 				const float du2 = v2.TextureCoordinate.x - v0.TextureCoordinate.x;
 				const float dv2 = v2.TextureCoordinate.y - v0.TextureCoordinate.y;
 				const float denominator = du1 * dv2 - du2 * dv1;
-				const float invDenominator = std::fabs(denominator) < 1e-8f ? 0.0f : 1.0f / denominator;
+				const float invDenominator =
+					std::fabs(denominator) < 1e-8f ? 0.0f : 1.0f / denominator;
 
 				const EU::Vector3 tangent(
 					(edge1.x * dv2 - edge2.x * dv1) * invDenominator,
@@ -634,19 +798,19 @@ Model3D::LoadGLTFModel(const std::string& filePath) {
 			}
 
 			for (SimpleVertex& vertex : mc.m_vertex) {
-				normalizeVec(vertex.Normal);
+				NormalizeVector(vertex.Normal);
 				const float tangentDotNormal =
 					vertex.Tangent.x * vertex.Normal.x +
 					vertex.Tangent.y * vertex.Normal.y +
 					vertex.Tangent.z * vertex.Normal.z;
 				vertex.Tangent = vertex.Tangent - (vertex.Normal * tangentDotNormal);
-				normalizeVec(vertex.Tangent);
+				NormalizeVector(vertex.Tangent);
 
 				vertex.Bitangent = EU::Vector3(
 					vertex.Normal.y * vertex.Tangent.z - vertex.Normal.z * vertex.Tangent.y,
 					vertex.Normal.z * vertex.Tangent.x - vertex.Normal.x * vertex.Tangent.z,
 					vertex.Normal.x * vertex.Tangent.y - vertex.Normal.y * vertex.Tangent.x);
-				normalizeVec(vertex.Bitangent);
+				NormalizeVector(vertex.Bitangent);
 			}
 
 			loadedMeshes.push_back(mc);
@@ -689,23 +853,64 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 	if (mesh->GetElementTangentCount() == 0 && uvSetName)
 		mesh->GenerateTangentsData(uvSetName);
 
-	const FbxGeometryElementUV* uvElem = (mesh->GetElementUVCount() > 0) ? mesh->GetElementUV(0) : nullptr;
-	const FbxGeometryElementTangent* tanElem = (mesh->GetElementTangentCount() > 0) ? mesh->GetElementTangent(0) : nullptr;
-	const FbxGeometryElementBinormal* binElem = (mesh->GetElementBinormalCount() > 0) ? mesh->GetElementBinormal(0) : nullptr;
+	const FbxGeometryElementUV* uvElem =
+		(mesh->GetElementUVCount() > 0) ? mesh->GetElementUV(0) : nullptr;
+	const FbxGeometryElementTangent* tanElem =
+		(mesh->GetElementTangentCount() > 0) ?
+		mesh->GetElementTangent(0) :
+		nullptr;
+	const FbxGeometryElementBinormal* binElem =
+		(mesh->GetElementBinormalCount() > 0) ?
+		mesh->GetElementBinormal(0) :
+		nullptr;
+	const FbxGeometryElementMaterial* materialElem =
+		(mesh->GetElementMaterialCount() > 0) ?
+		mesh->GetElementMaterial(0) :
+		nullptr;
+
+	FbxAMatrix geometryTransform;
+	geometryTransform.SetT(node->GetGeometricTranslation(FbxNode::eSourcePivot));
+	geometryTransform.SetR(node->GetGeometricRotation(FbxNode::eSourcePivot));
+	geometryTransform.SetS(node->GetGeometricScaling(FbxNode::eSourcePivot));
+	const FbxAMatrix nodeTransform = node->EvaluateGlobalTransform() * geometryTransform;
 
 	std::vector<SimpleVertex> vertices;
-	std::vector<unsigned int> indices;
 	vertices.reserve(mesh->GetPolygonCount() * 3);
-	indices.reserve(mesh->GetPolygonCount() * 3);
+
+	struct
+	Triangle {
+		unsigned int i0;
+		unsigned int i1;
+		unsigned int i2;
+		int materialSlot;
+	};
+	std::vector<Triangle> triangles;
+	triangles.reserve(mesh->GetPolygonCount() * 3);
+
+	std::vector<int> nodeMaterialIndices;
+	const int nodeMaterialCount = node->GetMaterialCount();
+	if (nodeMaterialCount > 0) {
+		nodeMaterialIndices.reserve(nodeMaterialCount);
+		for (int i = 0; i < nodeMaterialCount; ++i) {
+			nodeMaterialIndices.push_back(ProcessFBXMaterials(node->GetMaterial(i)));
+		}
+	}
+	else {
+		nodeMaterialIndices.push_back(ProcessFBXMaterials(nullptr));
+	}
 
 	auto readV2 = [](const FbxGeometryElementUV* elem, int cpIdx, int pvIdx) -> FbxVector2 {
 		if (!elem) return FbxVector2(0, 0);
 		using E = FbxGeometryElement;
 		int idx;
 		if (elem->GetMappingMode() == E::eByControlPoint)
-			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ? elem->GetIndexArray().GetAt(cpIdx) : cpIdx;
+			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ?
+			elem->GetIndexArray().GetAt(cpIdx) :
+			cpIdx;
 		else
-			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ? elem->GetIndexArray().GetAt(pvIdx) : pvIdx;
+			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ?
+			elem->GetIndexArray().GetAt(pvIdx) :
+			pvIdx;
 		return elem->GetDirectArray().GetAt(idx);
 		};
 	auto readV4 = [](auto* elem, int cpIdx, int pvIdx) -> FbxVector4 {
@@ -713,16 +918,39 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 		using E = FbxGeometryElement;
 		int idx;
 		if (elem->GetMappingMode() == E::eByControlPoint)
-			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ? elem->GetIndexArray().GetAt(cpIdx) : cpIdx;
+			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ?
+			elem->GetIndexArray().GetAt(cpIdx) :
+			cpIdx;
 		else
-			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ? elem->GetIndexArray().GetAt(pvIdx) : pvIdx;
+			idx = (elem->GetReferenceMode() == E::eIndexToDirect) ?
+			elem->GetIndexArray().GetAt(pvIdx) :
+			pvIdx;
 		return elem->GetDirectArray().GetAt(idx);
 		};
+
+	auto readMaterialSlot = [&](int polygonIndex) -> int {
+		if (!materialElem || nodeMaterialIndices.empty()) return 0;
+		using E = FbxGeometryElement;
+		int idx = 0;
+		if (materialElem->GetMappingMode() == E::eByPolygon) {
+			idx = (materialElem->GetReferenceMode() == E::eIndexToDirect) ?
+				materialElem->GetIndexArray().GetAt(polygonIndex) :
+				polygonIndex;
+		}
+		else if (materialElem->GetMappingMode() == E::eAllSame) {
+			idx = (materialElem->GetReferenceMode() == E::eIndexToDirect) ?
+				materialElem->GetIndexArray().GetAt(0) :
+				0;
+		}
+		if (idx < 0 || idx >= static_cast<int>(nodeMaterialIndices.size())) return 0;
+		return idx;
+	};
 
 	for (int p = 0; p < mesh->GetPolygonCount(); ++p)
 	{
 		const int polySize = mesh->GetPolygonSize(p);
 		std::vector<unsigned> cornerIdx; cornerIdx.reserve(polySize);
+		const int materialSlot = readMaterialSlot(p);
 
 		for (int v = 0; v < polySize; ++v)
 		{
@@ -732,12 +960,12 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 			SimpleVertex out{};
 
 			FbxVector4 P = mesh->GetControlPointAt(cpIndex);
-			out.Position = { (float)P[0], (float)P[1], (float)P[2] };
+			out.Position = TransformFBXPoint(nodeTransform, P);
 
 			FbxVector4 N(0, 1, 0, 0);
 			mesh->GetPolygonVertexNormal(p, v, N);
 			N.Normalize();
-			out.Normal = { (float)N[0], (float)N[1], (float)N[2] };
+			out.Normal = TransformFBXDirection(nodeTransform, N);
 
 			if (uvElem && uvSetName) {
 				int uvIdx = mesh->GetTextureUVIndex(p, v);
@@ -751,13 +979,13 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 
 			if (tanElem) {
 				FbxVector4 T = readV4(tanElem, cpIndex, pvIndex);
-				out.Tangent = { (float)T[0], (float)T[1], (float)T[2] };
+				out.Tangent = TransformFBXDirection(nodeTransform, T);
 			}
 			else out.Tangent = { 0,0,0 };
 
 			if (binElem) {
 				FbxVector4 B = readV4(binElem, cpIndex, pvIndex);
-				out.Bitangent = { (float)B[0], (float)B[1], (float)B[2] };
+				out.Bitangent = TransformFBXDirection(nodeTransform, B);
 			}
 			else out.Bitangent = { 0,0,0 };
 
@@ -766,23 +994,39 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 		}
 
 		for (int k = 1; k + 1 < polySize; ++k) {
-			indices.push_back(cornerIdx[0]);
-			indices.push_back(cornerIdx[k + 1]);
-			indices.push_back(cornerIdx[k]);
+			triangles.push_back(Triangle{
+				cornerIdx[0],
+				cornerIdx[k + 1],
+				cornerIdx[k],
+				materialSlot
+			});
 		}
 	}
 
 	if (mesh->GetElementTangentCount() == 0 || mesh->GetElementBinormalCount() == 0)
 	{
-		auto add = [](EU::Vector3 a, const EU::Vector3& b) { a.x += b.x; a.y += b.y; a.z += b.z; return a; };
-		auto sub = [](const EU::Vector3& a, const EU::Vector3& b) { return EU::Vector3(a.x - b.x, a.y - b.y, a.z - b.z); };
-		auto mul = [](const EU::Vector3& a, float s) { return EU::Vector3(a.x * s, a.y * s, a.z * s); };
+		auto add = [](EU::Vector3 a, const EU::Vector3& b) {
+			a.x += b.x;
+			a.y += b.y;
+			a.z += b.z;
+			return a;
+		};
+		auto sub = [](const EU::Vector3& a, const EU::Vector3& b) {
+			return EU::Vector3(a.x - b.x,
+				a.y - b.y,
+				a.z - b.z);
+		};
+		auto mul = [](const EU::Vector3& a, float s) {
+			return EU::Vector3(a.x * s,
+				a.y * s,
+				a.z * s);
+		};
 
-		for (size_t i = 0; i + 2 < indices.size(); i += 3)
+		for (const Triangle& triangle : triangles)
 		{
-			SimpleVertex& v0 = vertices[indices[i + 0]];
-			SimpleVertex& v1 = vertices[indices[i + 1]];
-			SimpleVertex& v2 = vertices[indices[i + 2]];
+			SimpleVertex& v0 = vertices[triangle.i0];
+			SimpleVertex& v1 = vertices[triangle.i1];
+			SimpleVertex& v2 = vertices[triangle.i2];
 
 			EU::Vector3 e1 = sub(v1.Position, v0.Position);
 			EU::Vector3 e2 = sub(v2.Position, v0.Position);
@@ -795,8 +1039,12 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 			float denom = du1 * dv2 - du2 * dv1;
 			float r = (std::fabs(denom) < 1e-8f) ? 0.0f : 1.0f / denom;
 
-			EU::Vector3 T = mul(EU::Vector3(e1.x * dv2 - e2.x * dv1, e1.y * dv2 - e2.y * dv1, e1.z * dv2 - e2.z * dv1), r);
-			EU::Vector3 B = mul(EU::Vector3(e2.x * du1 - e1.x * du2, e2.y * du1 - e1.y * du2, e2.z * du1 - e1.z * du2), r);
+			EU::Vector3 T = mul(EU::Vector3(e1.x * dv2 - e2.x * dv1,
+				e1.y * dv2 - e2.y * dv1,
+				e1.z * dv2 - e2.z * dv1), r);
+			EU::Vector3 B = mul(EU::Vector3(e2.x * du1 - e1.x * du2,
+				e2.y * du1 - e1.y * du2,
+				e2.z * du1 - e1.z * du2), r);
 
 			v0.Tangent = add(v0.Tangent, T);
 			v1.Tangent = add(v1.Tangent, T);
@@ -824,8 +1072,8 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 	}
 
 	if (mirrored || forceFlipWinding) {
-		for (size_t i = 0; i + 2 < indices.size(); i += 3)
-			std::swap(indices[i + 1], indices[i + 2]);
+		for (Triangle& triangle : triangles)
+			std::swap(triangle.i1, triangle.i2);
 
 		for (auto& v : vertices) {
 			v.Normal = { v.Normal.x, v.Normal.y, v.Normal.z };
@@ -834,9 +1082,21 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 		}
 	}
 
-	auto dot3 = [](const EU::Vector3& a, const EU::Vector3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
-	auto norm3 = [](EU::Vector3& v) { float l = std::sqrt(EU::EMax(1e-20f, v.x * v.x + v.y * v.y + v.z * v.z)); v.x /= l; v.y /= l; v.z /= l; };
-	auto sub3 = [](const EU::Vector3& a, const EU::Vector3& b) { return EU::Vector3(a.x - b.x, a.y - b.y, a.z - b.z); };
+	auto dot3 = [](const EU::Vector3& a, const EU::Vector3& b) {
+		return a.x * b.x + a.y * b.y + a.z * b.z;
+	};
+	auto norm3 = [](EU::Vector3& v) {
+		float l = std::sqrt(EU::EMax(1e-20f,
+			v.x * v.x + v.y * v.y + v.z * v.z));
+		v.x /= l;
+		v.y /= l;
+		v.z /= l;
+	};
+	auto sub3 = [](const EU::Vector3& a, const EU::Vector3& b) {
+		return EU::Vector3(a.x - b.x,
+			a.y - b.y,
+			a.z - b.z);
+	};
 	auto cross3 = [](const EU::Vector3& a, const EU::Vector3& b) {
 		return EU::Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 		};
@@ -845,7 +1105,10 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 	{
 		norm3(v.Normal);
 		float dTN = dot3(v.Tangent, v.Normal);
-		v.Tangent = sub3(v.Tangent, EU::Vector3(v.Normal.x * dTN, v.Normal.y * dTN, v.Normal.z * dTN));
+		v.Tangent = sub3(v.Tangent,
+			EU::Vector3(v.Normal.x * dTN,
+				v.Normal.y * dTN,
+				v.Normal.z * dTN));
 		norm3(v.Tangent);
 
 		EU::Vector3 Bcalc = cross3(v.Normal, v.Tangent);
@@ -854,29 +1117,108 @@ Model3D::ProcessFBXMesh(FbxNode* node) {
 		norm3(v.Bitangent);
 	}
 
-	MeshComponent mc;
-	mc.m_name = node->GetName();
-	mc.m_vertex = std::move(vertices);
-	mc.m_index = std::move(indices);
-	mc.m_numVertex = (int)mc.m_vertex.size();
-	mc.m_numIndex = (int)mc.m_index.size();
-	m_meshes.push_back(std::move(mc));
+	struct
+	MaterialBucket {
+		std::vector<SimpleVertex> vertices;
+		std::vector<unsigned int> indices;
+		std::unordered_map<unsigned int, unsigned int> remap;
+	};
+	std::vector<MaterialBucket> buckets(nodeMaterialIndices.size());
+	auto remapVertex = [&](MaterialBucket& bucket, unsigned int sourceIndex) {
+		auto it = bucket.remap.find(sourceIndex);
+		if (it != bucket.remap.end()) return it->second;
+		const unsigned int targetIndex = static_cast<unsigned int>(bucket.vertices.size());
+		bucket.vertices.push_back(vertices[sourceIndex]);
+		bucket.remap[sourceIndex] = targetIndex;
+		return targetIndex;
+	};
+
+	for (const Triangle& triangle : triangles) {
+		const int materialSlot =
+			(triangle.materialSlot >= 0 &&
+				triangle.materialSlot < static_cast<int>(buckets.size())) ?
+			triangle.materialSlot :
+			0;
+		MaterialBucket& bucket = buckets[materialSlot];
+		bucket.indices.push_back(remapVertex(bucket, triangle.i0));
+		bucket.indices.push_back(remapVertex(bucket, triangle.i1));
+		bucket.indices.push_back(remapVertex(bucket, triangle.i2));
+	}
+
+	for (size_t i = 0; i < buckets.size(); ++i) {
+		MaterialBucket& bucket = buckets[i];
+		if (bucket.indices.empty()) continue;
+
+		MeshComponent mc;
+		mc.m_name = node->GetName();
+		if (buckets.size() > 1) {
+			mc.m_name += "_mat" + std::to_string(i);
+		}
+		mc.m_materialIndex = nodeMaterialIndices[i];
+		mc.m_vertex = std::move(bucket.vertices);
+		mc.m_index = std::move(bucket.indices);
+		mc.m_numVertex = static_cast<int>(mc.m_vertex.size());
+		mc.m_numIndex = static_cast<int>(mc.m_index.size());
+		m_meshes.push_back(std::move(mc));
+	}
 }
 
-void Model3D::ProcessFBXMaterials(FbxSurfaceMaterial* material)
+int
+Model3D::ProcessFBXMaterials(FbxSurfaceMaterial* material)
 {
+	ImportedMaterialInfo info;
 	if (material) {
-		FbxProperty prop = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
-		if (prop.IsValid()) {
-			int textureCount = prop.GetSrcObjectCount<FbxTexture>();
-			for (int i = 0; i < textureCount; ++i) {
-				FbxTexture* texture = FbxCast<FbxTexture>(prop.GetSrcObject<FbxTexture>(i));
-				if (texture) {
-					textureFileNames.push_back(texture->GetName());
-				}
-			}
+		if (FbxSurfaceLambert* lambert = FbxCast<FbxSurfaceLambert>(material)) {
+			const FbxDouble3 diffuse = lambert->Diffuse.Get();
+			info.baseColor = XMFLOAT4(
+				static_cast<float>(diffuse[0]),
+				static_cast<float>(diffuse[1]),
+				static_cast<float>(diffuse[2]),
+				1.0f);
+			info.alphaBlend = false;
 		}
+		if (FbxSurfacePhong* phong = FbxCast<FbxSurfacePhong>(material)) {
+			const double shininess = phong->Shininess.Get();
+			const double safeShininess = shininess < 1.0 ? 1.0 : shininess;
+			double reflection = phong->ReflectionFactor.Get();
+			if (reflection < 0.0) reflection = 0.0;
+			if (reflection > 1.0) reflection = 1.0;
+			info.roughness = static_cast<float>(
+				1.0 / std::sqrt(safeShininess));
+			info.metallic = static_cast<float>(reflection);
+		}
+
+		auto assignTexture = [&](const char* propertyName, int slot) {
+			FbxProperty prop = material->FindProperty(propertyName);
+			if (!prop.IsValid()) return;
+
+			const int fileTextureCount = prop.GetSrcObjectCount<FbxFileTexture>();
+			for (int i = 0; i < fileTextureCount; ++i) {
+				FbxFileTexture* texture =
+					FbxCast<FbxFileTexture>(prop.GetSrcObject<FbxFileTexture>(i));
+				if (!texture) continue;
+
+				std::string path = texture->GetFileName();
+				if (path.empty()) path = texture->GetRelativeFileName();
+				if (path.empty()) path = texture->GetName();
+				if (path.empty()) continue;
+
+				info.texturePaths[slot] = path;
+				textureFileNames.push_back(path);
+				break;
+			}
+		};
+
+		assignTexture(FbxSurfaceMaterial::sDiffuse, 0);
+		assignTexture(FbxSurfaceMaterial::sNormalMap, 1);
+		assignTexture(FbxSurfaceMaterial::sBump, 1);
+		assignTexture(FbxSurfaceMaterial::sReflection, 2);
+		assignTexture(FbxSurfaceMaterial::sShininess, 3);
+		assignTexture(FbxSurfaceMaterial::sEmissive, 5);
 	}
+	const int materialIndex = static_cast<int>(m_materialInfos.size());
+	m_materialInfos.push_back(info);
+	return materialIndex;
 }
 
 std::string
@@ -885,7 +1227,8 @@ Model3D::GetBinaryCachePath() const {
 }
 
 bool
-Model3D::IsBinaryCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) const {
+Model3D::IsBinaryCacheUpToDate(const std::string& sourcePath,
+	const std::string& cachePath) const {
 	ULONGLONG sourceWriteTime = 0;
 	ULONGLONG cacheWriteTime = 0;
 
@@ -911,11 +1254,17 @@ Model3D::LoadBinaryCache(const std::string& cachePath) {
 	uint32_t version = 0;
 	uint32_t meshCount = 0;
 	uint32_t textureCount = 0;
+	uint32_t embeddedTextureCount = 0;
+	uint32_t materialInfoCount = 0;
 
 	stream.read(reinterpret_cast<char*>(&magic), sizeof(magic));
 	stream.read(reinterpret_cast<char*>(&version), sizeof(version));
 	stream.read(reinterpret_cast<char*>(&meshCount), sizeof(meshCount));
 	stream.read(reinterpret_cast<char*>(&textureCount), sizeof(textureCount));
+	stream.read(reinterpret_cast<char*>(&embeddedTextureCount),
+		sizeof(embeddedTextureCount));
+	stream.read(reinterpret_cast<char*>(&materialInfoCount),
+		sizeof(materialInfoCount));
 
 	if (!stream.good() || magic != kModelCacheMagic || version != kModelCacheVersion) {
 		return false;
@@ -923,8 +1272,12 @@ Model3D::LoadBinaryCache(const std::string& cachePath) {
 
 	std::vector<MeshComponent> loadedMeshes;
 	std::vector<std::string> loadedTextures;
+	std::vector<EmbeddedTexture> loadedEmbeddedTextures;
+	std::vector<ImportedMaterialInfo> loadedMaterialInfos;
 	loadedMeshes.reserve(meshCount);
 	loadedTextures.reserve(textureCount);
+	loadedEmbeddedTextures.reserve(embeddedTextureCount);
+	loadedMaterialInfos.reserve(materialInfoCount);
 
 	for (uint32_t i = 0; i < textureCount; ++i) {
 		std::string textureName;
@@ -932,6 +1285,54 @@ Model3D::LoadBinaryCache(const std::string& cachePath) {
 			return false;
 		}
 		loadedTextures.push_back(std::move(textureName));
+	}
+
+	for (uint32_t i = 0; i < embeddedTextureCount; ++i) {
+		EmbeddedTexture embeddedTexture;
+		if (!ReadString(stream, embeddedTexture.name)) {
+			return false;
+		}
+
+		uint32_t dataSize = 0;
+		stream.read(reinterpret_cast<char*>(&embeddedTexture.materialIndex),
+			sizeof(embeddedTexture.materialIndex));
+		stream.read(reinterpret_cast<char*>(&embeddedTexture.textureSlot),
+			sizeof(embeddedTexture.textureSlot));
+		stream.read(reinterpret_cast<char*>(&dataSize), sizeof(dataSize));
+		if (!stream.good()) {
+			return false;
+		}
+
+		embeddedTexture.data.resize(dataSize);
+		if (dataSize > 0) {
+			stream.read(reinterpret_cast<char*>(embeddedTexture.data.data()),
+				dataSize);
+		}
+		if (!stream.good()) {
+			return false;
+		}
+		loadedEmbeddedTextures.push_back(std::move(embeddedTexture));
+	}
+
+	for (uint32_t i = 0; i < materialInfoCount; ++i) {
+		ImportedMaterialInfo materialInfo;
+		stream.read(reinterpret_cast<char*>(&materialInfo.baseColor),
+			sizeof(materialInfo.baseColor));
+		stream.read(reinterpret_cast<char*>(&materialInfo.metallic),
+			sizeof(materialInfo.metallic));
+		stream.read(reinterpret_cast<char*>(&materialInfo.roughness),
+			sizeof(materialInfo.roughness));
+		stream.read(reinterpret_cast<char*>(&materialInfo.alphaBlend),
+			sizeof(materialInfo.alphaBlend));
+		if (!stream.good()) {
+			return false;
+		}
+		for (std::string& texturePath : materialInfo.texturePaths) {
+			if (!ReadString(stream, texturePath)) {
+				return false;
+			}
+		}
+		loadedMaterialInfos.push_back(materialInfo);
 	}
 
 	for (uint32_t i = 0; i < meshCount; ++i) {
@@ -942,6 +1343,10 @@ Model3D::LoadBinaryCache(const std::string& cachePath) {
 
 		uint32_t vertexCount = 0;
 		uint32_t indexCount = 0;
+		stream.read(reinterpret_cast<char*>(&mesh.m_materialIndex),
+			sizeof(mesh.m_materialIndex));
+		stream.read(reinterpret_cast<char*>(&mesh.m_localTransform),
+			sizeof(mesh.m_localTransform));
 		stream.read(reinterpret_cast<char*>(&vertexCount), sizeof(vertexCount));
 		stream.read(reinterpret_cast<char*>(&indexCount), sizeof(indexCount));
 		if (!stream.good()) {
@@ -951,10 +1356,12 @@ Model3D::LoadBinaryCache(const std::string& cachePath) {
 		mesh.m_vertex.resize(vertexCount);
 		mesh.m_index.resize(indexCount);
 		if (vertexCount > 0) {
-			stream.read(reinterpret_cast<char*>(mesh.m_vertex.data()), sizeof(SimpleVertex) * vertexCount);
+			stream.read(reinterpret_cast<char*>(mesh.m_vertex.data()),
+				sizeof(SimpleVertex) * vertexCount);
 		}
 		if (indexCount > 0) {
-			stream.read(reinterpret_cast<char*>(mesh.m_index.data()), sizeof(unsigned int) * indexCount);
+			stream.read(reinterpret_cast<char*>(mesh.m_index.data()),
+				sizeof(unsigned int) * indexCount);
 		}
 		if (!stream.good()) {
 			return false;
@@ -967,6 +1374,8 @@ Model3D::LoadBinaryCache(const std::string& cachePath) {
 
 	m_meshes = std::move(loadedMeshes);
 	textureFileNames = std::move(loadedTextures);
+	m_embeddedTextures = std::move(loadedEmbeddedTextures);
+	m_materialInfos = std::move(loadedMaterialInfos);
 
 	const std::wstring cachePathW(cachePath.begin(), cachePath.end());
 	MESSAGE("ModelLoader", "BinaryCache",
@@ -983,15 +1392,65 @@ Model3D::SaveBinaryCache(const std::string& cachePath) const {
 
 	const uint32_t meshCount = static_cast<uint32_t>(m_meshes.size());
 	const uint32_t textureCount = static_cast<uint32_t>(textureFileNames.size());
+	const uint32_t embeddedTextureCount =
+		static_cast<uint32_t>(m_embeddedTextures.size());
+	const uint32_t materialInfoCount =
+		static_cast<uint32_t>(m_materialInfos.size());
 
-	stream.write(reinterpret_cast<const char*>(&kModelCacheMagic), sizeof(kModelCacheMagic));
-	stream.write(reinterpret_cast<const char*>(&kModelCacheVersion), sizeof(kModelCacheVersion));
+	stream.write(reinterpret_cast<const char*>(&kModelCacheMagic),
+		sizeof(kModelCacheMagic));
+	stream.write(reinterpret_cast<const char*>(&kModelCacheVersion),
+		sizeof(kModelCacheVersion));
 	stream.write(reinterpret_cast<const char*>(&meshCount), sizeof(meshCount));
 	stream.write(reinterpret_cast<const char*>(&textureCount), sizeof(textureCount));
+	stream.write(reinterpret_cast<const char*>(&embeddedTextureCount),
+		sizeof(embeddedTextureCount));
+	stream.write(reinterpret_cast<const char*>(&materialInfoCount),
+		sizeof(materialInfoCount));
 
 	for (const std::string& textureName : textureFileNames) {
 		if (!WriteString(stream, textureName)) {
 			return false;
+		}
+	}
+
+	for (const EmbeddedTexture& embeddedTexture : m_embeddedTextures) {
+		if (!WriteString(stream, embeddedTexture.name)) {
+			return false;
+		}
+
+		const uint32_t dataSize =
+			static_cast<uint32_t>(embeddedTexture.data.size());
+		stream.write(reinterpret_cast<const char*>(&embeddedTexture.materialIndex),
+			sizeof(embeddedTexture.materialIndex));
+		stream.write(reinterpret_cast<const char*>(&embeddedTexture.textureSlot),
+			sizeof(embeddedTexture.textureSlot));
+		stream.write(reinterpret_cast<const char*>(&dataSize), sizeof(dataSize));
+		if (dataSize > 0) {
+			stream.write(reinterpret_cast<const char*>(embeddedTexture.data.data()),
+				dataSize);
+		}
+		if (!stream.good()) {
+			return false;
+		}
+	}
+
+	for (const ImportedMaterialInfo& materialInfo : m_materialInfos) {
+		stream.write(reinterpret_cast<const char*>(&materialInfo.baseColor),
+			sizeof(materialInfo.baseColor));
+		stream.write(reinterpret_cast<const char*>(&materialInfo.metallic),
+			sizeof(materialInfo.metallic));
+		stream.write(reinterpret_cast<const char*>(&materialInfo.roughness),
+			sizeof(materialInfo.roughness));
+		stream.write(reinterpret_cast<const char*>(&materialInfo.alphaBlend),
+			sizeof(materialInfo.alphaBlend));
+		if (!stream.good()) {
+			return false;
+		}
+		for (const std::string& texturePath : materialInfo.texturePaths) {
+			if (!WriteString(stream, texturePath)) {
+				return false;
+			}
 		}
 	}
 
@@ -1002,14 +1461,20 @@ Model3D::SaveBinaryCache(const std::string& cachePath) const {
 
 		const uint32_t vertexCount = static_cast<uint32_t>(mesh.m_vertex.size());
 		const uint32_t indexCount = static_cast<uint32_t>(mesh.m_index.size());
+		stream.write(reinterpret_cast<const char*>(&mesh.m_materialIndex),
+			sizeof(mesh.m_materialIndex));
+		stream.write(reinterpret_cast<const char*>(&mesh.m_localTransform),
+			sizeof(mesh.m_localTransform));
 		stream.write(reinterpret_cast<const char*>(&vertexCount), sizeof(vertexCount));
 		stream.write(reinterpret_cast<const char*>(&indexCount), sizeof(indexCount));
 
 		if (vertexCount > 0) {
-			stream.write(reinterpret_cast<const char*>(mesh.m_vertex.data()), sizeof(SimpleVertex) * vertexCount);
+			stream.write(reinterpret_cast<const char*>(mesh.m_vertex.data()),
+				sizeof(SimpleVertex) * vertexCount);
 		}
 		if (indexCount > 0) {
-			stream.write(reinterpret_cast<const char*>(mesh.m_index.data()), sizeof(unsigned int) * indexCount);
+			stream.write(reinterpret_cast<const char*>(mesh.m_index.data()),
+				sizeof(unsigned int) * indexCount);
 		}
 
 		if (!stream.good()) {

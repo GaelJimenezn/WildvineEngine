@@ -5,18 +5,62 @@
 #include "DeviceContext.h"
 #include <cstdint>
 #include <fstream>
+#include <vector>
 
 namespace {
   constexpr uint32_t kTextureCacheMagic = 0x58545657; // WVTX
   constexpr uint32_t kTextureCacheVersion = 1;
 
-  struct CachedTextureData {
+  struct
+  CachedTextureData {
     int width = 0;
     int height = 0;
     std::vector<unsigned char> rgba;
   };
 
-  bool GetFileWriteTime(const std::string& path, ULONGLONG& outWriteTime) {
+  bool
+  FileExists(const std::string& path) {
+    const DWORD attributes = GetFileAttributesA(path.c_str());
+    return attributes != INVALID_FILE_ATTRIBUTES &&
+      !(attributes & FILE_ATTRIBUTE_DIRECTORY);
+  }
+
+  std::string
+  DirectoryOf(const std::string& path) {
+    const size_t slash = path.find_last_of("/\\");
+    return (slash == std::string::npos) ? std::string() : path.substr(0, slash);
+  }
+
+  std::string
+  ResolveTextureFilePath(const std::string& path) {
+    char modulePath[MAX_PATH] = {};
+    GetModuleFileNameA(nullptr, modulePath, MAX_PATH);
+    const std::string exeDir = DirectoryOf(modulePath);
+    const std::string binDir = DirectoryOf(exeDir);
+
+    std::vector<std::string> pathVariants;
+    pathVariants.push_back(path);
+    pathVariants.push_back(path + ".png");
+    pathVariants.push_back(path + ".jpg");
+    pathVariants.push_back(path + ".jpeg");
+    pathVariants.push_back(path + ".dds");
+
+    std::vector<std::string> roots;
+    roots.push_back("");
+    if (!exeDir.empty()) roots.push_back(exeDir + "/");
+    if (!binDir.empty()) roots.push_back(binDir + "/");
+
+    for (const std::string& root : roots) {
+      for (const std::string& variant : pathVariants) {
+        const std::string candidate = root + variant;
+        if (FileExists(candidate)) return candidate;
+      }
+    }
+    return path;
+  }
+
+  bool
+  GetFileWriteTime(const std::string& path, ULONGLONG& outWriteTime) {
     WIN32_FILE_ATTRIBUTE_DATA attributes{};
     if (!GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attributes)) {
       return false;
@@ -29,11 +73,14 @@ namespace {
     return true;
   }
 
-  std::string GetTextureCachePath(const std::string& sourcePath) {
+  std::string
+  GetTextureCachePath(const std::string& sourcePath) {
     return sourcePath + ".wvtx";
   }
 
-  bool IsTextureCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) {
+  bool
+  IsTextureCacheUpToDate(const std::string& sourcePath,
+    const std::string& cachePath) {
     ULONGLONG sourceWriteTime = 0;
     ULONGLONG cacheWriteTime = 0;
     if (!GetFileWriteTime(sourcePath, sourceWriteTime)) {
@@ -45,15 +92,21 @@ namespace {
     return cacheWriteTime >= sourceWriteTime;
   }
 
-  bool SaveTextureCache(const std::string& cachePath, int width, int height, const unsigned char* data) {
+  bool
+  SaveTextureCache(const std::string& cachePath,
+    int width,
+    int height,
+    const unsigned char* data) {
     std::ofstream stream(cachePath, std::ios::binary | std::ios::trunc);
     if (!stream.is_open()) {
       return false;
     }
 
     const uint32_t dataSize = static_cast<uint32_t>(width * height * 4);
-    stream.write(reinterpret_cast<const char*>(&kTextureCacheMagic), sizeof(kTextureCacheMagic));
-    stream.write(reinterpret_cast<const char*>(&kTextureCacheVersion), sizeof(kTextureCacheVersion));
+    stream.write(reinterpret_cast<const char*>(&kTextureCacheMagic),
+      sizeof(kTextureCacheMagic));
+    stream.write(reinterpret_cast<const char*>(&kTextureCacheVersion),
+      sizeof(kTextureCacheVersion));
     stream.write(reinterpret_cast<const char*>(&width), sizeof(width));
     stream.write(reinterpret_cast<const char*>(&height), sizeof(height));
     stream.write(reinterpret_cast<const char*>(&dataSize), sizeof(dataSize));
@@ -61,7 +114,9 @@ namespace {
     return stream.good();
   }
 
-  bool LoadTextureCache(const std::string& cachePath, CachedTextureData& outTexture) {
+  bool
+  LoadTextureCache(const std::string& cachePath,
+    CachedTextureData& outTexture) {
     std::ifstream stream(cachePath, std::ios::binary);
     if (!stream.is_open()) {
       return false;
@@ -90,7 +145,8 @@ namespace {
     return stream.good();
   }
 
-  HRESULT CreateTextureFromRGBA(Device& device,
+  HRESULT
+  CreateTextureFromRGBA(Device& device,
     int width,
     int height,
     const unsigned char* data,
@@ -130,7 +186,10 @@ namespace {
     return hr;
   }
 
-  HRESULT InitTextureFromImage(Device& device, const std::string& fullPath, Texture& texture) {
+  HRESULT
+  InitTextureFromImage(Device& device,
+    const std::string& fullPath,
+    Texture& texture) {
     CachedTextureData cachedTexture;
     const std::string cachePath = GetTextureCachePath(fullPath);
 
@@ -140,7 +199,8 @@ namespace {
     unsigned char* decodedData = nullptr;
     const unsigned char* uploadData = nullptr;
 
-    if (IsTextureCacheUpToDate(fullPath, cachePath) && LoadTextureCache(cachePath, cachedTexture)) {
+    if (IsTextureCacheUpToDate(fullPath, cachePath) &&
+      LoadTextureCache(cachePath, cachedTexture)) {
       width = cachedTexture.width;
       height = cachedTexture.height;
       uploadData = cachedTexture.rgba.data();
@@ -156,7 +216,12 @@ namespace {
       SaveTextureCache(cachePath, width, height, decodedData);
     }
 
-    HRESULT hr = CreateTextureFromRGBA(device, width, height, uploadData, &texture.m_texture, &texture.m_textureFromImg);
+    HRESULT hr = CreateTextureFromRGBA(device,
+      width,
+      height,
+      uploadData,
+      &texture.m_texture,
+      &texture.m_textureFromImg);
     if (decodedData) {
       stbi_image_free(decodedData);
     }
@@ -164,7 +229,9 @@ namespace {
     if (FAILED(hr)) {
       SAFE_RELEASE(texture.m_texture);
       SAFE_RELEASE(texture.m_textureFromImg);
-      ERROR("Texture", "init", "Failed to create shader resource view for cached image texture");
+      ERROR("Texture",
+        "init",
+        "Failed to create shader resource view for cached image texture");
       return hr;
     }
 
@@ -188,13 +255,26 @@ Texture::initFromMemory(Device& device,
 	int width = 0;
 	int height = 0;
 	int channels = 0;
-	unsigned char* decodedData = stbi_load_from_memory(data, (int)size, &width, &height, &channels, 4);
+	unsigned char* decodedData = stbi_load_from_memory(data,
+		(int)size,
+		&width,
+		&height,
+		&channels,
+		4);
 	if (!decodedData) {
-		ERROR("Texture", "initFromMemory", ("Failed to load texture from memory: " + std::string(stbi_failure_reason())).c_str());
+		ERROR("Texture",
+			"initFromMemory",
+			("Failed to load texture from memory: " +
+				std::string(stbi_failure_reason())).c_str());
 		return E_FAIL;
 	}
 
-	HRESULT hr = CreateTextureFromRGBA(device, width, height, decodedData, &m_texture, &m_textureFromImg);
+	HRESULT hr = CreateTextureFromRGBA(device,
+		width,
+		height,
+		decodedData,
+		&m_texture,
+		&m_textureFromImg);
 	stbi_image_free(decodedData);
 
 	if (FAILED(hr)) {
@@ -204,6 +284,103 @@ Texture::initFromMemory(Device& device,
 		return hr;
 	}
 	return S_OK;
+}
+
+HRESULT
+Texture::initSingleChannelFromMemory(Device& device,
+  const unsigned char* data,
+  size_t size,
+  int channelIndex,
+  const std::string& textureName) {
+  if (!device.m_device) {
+    ERROR("Texture", "initSingleChannelFromMemory", "Device is null.");
+    return E_POINTER;
+  }
+  if (channelIndex < 0 || channelIndex > 3) {
+    ERROR("Texture", "initSingleChannelFromMemory", "Invalid channel index.");
+    return E_INVALIDARG;
+  }
+
+  m_textureName = textureName;
+
+  int width = 0;
+  int height = 0;
+  int channels = 0;
+  unsigned char* decodedData = stbi_load_from_memory(data,
+    (int)size,
+    &width,
+    &height,
+    &channels,
+    4);
+  if (!decodedData) {
+    ERROR("Texture",
+      "initSingleChannelFromMemory",
+      ("Failed to load texture from memory: " +
+        std::string(stbi_failure_reason())).c_str());
+    return E_FAIL;
+  }
+
+  std::vector<unsigned char> channelData(static_cast<size_t>(width) * height * 4);
+  for (int i = 0; i < width * height; ++i) {
+    const unsigned char value = decodedData[i * 4 + channelIndex];
+    channelData[i * 4 + 0] = value;
+    channelData[i * 4 + 1] = value;
+    channelData[i * 4 + 2] = value;
+    channelData[i * 4 + 3] = 255;
+  }
+
+  HRESULT hr = CreateTextureFromRGBA(device,
+    width,
+    height,
+    channelData.data(),
+    &m_texture,
+    &m_textureFromImg);
+  stbi_image_free(decodedData);
+
+  if (FAILED(hr)) {
+    SAFE_RELEASE(m_texture);
+    SAFE_RELEASE(m_textureFromImg);
+    ERROR("Texture",
+      "initSingleChannelFromMemory",
+      "Failed to create shader resource view");
+    return hr;
+  }
+
+  SAFE_RELEASE(m_texture);
+  return S_OK;
+}
+
+HRESULT
+Texture::initSolidColor(Device& device,
+  unsigned char r,
+  unsigned char g,
+  unsigned char b,
+  unsigned char a,
+  const std::string& textureName) {
+  if (!device.m_device) {
+    ERROR("Texture", "initSolidColor", "Device is null.");
+    return E_POINTER;
+  }
+
+  destroy();
+  const unsigned char pixel[4] = { r, g, b, a };
+  m_textureName = textureName;
+
+  HRESULT hr = CreateTextureFromRGBA(device,
+    1,
+    1,
+    pixel,
+    &m_texture,
+    &m_textureFromImg);
+  if (FAILED(hr)) {
+    SAFE_RELEASE(m_texture);
+    SAFE_RELEASE(m_textureFromImg);
+    ERROR("Texture", "initSolidColor", "Failed to create solid color texture");
+    return hr;
+  }
+
+  SAFE_RELEASE(m_texture);
+  return S_OK;
 }
 
 HRESULT
@@ -261,6 +438,47 @@ Texture::init(Device& device,
 }
 
 HRESULT
+Texture::initFromFile(Device& device,
+  const std::string& fullPath) {
+  if (!device.m_device) {
+    ERROR("Texture", "initFromFile", "Device is null.");
+    return E_POINTER;
+  }
+  if (fullPath.empty()) {
+    ERROR("Texture", "initFromFile", "Texture path cannot be empty.");
+    return E_INVALIDARG;
+  }
+
+  destroy();
+  const std::string resolvedPath = ResolveTextureFilePath(fullPath);
+  m_textureName = resolvedPath;
+
+  std::string lower = resolvedPath;
+  for (char& c : lower) {
+    if (c >= 'A' && c <= 'Z') c = static_cast<char>(c + 32);
+  }
+
+  HRESULT hr = S_OK;
+  if (lower.size() >= 4 &&
+    lower.compare(lower.size() - 4, 4, ".dds") == 0) {
+    hr = D3DX11CreateShaderResourceViewFromFile(
+      device.m_device,
+      resolvedPath.c_str(),
+      nullptr,
+      nullptr,
+      &m_textureFromImg,
+      nullptr);
+    if (FAILED(hr)) {
+      ERROR("Texture", "initFromFile",
+        ("Failed to load DDS texture. Verify filepath: " + resolvedPath).c_str());
+    }
+    return hr;
+  }
+
+  return InitTextureFromImage(device, resolvedPath, *this);
+}
+
+HRESULT
 Texture::init(Device& device,
   unsigned int width,
   unsigned int height,
@@ -295,7 +513,8 @@ Texture::init(Device& device,
 
   if (FAILED(hr)) {
     ERROR("Texture", "init",
-      ("Failed to create texture with specified params. HRESULT: " + std::to_string(hr)).c_str());
+      ("Failed to create texture with specified params. HRESULT: " +
+        std::to_string(hr)).c_str());
     return hr;
   }
 
@@ -325,7 +544,8 @@ Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
 
   if (FAILED(hr)) {
     ERROR("Texture", "init",
-      ("Failed to create shader resource view for PNG textures. HRESULT: " + std::to_string(hr)).c_str());
+      ("Failed to create shader resource view for PNG textures. HRESULT: " +
+        std::to_string(hr)).c_str());
     return hr;
   }
 
@@ -370,7 +590,7 @@ Texture::CreateCubemap(Device& device,
 
   stbi_set_flip_vertically_on_load(false);
 
-  int width = 0, height = 0, channels = 0;
+  int width = 0, height = 0;
   std::array<unsigned char*, 6> facePixels{};
   facePixels.fill(nullptr);
 
@@ -391,7 +611,9 @@ Texture::CreateCubemap(Device& device,
       height = h;
     }
     else if (w != width || h != height) {
-      ERROR("Texture", "CreateCubemap", "All cubemap faces must have the same dimensions.");
+      ERROR("Texture",
+        "CreateCubemap",
+        "All cubemap faces must have the same dimensions.");
       for (int k = 0; k <= i; ++k) {
         if (facePixels[k]) {
           stbi_image_free(facePixels[k]);
@@ -410,9 +632,11 @@ Texture::CreateCubemap(Device& device,
   texDesc.SampleDesc.Count = 1;
   texDesc.SampleDesc.Quality = 0;
   texDesc.Usage = D3D11_USAGE_DEFAULT;
-  texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | (generateMips ? D3D11_BIND_RENDER_TARGET : 0);
+  texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE |
+    (generateMips ? D3D11_BIND_RENDER_TARGET : 0);
   texDesc.CPUAccessFlags = 0;
-  texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE | (generateMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0);
+  texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE |
+    (generateMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0);
 
   HRESULT hr = S_OK;
 

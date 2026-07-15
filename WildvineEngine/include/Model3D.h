@@ -15,10 +15,21 @@ enum
   GLTF  ///< Modelo en formato GLTF / GLB.
 };
 
-struct EmbeddedTexture {
+struct
+EmbeddedTexture {
     std::string name;
     std::vector<unsigned char> data;
     int materialIndex = 0;
+    int textureSlot = 0;
+};
+
+struct
+ImportedMaterialInfo {
+    XMFLOAT4 baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    float metallic = 0.0f;
+    float roughness = 1.0f;
+    bool alphaBlend = false;
+    std::string texturePaths[6];
 };
 
 class
@@ -45,7 +56,7 @@ public:
     MeshComponent mesh;
     mesh.m_skyVertex.assign(vertices, vertices + 8);
     mesh.m_index.assign(indices, indices + 36);
-    mesh.m_numIndex = mesh.m_index.size();
+    mesh.m_numIndex = static_cast<int>(mesh.m_index.size());
     SetType(ResourceType::Model3D);
     m_meshes.push_back(mesh);
   }
@@ -130,7 +141,7 @@ public:
    * @brief Procesa los materiales de una malla FBX.
    * @param material Material de superficie FBX.
    */
-  void
+  int
   ProcessFBXMaterials(FbxSurfaceMaterial* material);
 
   /**
@@ -143,17 +154,30 @@ public:
   const std::vector<EmbeddedTexture>&
   GetEmbeddedTextures() const { return m_embeddedTextures; }
 
+  const std::vector<ImportedMaterialInfo>&
+  GetMaterialInfos() const { return m_materialInfos; }
+
 private:
-  std::string GetBinaryCachePath() const;
-  bool IsBinaryCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) const;
-  bool LoadBinaryCache(const std::string& cachePath);
-  bool SaveBinaryCache(const std::string& cachePath) const;
+  std::string
+  GetBinaryCachePath() const;
+
+  bool
+  IsBinaryCacheUpToDate(const std::string& sourcePath,
+    const std::string& cachePath) const;
+
+  bool
+  LoadBinaryCache(const std::string& cachePath);
+
+  bool
+  SaveBinaryCache(const std::string& cachePath) const;
 
 private:
   FbxManager* lSdkManager;            ///< Administrador principal del SDK de FBX.
   FbxScene* lScene;                   ///< Escena cargada desde el archivo FBX.
-  std::vector<std::string > textureFileNames;  ///< Lista de texturas usadas por el modelo.
+  ///< Lista de texturas usadas por el modelo.
+  std::vector<std::string > textureFileNames;
   std::vector<EmbeddedTexture> m_embeddedTextures;
+  std::vector<ImportedMaterialInfo> m_materialInfos;
 
 public:
   ModelType m_modelType;              ///< Tipo del modelo cargado (OBJ o FBX).

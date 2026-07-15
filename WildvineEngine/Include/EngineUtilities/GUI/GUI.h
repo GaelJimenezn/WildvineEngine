@@ -229,6 +229,8 @@ public:
   // Content Browser spawn
   std::string m_assetSpawnPath;
   bool m_assetSpawnRequested = false;
+  std::string m_assetDeletePath;
+  bool m_assetDeleteRequested = false;
   
   // Texture drop
   std::string m_textureDropPath;
@@ -244,7 +246,7 @@ public:
 
   // Grid / Snap
   bool  m_showGrid = true;
-  float m_gridSize = 10.0f;
+  float m_gridSize = 100.0f;
   bool  m_snapEnabled = false;
   float m_snapTranslate = 0.5f;
   float m_snapRotate = 15.0f;

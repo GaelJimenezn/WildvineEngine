@@ -5,42 +5,83 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <chrono>
 
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern LRESULT
+ImGui_ImplWin32_WndProcHandler(HWND hWnd,
+	UINT msg,
+	WPARAM wParam,
+	LPARAM lParam);
 
 namespace {
 
-static std::string toLowerCopy(std::string s) {
-	for (char& c : s) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+static std::string
+toLowerCopy(std::string s) {
+	for (char& c : s) {
+		if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+	}
 	return s;
 }
 
-static std::string stripExt(const std::string& f) {
+static std::string
+stripExt(const std::string& f) {
 	size_t d = f.find_last_of('.');
 	return (d == std::string::npos) ? f : f.substr(0, d);
 }
 
-static std::string fileBaseName(const std::string& path) {
+static std::string
+fileBaseName(const std::string& path) {
 	size_t s = path.find_last_of("/\\");
 	std::string n = (s == std::string::npos) ? path : path.substr(s + 1);
 	return stripExt(n);
 }
 
-static bool endsWith(const std::string& s, const std::string& suf) {
-	return s.size() >= suf.size() && s.compare(s.size() - suf.size(), suf.size(), suf) == 0;
+static bool
+endsWith(const std::string& s, const std::string& suf) {
+	return s.size() >= suf.size() &&
+		s.compare(s.size() - suf.size(), suf.size(), suf) == 0;
 }
 
-static bool containsStr(const std::string& s, const std::string& sub) {
+static bool
+containsStr(const std::string& s, const std::string& sub) {
 	return s.find(sub) != std::string::npos;
 }
 
-static ExtensionType extFromName(const std::string& lower) {
+static bool
+fileExists(const std::string& path) {
+	const DWORD attributes = GetFileAttributesA(path.c_str());
+	return attributes != INVALID_FILE_ATTRIBUTES &&
+		!(attributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+static bool
+isAbsolutePath(const std::string& path) {
+	return path.size() > 2 &&
+		((path[1] == ':' && (path[2] == '\\' || path[2] == '/')) ||
+			(path[0] == '\\' && path[1] == '\\'));
+}
+
+static std::string
+directoryOf(const std::string& path) {
+	const size_t slash = path.find_last_of("/\\");
+	return (slash == std::string::npos) ? std::string() : path.substr(0, slash);
+}
+
+static std::string
+fileNameOf(const std::string& path) {
+	const size_t slash = path.find_last_of("/\\");
+	return (slash == std::string::npos) ? path : path.substr(slash + 1);
+}
+
+static ExtensionType
+extFromName(const std::string& lower) {
 	if (endsWith(lower, ".jpg") || endsWith(lower, ".jpeg")) return JPG;
 	if (endsWith(lower, ".dds")) return DDS;
 	return PNG;
 }
 
-static std::vector<std::string> listImageFiles(const std::string& dir) {
+static std::vector<std::string>
+listImageFiles(const std::string& dir) {
 	std::vector<std::string> out;
 	std::string pat = dir + "\\*";
 	WIN32_FIND_DATAA fd;
@@ -57,7 +98,8 @@ static std::vector<std::string> listImageFiles(const std::string& dir) {
 	return out;
 }
 
-static std::vector<std::string> listSubfolders(const std::string& dir) {
+static std::vector<std::string>
+listSubfolders(const std::string& dir) {
 	std::vector<std::string> out;
 	std::string pat = dir + "\\*";
 	WIN32_FIND_DATAA fd;
@@ -73,17 +115,22 @@ static std::vector<std::string> listSubfolders(const std::string& dir) {
 	return out;
 }
 
-class TransformCommand : public ICommand {
+class
+TransformCommand : public ICommand {
 public:
 	TransformCommand(EU::TSharedPointer<Actor> actor,
 		const GizmoEditState& before,
 		const GizmoEditState& after)
 		: m_actor(actor), m_before(before), m_after(after) {}
-	void undo() override { apply(m_before); }
-	void redo() override { apply(m_after); }
-	const char* name() const override { return "Transform"; }
+	void
+	undo() override { apply(m_before); }
+	void
+	redo() override { apply(m_after); }
+	const char*
+	name() const override { return "Transform"; }
 private:
-	void apply(const GizmoEditState& s) {
+	void
+	apply(const GizmoEditState& s) {
 		if (m_actor.isNull()) return;
 		EU::TSharedPointer<Transform> t = m_actor->getComponent<Transform>();
 		if (!t) return;
@@ -96,25 +143,33 @@ private:
 	GizmoEditState m_after;
 };
 
-class SpawnActorCommand : public ICommand {
+class
+SpawnActorCommand : public ICommand {
 public:
 	SpawnActorCommand(BaseApp* app, EU::TSharedPointer<Actor> actor)
 		: m_app(app), m_actor(actor) {}
-	void undo() override { if (m_app) m_app->removeActorFromScene(m_actor); }
-	void redo() override { if (m_app) m_app->addActorToScene(m_actor); }
-	const char* name() const override { return "Spawn Actor"; }
+	void
+	undo() override { if (m_app) m_app->removeActorFromScene(m_actor); }
+	void
+	redo() override { if (m_app) m_app->addActorToScene(m_actor); }
+	const char*
+	name() const override { return "Spawn Actor"; }
 private:
 	BaseApp* m_app;
 	EU::TSharedPointer<Actor> m_actor;
 };
 
-class DeleteActorCommand : public ICommand {
+class
+DeleteActorCommand : public ICommand {
 public:
 	DeleteActorCommand(BaseApp* app, EU::TSharedPointer<Actor> actor)
 		: m_app(app), m_actor(actor) {}
-	void undo() override { if (m_app) m_app->addActorToScene(m_actor); }
-	void redo() override { if (m_app) m_app->removeActorFromScene(m_actor); }
-	const char* name() const override { return "Delete Actor"; }
+	void
+	undo() override { if (m_app) m_app->addActorToScene(m_actor); }
+	void
+	redo() override { if (m_app) m_app->removeActorFromScene(m_actor); }
+	const char*
+	name() const override { return "Delete Actor"; }
 private:
 	BaseApp* m_app;
 	EU::TSharedPointer<Actor> m_actor;
@@ -144,7 +199,8 @@ BaseApp::createLightActor(LightType type, const std::string& baseName) {
 
 	lightActor->setName(baseName);
 
-	EU::TSharedPointer<LightComponent> lightComponent = lightActor->getComponent<LightComponent>();
+	EU::TSharedPointer<LightComponent> lightComponent =
+		lightActor->getComponent<LightComponent>();
 	if (!lightComponent) {
 		lightComponent = EU::MakeShared<LightComponent>();
 		lightActor->addComponent(lightComponent);
@@ -154,8 +210,8 @@ BaseApp::createLightActor(LightType type, const std::string& baseName) {
 	light.type = type;
 	light.color = EU::Vector3(1.0f, 1.0f, 1.0f);
 	light.intensity = 3.0f;
-	light.direction = EU::Vector3(-0.35f, -1.0f, 0.25f);
-	light.position = EU::Vector3(0.0f, 3.0f, 0.0f);
+	light.direction = EU::Vector3(-0.35f, -0.25f, -1.0f);
+	light.position = EU::Vector3(0.0f, 0.0f, 3.0f);
 
 	// Defaults per type
 	if (type == LightType::Point) {
@@ -174,7 +230,7 @@ BaseApp::createLightActor(LightType type, const std::string& baseName) {
 		// Directional
 		light.range = 0.0f;
 		light.spotAngle = 0.0f;
-		light.position = EU::Vector3(-4.0f, 6.0f, -4.0f);
+		light.position = EU::Vector3(-4.0f, -4.0f, 6.0f);
 	}
 
 	lightComponent->setCastShadow(type == LightType::Directional);
@@ -217,8 +273,10 @@ BaseApp::enforceDefaultSceneLayout() {
 		LightData& light = lightComponent->getLightData();
 		light.type = LightType::Directional;
 		if (light.intensity <= 0.0f) light.intensity = 3.0f;
-		if (light.direction.x == 0.0f && light.direction.y == 0.0f && light.direction.z == 0.0f) {
-			light.direction = EU::Vector3(-0.35f, -1.0f, 0.25f);
+		if (light.direction.x == 0.0f &&
+			light.direction.y == 0.0f &&
+			light.direction.z == 0.0f) {
+			light.direction = EU::Vector3(-0.35f, -0.25f, -1.0f);
 		}
 		light.range = 0.0f;
 		light.spotAngle = 0.0f;
@@ -226,7 +284,9 @@ BaseApp::enforceDefaultSceneLayout() {
 	}
 
 	Actor* modelActor = m_cyberGun.isNull() ? nullptr : m_cyberGun.get();
-	Actor* lightActor = m_directionalLightActor.isNull() ? nullptr : m_directionalLightActor.get();
+	Actor* lightActor = m_directionalLightActor.isNull() ?
+		nullptr :
+		m_directionalLightActor.get();
 
 	for (int i = static_cast<int>(m_actors.size()) - 1; i >= 0; --i) {
 		Actor* actor = m_actors[i].isNull() ? nullptr : m_actors[i].get();
@@ -244,7 +304,7 @@ BaseApp::enforceDefaultSceneLayout() {
 void
 BaseApp::frameDefaultSceneCamera() {
 	if (m_model == nullptr || m_cyberGun.isNull()) {
-		m_camera.lookAt(EU::Vector3(0.0f, 3.0f, -12.0f), EU::Vector3(0.0f, 0.0f, 0.0f));
+		m_camera.lookAt(EU::Vector3(0.0f, -12.0f, 3.0f), EU::Vector3(0.0f, 0.0f, 0.0f));
 		return;
 	}
 
@@ -272,7 +332,7 @@ BaseApp::frameDefaultSceneCamera() {
 	}
 
 	if (!hasVertices) {
-		m_camera.lookAt(EU::Vector3(0.0f, 3.0f, -12.0f), EU::Vector3(0.0f, 0.0f, 0.0f));
+		m_camera.lookAt(EU::Vector3(0.0f, -12.0f, 3.0f), EU::Vector3(0.0f, 0.0f, 0.0f));
 		return;
 	}
 
@@ -309,7 +369,7 @@ BaseApp::frameDefaultSceneCamera() {
 	const float computedHeight = radius * 0.18f;
 	const float height = computedHeight > 1.5f ? computedHeight : 1.5f;
 
-	EU::Vector3 cameraPosition(center.x, center.y + height, center.z - distance);
+	EU::Vector3 cameraPosition(center.x, center.y - distance, center.z + height);
 	m_camera.lookAt(cameraPosition, center);
 }
 
@@ -334,7 +394,8 @@ BaseApp::syncLightActors() {
 
 	for (auto& actor : m_actors) {
 		if (actor.isNull()) continue;
-		EU::TSharedPointer<LightComponent> lightComponent = actor->getComponent<LightComponent>();
+		EU::TSharedPointer<LightComponent> lightComponent =
+			actor->getComponent<LightComponent>();
 		if (!lightComponent) continue;
 
 		LightData& light = lightComponent->getLightData();
@@ -352,14 +413,193 @@ BaseApp::syncLightActors() {
 }
 
 HRESULT
-BaseApp::loadPbrTexture(Texture& texture, const std::string& path, const char* debugName) {
-	HRESULT hr = texture.init(m_device, path, PNG);
+BaseApp::loadPbrTexture(Texture& texture,
+	const std::string& path,
+	const char* debugName) {
+	HRESULT hr = texture.initFromFile(m_device, path);
 	if (FAILED(hr)) {
 		ERROR("Main", "LoadPbrTexture",
 			("Failed to initialize " + std::string(debugName) + " texture: " + path +
 				". HRESULT: " + std::to_string(hr)).c_str());
 	}
 	return hr;
+}
+
+HRESULT
+BaseApp::buildEditorGridMesh() {
+	m_editorGridMesh.destroy();
+
+	MeshComponent gridMesh;
+	constexpr int halfCells = 100;
+	constexpr float spacing = 1.0f;
+	const float extent = halfCells * spacing;
+
+	auto pushVertex = [&](float x, float y) -> unsigned int {
+		SimpleVertex v{};
+		v.Position = EU::Vector3(x, y, 0.0f);
+		v.Normal = EU::Vector3(0.0f, 0.0f, 1.0f);
+		v.Tangent = EU::Vector3(1.0f, 0.0f, 0.0f);
+		v.Bitangent = EU::Vector3(0.0f, 1.0f, 0.0f);
+		v.TextureCoordinate = EU::Vector2(0.0f, 0.0f);
+		gridMesh.m_vertex.push_back(v);
+		return static_cast<unsigned int>(gridMesh.m_vertex.size() - 1);
+	};
+
+	auto pushLine = [&](float x0, float y0, float x1, float y1) {
+		gridMesh.m_index.push_back(pushVertex(x0, y0));
+		gridMesh.m_index.push_back(pushVertex(x1, y1));
+	};
+
+	for (int i = -halfCells; i <= halfCells; ++i) {
+		const float p = i * spacing;
+		pushLine(-extent, p, extent, p);
+		pushLine(p, -extent, p, extent);
+	}
+
+	gridMesh.m_numVertex = static_cast<int>(gridMesh.m_vertex.size());
+	gridMesh.m_numIndex = static_cast<int>(gridMesh.m_index.size());
+
+	Submesh submesh{};
+	HRESULT hr = submesh.vertexBuffer.init(m_device, gridMesh, D3D11_BIND_VERTEX_BUFFER);
+	if (FAILED(hr)) return hr;
+	hr = submesh.indexBuffer.init(m_device, gridMesh, D3D11_BIND_INDEX_BUFFER);
+	if (FAILED(hr)) return hr;
+	submesh.indexCount = gridMesh.m_numIndex;
+	submesh.startIndex = 0;
+	submesh.materialSlot = 0;
+	m_editorGridMesh.getSubmeshes().push_back(std::move(submesh));
+	m_editorGridReady = true;
+	return S_OK;
+}
+
+void
+BaseApp::addEditorGridToRenderScene() {
+	if (!m_gui.m_showGrid || !m_editorGridReady) return;
+
+	RenderObject gridObject{};
+	gridObject.mesh = &m_editorGridMesh;
+	gridObject.materialInstance = &m_editorGridMaterialInstance;
+	gridObject.materialInstances.push_back(&m_editorGridMaterialInstance);
+	gridObject.world = XMMatrixIdentity();
+	gridObject.topology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+	gridObject.castShadow = false;
+	gridObject.transparent = false;
+	gridObject.distanceToCamera = 0.0f;
+	m_renderScene.opaqueObjects.push_back(gridObject);
+}
+
+HRESULT
+BaseApp::rebuildEditorSelectionMesh(const EU::Vector3& localMin,
+	const EU::Vector3& localMax) {
+	m_editorSelectionMesh.destroy();
+	m_editorSelectionReady = false;
+
+	MeshComponent mesh;
+
+	auto pushVertex = [&](float x, float y, float z) -> unsigned int {
+		SimpleVertex v{};
+		v.Position = EU::Vector3(x, y, z);
+		v.Normal = EU::Vector3(0.0f, 0.0f, 1.0f);
+		v.Tangent = EU::Vector3(1.0f, 0.0f, 0.0f);
+		v.Bitangent = EU::Vector3(0.0f, 1.0f, 0.0f);
+		v.TextureCoordinate = EU::Vector2(0.0f, 0.0f);
+		mesh.m_vertex.push_back(v);
+		return static_cast<unsigned int>(mesh.m_vertex.size() - 1);
+	};
+
+	const unsigned int corners[] = {
+		pushVertex(localMin.x, localMin.y, localMin.z),
+		pushVertex(localMax.x, localMin.y, localMin.z),
+		pushVertex(localMax.x, localMax.y, localMin.z),
+		pushVertex(localMin.x, localMax.y, localMin.z),
+		pushVertex(localMin.x, localMin.y, localMax.z),
+		pushVertex(localMax.x, localMin.y, localMax.z),
+		pushVertex(localMax.x, localMax.y, localMax.z),
+		pushVertex(localMin.x, localMax.y, localMax.z)
+	};
+	const unsigned int edges[] = {
+		0,1, 1,2, 2,3, 3,0,
+		4,5, 5,6, 6,7, 7,4,
+		0,4, 1,5, 2,6, 3,7
+	};
+	for (unsigned int i : edges) {
+		mesh.m_index.push_back(corners[i]);
+	}
+
+	mesh.m_numVertex = static_cast<int>(mesh.m_vertex.size());
+	mesh.m_numIndex = static_cast<int>(mesh.m_index.size());
+
+	Submesh submesh{};
+	HRESULT hr = submesh.vertexBuffer.init(m_device, mesh, D3D11_BIND_VERTEX_BUFFER);
+	if (FAILED(hr)) return hr;
+	hr = submesh.indexBuffer.init(m_device, mesh, D3D11_BIND_INDEX_BUFFER);
+	if (FAILED(hr)) return hr;
+	submesh.indexCount = mesh.m_numIndex;
+	submesh.startIndex = 0;
+	submesh.materialSlot = 0;
+	m_editorSelectionMesh.getSubmeshes().push_back(std::move(submesh));
+	m_editorSelectionReady = true;
+	return S_OK;
+}
+
+void
+BaseApp::addEditorSelectionToRenderScene() {
+	if (m_gui.selectedActorIndex < 0 ||
+		m_gui.selectedActorIndex >= static_cast<int>(m_actors.size())) {
+		m_editorSelectionCachedActorIndex = -1;
+		return;
+	}
+
+	EU::TSharedPointer<Actor> actor = m_actors[m_gui.selectedActorIndex];
+	if (actor.isNull()) {
+		m_editorSelectionCachedActorIndex = -1;
+		return;
+	}
+	EU::TSharedPointer<Transform> transform = actor->getComponent<Transform>();
+	if (!transform) {
+		m_editorSelectionCachedActorIndex = -1;
+		return;
+	}
+
+	EU::Vector3 localMin, localMax;
+	if (!getActorAABB(actor, localMin, localMax)) {
+		m_editorSelectionCachedActorIndex = -1;
+		return;
+	}
+
+	auto sameBounds = [](const EU::Vector3& a, const EU::Vector3& b) {
+		const float eps = 0.0001f;
+		return fabsf(a.x - b.x) < eps &&
+			fabsf(a.y - b.y) < eps &&
+			fabsf(a.z - b.z) < eps;
+	};
+
+	const bool needsSelectionRebuild =
+		!m_editorSelectionReady ||
+		m_editorSelectionCachedActorIndex != m_gui.selectedActorIndex ||
+		!sameBounds(m_editorSelectionCachedMin, localMin) ||
+		!sameBounds(m_editorSelectionCachedMax, localMax);
+
+	if (needsSelectionRebuild) {
+		if (FAILED(rebuildEditorSelectionMesh(localMin, localMax)) ||
+			!m_editorSelectionReady) {
+			return;
+		}
+		m_editorSelectionCachedActorIndex = m_gui.selectedActorIndex;
+		m_editorSelectionCachedMin = localMin;
+		m_editorSelectionCachedMax = localMax;
+	}
+
+	RenderObject selectionObject{};
+	selectionObject.mesh = &m_editorSelectionMesh;
+	selectionObject.materialInstance = &m_editorSelectionMaterialInstance;
+	selectionObject.materialInstances.push_back(&m_editorSelectionMaterialInstance);
+	selectionObject.world = transform->worldMatrix;
+	selectionObject.topology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+	selectionObject.castShadow = false;
+	selectionObject.transparent = false;
+	selectionObject.distanceToCamera = 0.0f;
+	m_renderScene.opaqueObjects.push_back(selectionObject);
 }
 
 int
@@ -409,7 +649,10 @@ BaseApp::init() {
 	// 1. SwapChain
 	hr = m_swapChain.init(m_device, m_deviceContext, m_backBuffer, m_window);
 	if (FAILED(hr)) {
-		ERROR("Main", "InitDevice", ("Failed to initialize SwapChain. HRESULT: " + std::to_string(hr)).c_str());
+		ERROR("Main",
+			"InitDevice",
+			("Failed to initialize SwapChain. HRESULT: " +
+				std::to_string(hr)).c_str());
 		return hr;
 	}
 
@@ -431,6 +674,23 @@ BaseApp::init() {
 	if (FAILED(hr)) { ERROR("Main", "InitDevice", "Failed Viewport."); return hr; }
 	m_d3dReady = true;
 
+	hr = m_defaultWhiteSRV.initSolidColor(m_device,
+		255,
+		255,
+		255,
+		255,
+		"DefaultWhite");
+	if (FAILED(hr)) return hr;
+	hr = m_defaultBlackSRV.initSolidColor(m_device, 0, 0, 0, 255, "DefaultBlack");
+	if (FAILED(hr)) return hr;
+	hr = m_defaultFlatNormalSRV.initSolidColor(m_device,
+		128,
+		128,
+		255,
+		255,
+		"DefaultFlatNormal");
+	if (FAILED(hr)) return hr;
+
 	// --------------------------------------------------------------------------
 	// SKYBOX
 	// --------------------------------------------------------------------------
@@ -451,7 +711,8 @@ BaseApp::init() {
 			return E_FAIL;
 		}
 
-		struct PbrTextureRequest {
+		struct
+		PbrTextureRequest {
 			Texture* texture;
 			const char* path;
 			const char* debugName;
@@ -544,10 +805,10 @@ BaseApp::init() {
 	// CAMERA / LIGHT
 	// --------------------------------------------------------------------------
 	m_camera.setLens(XM_PIDIV4, m_window.m_width / (float)m_window.m_height, 0.01f, 100.0f);
-	m_camera.setPosition(0.0f, 3.0f, -6.0f);
+	m_camera.setPosition(0.0f, -6.0f, 3.0f);
 
 	m_constantBufferStruct.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
-	m_constantBufferStruct.LightDir = EU::Vector3(-0.20f, -1.0f, 1.0f);
+	m_constantBufferStruct.LightDir = EU::Vector3(-0.20f, -1.0f, -1.0f);
 
 	m_skybox.init(m_device, &m_deviceContext, m_skyboxTex);
 
@@ -557,7 +818,10 @@ BaseApp::init() {
 	hr = m_defaultRasterizer.init(m_device, D3D11_FILL_SOLID, D3D11_CULL_BACK, false, true);
 	if (FAILED(hr)) { ERROR("Main", "InitDevice", "Failed Rasterizer."); return hr; }
 
-	hr = m_defaultDepthStencil.init(m_device, true, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_LESS);
+	hr = m_defaultDepthStencil.init(m_device,
+		true,
+		D3D11_DEPTH_WRITE_MASK_ALL,
+		D3D11_COMPARISON_LESS);
 	if (FAILED(hr)) { ERROR("Main", "InitDevice", "Failed DepthStencilState."); return hr; }
 
 	hr = m_defaultSampler.init(m_device);
@@ -593,6 +857,48 @@ BaseApp::init() {
 	m_cyberGunMaterial.getParams().normalScale = 1.0f;
 	m_cyberGunMaterial.getParams().emissiveStrength = 1.0f;
 	m_cyberGunMaterial.getParams().alphaCutoff = 0.5f;
+
+	m_editorGridMaterial.setShader(&m_shaderProgram);
+	m_editorGridMaterial.setRasterizerState(&m_defaultRasterizer);
+	m_editorGridMaterial.setDepthStencilState(&m_defaultDepthStencil);
+	m_editorGridMaterial.setSamplerState(&m_defaultSampler);
+	m_editorGridMaterial.setDomain(MaterialDomain::Opaque);
+	m_editorGridMaterial.setBlendMode(BlendMode::Opaque);
+
+	m_editorGridMaterialInstance.setMaterial(&m_editorGridMaterial);
+	m_editorGridMaterialInstance.setAlbedo(&m_defaultWhiteSRV);
+	m_editorGridMaterialInstance.setNormal(&m_defaultFlatNormalSRV);
+	m_editorGridMaterialInstance.setMetallic(&m_defaultWhiteSRV);
+	m_editorGridMaterialInstance.setRoughness(&m_defaultWhiteSRV);
+	m_editorGridMaterialInstance.setAO(&m_defaultWhiteSRV);
+	m_editorGridMaterialInstance.setEmissive(&m_defaultBlackSRV);
+	m_editorGridMaterialInstance.getParams().baseColor =
+		XMFLOAT4(0.18f, 0.20f, 0.20f, 1.0f);
+	m_editorGridMaterialInstance.getParams().metallic = 0.0f;
+	m_editorGridMaterialInstance.getParams().roughness = 1.0f;
+	m_editorGridMaterialInstance.getParams().ao = 1.0f;
+	m_editorGridMaterialInstance.getParams().normalScale = 0.0f;
+	m_editorGridMaterialInstance.getParams().emissiveStrength = 0.0f;
+	m_editorGridMaterialInstance.getParams().alphaCutoff = 0.0f;
+
+	m_editorSelectionMaterialInstance.setMaterial(&m_editorGridMaterial);
+	m_editorSelectionMaterialInstance.setAlbedo(&m_defaultWhiteSRV);
+	m_editorSelectionMaterialInstance.setNormal(&m_defaultFlatNormalSRV);
+	m_editorSelectionMaterialInstance.setMetallic(&m_defaultWhiteSRV);
+	m_editorSelectionMaterialInstance.setRoughness(&m_defaultWhiteSRV);
+	m_editorSelectionMaterialInstance.setAO(&m_defaultWhiteSRV);
+	m_editorSelectionMaterialInstance.setEmissive(&m_defaultBlackSRV);
+	m_editorSelectionMaterialInstance.getParams().baseColor =
+		XMFLOAT4(0.55f, 0.24f, 0.95f, 1.0f);
+	m_editorSelectionMaterialInstance.getParams().metallic = 0.0f;
+	m_editorSelectionMaterialInstance.getParams().roughness = 0.65f;
+	m_editorSelectionMaterialInstance.getParams().ao = 1.0f;
+	m_editorSelectionMaterialInstance.getParams().normalScale = 0.0f;
+	m_editorSelectionMaterialInstance.getParams().emissiveStrength = 0.0f;
+	m_editorSelectionMaterialInstance.getParams().alphaCutoff = 0.0f;
+
+	hr = buildEditorGridMesh();
+	if (FAILED(hr)) { ERROR("Main", "InitDevice", "Failed EditorGrid."); return hr; }
 
 	// --------------------------------------------------------------------------
 	// MESH RENDERER COMPONENT
@@ -673,22 +979,137 @@ BaseApp::update(float deltaTime) {
 		m_gui.drawToolboxPanel();
 	}
 
-	m_gui.drawViewportGrid(m_camera);
-	m_gui.drawLightingPanel(&m_constantBufferStruct.LightDir.x, &m_constantBufferStruct.LightColor.x);
+	m_gui.drawLightingPanel(&m_constantBufferStruct.LightDir.x,
+		&m_constantBufferStruct.LightColor.x);
 	m_gui.drawStatsPanel(deltaTime, m_lastDrawCalls);
 	m_gui.drawConsolePanel();
 	m_gui.drawTexturePreview();
 	m_gui.drawContentBrowser(m_thumbnails);
 
+	if (m_gui.m_assetDeleteRequested) {
+		const std::string deletePath = m_gui.m_assetDeletePath;
+		m_gui.m_assetDeleteRequested = false;
+		m_gui.m_assetDeletePath.clear();
+
+		if (!deletePath.empty()) {
+			const BOOL deletedModel = DeleteFileA(deletePath.c_str());
+			DeleteFileA((deletePath + ".wvmesh").c_str());
+			if (m_pendingModelImport.active && m_pendingModelImport.path == deletePath) {
+				MESSAGE("BaseApp", "ContentBrowser", "El modelo se quitara del browser cuando termine el import activo");
+			}
+			if (m_queuedModelSpawnPath == deletePath) {
+				m_queuedModelSpawnActive = false;
+				m_queuedModelSpawnPath.clear();
+			}
+			if (m_gui.m_assetSpawnPath == deletePath) {
+				m_gui.m_assetSpawnRequested = false;
+				m_gui.m_assetSpawnPath.clear();
+			}
+			if (deletedModel) {
+				MESSAGE("BaseApp", "ContentBrowser", ("Modelo eliminado: " + deletePath).c_str());
+			}
+			else {
+				ERROR("BaseApp", "ContentBrowser", ("No se pudo eliminar: " + deletePath).c_str());
+			}
+		}
+	}
+
+	if (m_pendingModelImport.active &&
+		m_pendingModelImport.job.wait_for(std::chrono::seconds(0)) ==
+		std::future_status::ready) {
+		const bool imported = m_pendingModelImport.job.get();
+		const std::string path = m_pendingModelImport.path;
+		const EU::Vector3 spawnPosition = m_pendingModelImport.spawnPosition;
+		m_pendingModelImport.active = false;
+
+		if (imported) {
+			EU::TSharedPointer<Actor> a = loadModelActor(path, spawnPosition);
+			if (!a.isNull()) {
+				addActorToScene(a);
+				m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, a)));
+				m_gui.selectedActorIndex = (int)m_actors.size() - 1;
+				MESSAGE("BaseApp", "loadModelActor", "Modelo instanciado desde cache");
+			}
+		}
+		else {
+			ERROR("BaseApp", "AsyncModelImport", "No se pudo importar el modelo");
+		}
+	}
+
+	bool useQueuedModelSpawnPosition = false;
+	EU::Vector3 queuedModelSpawnPosition(0.0f, 0.0f, 0.0f);
+	if (!m_pendingModelImport.active && m_queuedModelSpawnActive) {
+		m_gui.m_assetSpawnPath = m_queuedModelSpawnPath;
+		m_gui.m_assetSpawnRequested = true;
+		queuedModelSpawnPosition = m_queuedModelSpawnPosition;
+		useQueuedModelSpawnPosition = true;
+		m_queuedModelSpawnActive = false;
+	}
+
 	// Instanciar modelo desde el Content Browser
 	if (m_gui.m_assetSpawnRequested) {
-		m_gui.m_assetSpawnRequested = false;
-		EU::TSharedPointer<Actor> a = loadModelActor(m_gui.m_assetSpawnPath);
-		if (!a.isNull()) {
-			addActorToScene(a);
-			m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, a)));
-			m_gui.selectedActorIndex = (int)m_actors.size() - 1;
-			MESSAGE("BaseApp", "loadModelActor", "Modelo instanciado desde Content");
+		EU::Vector3 spawnPosition(0.0f, 2.92f, 5.60f);
+		if (useQueuedModelSpawnPosition) {
+			spawnPosition = queuedModelSpawnPosition;
+		}
+		else {
+			if (!getViewportMouseGroundPosition(spawnPosition)) {
+				const EU::Vector3 cameraPosition = m_camera.getPosition();
+				const EU::Vector3 cameraForward = m_camera.GetForward();
+				spawnPosition = EU::Vector3(
+					cameraPosition.x + cameraForward.x * 8.0f,
+					cameraPosition.y + cameraForward.y * 8.0f,
+					0.0f);
+			}
+		}
+		const std::string lowerPath = toLowerCopy(m_gui.m_assetSpawnPath);
+		bool importAsync = endsWith(lowerPath, ".fbx");
+		WIN32_FILE_ATTRIBUTE_DATA fileData{};
+		if (importAsync &&
+			GetFileAttributesExA(m_gui.m_assetSpawnPath.c_str(),
+				GetFileExInfoStandard,
+				&fileData)) {
+			ULARGE_INTEGER size{};
+			size.LowPart = fileData.nFileSizeLow;
+			size.HighPart = fileData.nFileSizeHigh;
+			importAsync = size.QuadPart > (8ull * 1024ull * 1024ull);
+		}
+
+		if (importAsync) {
+			if (!m_pendingModelImport.active) {
+				m_gui.m_assetSpawnRequested = false;
+				const std::string path = m_gui.m_assetSpawnPath;
+				m_pendingModelImport.path = path;
+				m_pendingModelImport.spawnPosition = spawnPosition;
+				m_pendingModelImport.active = true;
+				m_pendingModelImport.job = std::async(std::launch::async, [path]() {
+					std::string lower = toLowerCopy(path);
+					ModelType type = FBX;
+					if (endsWith(lower, ".obj")) type = OBJ;
+					else if (endsWith(lower, ".glb") || endsWith(lower, ".gltf")) type = GLTF;
+					Model3D model(path, type);
+					return !model.GetMeshes().empty();
+				});
+				MESSAGE("BaseApp", "AsyncModelImport", "Importando FBX grande en background");
+			}
+			else {
+				m_queuedModelSpawnActive = true;
+				m_queuedModelSpawnPath = m_gui.m_assetSpawnPath;
+				m_queuedModelSpawnPosition = spawnPosition;
+				m_gui.m_assetSpawnRequested = false;
+				MESSAGE("BaseApp", "AsyncModelImport", "Modelo en cola hasta terminar el import actual");
+			}
+		}
+		else {
+			m_gui.m_assetSpawnRequested = false;
+			EU::TSharedPointer<Actor> a = loadModelActor(m_gui.m_assetSpawnPath,
+				spawnPosition);
+			if (!a.isNull()) {
+				addActorToScene(a);
+				m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, a)));
+				m_gui.selectedActorIndex = (int)m_actors.size() - 1;
+				MESSAGE("BaseApp", "loadModelActor", "Modelo instanciado desde Content");
+			}
 		}
 	}
 
@@ -698,7 +1119,8 @@ BaseApp::update(float deltaTime) {
 		if (m_gui.selectedActorIndex >= 0 && m_gui.selectedActorIndex < (int)m_actors.size()) {
 			EU::TSharedPointer<Actor> selected = m_actors[m_gui.selectedActorIndex];
 			if (!selected.isNull()) {
-				EU::TSharedPointer<MeshRendererComponent> mr = selected->getComponent<MeshRendererComponent>();
+				EU::TSharedPointer<MeshRendererComponent> mr =
+					selected->getComponent<MeshRendererComponent>();
 				if (mr && mr->getMaterialInstance()) {
 					Texture* newTex = new Texture();
 					HRESULT hr = loadPbrTexture(*newTex, m_gui.m_textureDropPath, "DynamicTexture");
@@ -856,17 +1278,17 @@ BaseApp::update(float deltaTime) {
 				if (GetAsyncKeyState('A') & 0x8000) m_camera.strafe(-speed);
 				if (GetAsyncKeyState('D') & 0x8000) m_camera.strafe( speed);
 				if (GetAsyncKeyState('E') & 0x8000) {
-					EU::Vector3 p = m_camera.getPosition(); p.y += speed; m_camera.setPosition(p);
+					EU::Vector3 p = m_camera.getPosition(); p.z += speed; m_camera.setPosition(p);
 				}
 				if (GetAsyncKeyState('Q') & 0x8000) {
-					EU::Vector3 p = m_camera.getPosition(); p.y -= speed; m_camera.setPosition(p);
+					EU::Vector3 p = m_camera.getPosition(); p.z -= speed; m_camera.setPosition(p);
 				}
 			}
 
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
 				m_camera.strafe(-io.MouseDelta.x * 0.02f);
 				EU::Vector3 p = m_camera.getPosition();
-				p.y += io.MouseDelta.y * 0.02f;
+				p.z += io.MouseDelta.y * 0.02f;
 				m_camera.setPosition(p);
 			}
 		}
@@ -893,26 +1315,14 @@ BaseApp::update(float deltaTime) {
 		pickActorFromMouse();
 	}
 
-	// --- Outline del objeto seleccionado (borde 3D) ---
-	if (!m_actors.empty() && m_gui.selectedActorIndex >= 0 &&
-		m_gui.selectedActorIndex < (int)m_actors.size()) {
-		EU::TSharedPointer<Actor> sel = m_actors[m_gui.selectedActorIndex];
-		if (!sel.isNull()) {
-			EU::TSharedPointer<Transform> t = sel->getComponent<Transform>();
-			EU::Vector3 mn, mx;
-			if (t && getActorAABB(sel, mn, mx)) {
-				m_gui.drawSelectionOutline(m_camera, mn, mx, t->worldMatrix);
-			}
-		}
-	}
-
 	// Resize estable del viewport
 	unsigned int desiredW = static_cast<unsigned int>(m_gui.m_viewportSize.x);
 	unsigned int desiredH = static_cast<unsigned int>(m_gui.m_viewportSize.y);
 	const unsigned int kMinViewportSize = 64;
 	if (desiredW < kMinViewportSize) desiredW = kMinViewportSize;
 	if (desiredH < kMinViewportSize) desiredH = kMinViewportSize;
-	if (desiredW != m_lastRequestedViewportWidth || desiredH != m_lastRequestedViewportHeight) {
+	if (desiredW != m_lastRequestedViewportWidth ||
+		desiredH != m_lastRequestedViewportHeight) {
 		m_lastRequestedViewportWidth = desiredW;
 		m_lastRequestedViewportHeight = desiredH;
 		m_viewportResizeStableFrames = 0;
@@ -939,13 +1349,20 @@ BaseApp::update(float deltaTime) {
 	}
 
 	XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
-	XMStoreFloat4x4(&m_constantBufferStruct.Projection, XMMatrixTranspose(m_camera.getProj()));
+	XMStoreFloat4x4(&m_constantBufferStruct.Projection,
+		XMMatrixTranspose(m_camera.getProj()));
 	m_constantBufferStruct.CameraPos = m_camera.getPosition();
 
 	syncLightActors();
 
 	m_skybox.update(m_deviceContext, m_camera);
-	m_constantBuffer.update(m_deviceContext, nullptr, 0, nullptr, &m_constantBufferStruct, 0, 0);
+	m_constantBuffer.update(m_deviceContext,
+		nullptr,
+		0,
+		nullptr,
+		&m_constantBufferStruct,
+		0,
+		0);
 	m_sceneGraph.update(deltaTime, m_deviceContext);
 }
 
@@ -958,6 +1375,8 @@ BaseApp::render() {
 	m_renderScene.clear();
 	m_sceneGraph.gatherRenderScene(m_renderScene, m_camera);
 	m_renderScene.skybox = &m_skybox;
+	addEditorGridToRenderScene();
+	addEditorSelectionToRenderScene();
 
 	m_renderPipeline.setShadowFactorDebugEnabled(m_gui.m_visualizeDeferredShadowFactor);
 	m_renderPipeline.render(m_deviceContext, m_camera, m_renderScene, m_editorViewportPass);
@@ -978,12 +1397,17 @@ BaseApp::destroy() {
 	m_renderPipeline.destroy();
 	m_editorViewportPass.destroy();
 	m_cyberGunRenderMesh.destroy();
+	m_editorGridMesh.destroy();
+	m_editorSelectionMesh.destroy();
 	m_AlbedoSRV.destroy();
 	m_MetallicSRV.destroy();
 	m_NormalSRV.destroy();
 	m_RoughnessSRV.destroy();
 	m_AOSRV.destroy();
 	m_EmissiveSRV.destroy();
+	m_defaultWhiteSRV.destroy();
+	m_defaultBlackSRV.destroy();
+	m_defaultFlatNormalSRV.destroy();
 	m_defaultRasterizer.destroy();
 	m_defaultDepthStencil.destroy();
 	m_defaultSampler.destroy();
@@ -1076,7 +1500,13 @@ BaseApp::onResize(unsigned int newW, unsigned int newH) {
 	if (FAILED(hr)) return;
 	hr = m_renderTargetView.init(m_device, m_backBuffer, DXGI_FORMAT_R8G8B8A8_UNORM);
 	if (FAILED(hr)) return;
-	hr = m_depthStencil.init(m_device, newW, newH, DXGI_FORMAT_D24_UNORM_S8_UINT, D3D11_BIND_DEPTH_STENCIL, 4, 0);
+	hr = m_depthStencil.init(m_device,
+		newW,
+		newH,
+		DXGI_FORMAT_D24_UNORM_S8_UINT,
+		D3D11_BIND_DEPTH_STENCIL,
+		4,
+		0);
 	if (FAILED(hr)) return;
 	hr = m_depthStencilView.init(m_device, m_depthStencil, DXGI_FORMAT_D24_UNORM_S8_UINT);
 	if (FAILED(hr)) return;
@@ -1091,7 +1521,10 @@ BaseApp::handleEditorViewportResize() {
 
 	m_deviceContext.m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	ID3D11ShaderResourceView* nullSRVs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] = {};
-	m_deviceContext.m_deviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullSRVs);
+	m_deviceContext.m_deviceContext->PSSetShaderResources(
+		0,
+		D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+		nullSRVs);
 
 	EditorViewportPass newPass;
 	HRESULT hr = newPass.init(m_device, m_pendingViewportWidth, m_pendingViewportHeight);
@@ -1137,7 +1570,8 @@ BaseApp::resetSceneToDefaults() {
 		}
 	}
 	if (!m_directionalLightActor.isNull()) {
-		EU::TSharedPointer<LightComponent> lc = m_directionalLightActor->getComponent<LightComponent>();
+		EU::TSharedPointer<LightComponent> lc =
+			m_directionalLightActor->getComponent<LightComponent>();
 		if (lc) {
 			lc->getLightData().direction = m_initialLightDir;
 			lc->getLightData().color = m_initialLightColor;
@@ -1154,7 +1588,9 @@ BaseApp::focusCameraOnActor(const EU::TSharedPointer<Actor>& actor) {
 	EU::Vector3 target = t->getPosition();
 	EU::Vector3 fwd = m_camera.GetForward();
 	const float dist = 6.0f;
-	EU::Vector3 eye(target.x - fwd.x * dist, target.y - fwd.y * dist, target.z - fwd.z * dist);
+	EU::Vector3 eye(target.x - fwd.x * dist,
+		target.y - fwd.y * dist,
+		target.z - fwd.z * dist);
 	m_camera.lookAt(eye, target);
 	m_camera.setPosition(eye);
 }
@@ -1180,7 +1616,9 @@ BaseApp::fitCameraToScene() {
 	float radius = 0.5f * sqrtf(dx * dx + dy * dy + dz * dz) + 3.0f;
 	float dist = radius / tanf(m_camera.getFovY() * 0.5f);
 	EU::Vector3 fwd = m_camera.GetForward();
-	EU::Vector3 eye(center.x - fwd.x * dist, center.y - fwd.y * dist, center.z - fwd.z * dist);
+	EU::Vector3 eye(center.x - fwd.x * dist,
+		center.y - fwd.y * dist,
+		center.z - fwd.z * dist);
 	m_camera.lookAt(eye, center);
 	m_camera.setPosition(eye);
 }
@@ -1230,7 +1668,8 @@ BaseApp::pickActorFromMouse() {
 
 	for (int i = 0; i < (int)m_actors.size(); ++i) {
 		if (m_actors[i].isNull()) continue;
-		EU::TSharedPointer<MeshRendererComponent> mr = m_actors[i]->getComponent<MeshRendererComponent>();
+		EU::TSharedPointer<MeshRendererComponent> mr =
+			m_actors[i]->getComponent<MeshRendererComponent>();
 		if (!mr || !mr->isVisible()) continue;
 		EU::TSharedPointer<Transform> t = m_actors[i]->getComponent<Transform>();
 		if (!t) continue;
@@ -1247,8 +1686,12 @@ BaseApp::pickActorFromMouse() {
 			float cz = (c & 4) ? lmx.z : lmn.z;
 			XMVECTOR wc = XMVector3TransformCoord(XMVectorSet(cx, cy, cz, 1.0f), world);
 			XMFLOAT3 f; XMStoreFloat3(&f, wc);
-			bmin[0] = fminf(bmin[0], f.x); bmin[1] = fminf(bmin[1], f.y); bmin[2] = fminf(bmin[2], f.z);
-			bmax[0] = fmaxf(bmax[0], f.x); bmax[1] = fmaxf(bmax[1], f.y); bmax[2] = fmaxf(bmax[2], f.z);
+			bmin[0] = fminf(bmin[0], f.x);
+			bmin[1] = fminf(bmin[1], f.y);
+			bmin[2] = fminf(bmin[2], f.z);
+			bmax[0] = fmaxf(bmax[0], f.x);
+			bmax[1] = fmaxf(bmax[1], f.y);
+			bmax[2] = fmaxf(bmax[2], f.z);
 		}
 
 		float ro[3] = { o.x, o.y, o.z };
@@ -1273,6 +1716,50 @@ BaseApp::pickActorFromMouse() {
 	}
 
 	if (bestIndex >= 0) m_gui.selectedActorIndex = bestIndex;
+}
+
+bool
+BaseApp::getViewportMouseGroundPosition(EU::Vector3& outPosition) const {
+	const float vpX = m_gui.m_viewportPos.x;
+	const float vpY = m_gui.m_viewportPos.y;
+	const float vpW = m_gui.m_viewportSize.x;
+	const float vpH = m_gui.m_viewportSize.y;
+	if (vpW < 1.0f || vpH < 1.0f) return false;
+
+	const ImVec2 mouse = ImGui::GetIO().MousePos;
+	const float mx = mouse.x - vpX;
+	const float my = mouse.y - vpY;
+	if (mx < 0.0f || my < 0.0f || mx > vpW || my > vpH) return false;
+
+	const float ndcX = (2.0f * mx / vpW) - 1.0f;
+	const float ndcY = 1.0f - (2.0f * my / vpH);
+
+	XMMATRIX view = m_camera.getView();
+	XMMATRIX proj = m_camera.getProj();
+	XMVECTOR det;
+	XMMATRIX invVP = XMMatrixInverse(&det, view * proj);
+	XMVECTOR nearP = XMVector3TransformCoord(
+		XMVectorSet(ndcX, ndcY, 0.0f, 1.0f),
+		invVP);
+	XMVECTOR farP = XMVector3TransformCoord(
+		XMVectorSet(ndcX, ndcY, 1.0f, 1.0f),
+		invVP);
+
+	XMFLOAT3 origin;
+	XMFLOAT3 direction;
+	XMStoreFloat3(&origin, nearP);
+	XMStoreFloat3(&direction, XMVector3Normalize(XMVectorSubtract(farP, nearP)));
+
+	if (fabsf(direction.z) < 1e-5f) return false;
+	const float hitT = -origin.z / direction.z;
+	if (hitT < 0.0f) return false;
+	if (hitT > 80.0f) return false;
+
+	outPosition = EU::Vector3(
+		origin.x + direction.x * hitT,
+		origin.y + direction.y * hitT,
+		0.0f);
+	return true;
 }
 
 void
@@ -1332,7 +1819,8 @@ BaseApp::duplicateSelected() {
 	EU::TSharedPointer<Transform> nt = a->getComponent<Transform>();
 	if (nt) nt->setTransform(pos, rot, sca);
 
-	EU::TSharedPointer<MeshRendererComponent> srcMr = src->getComponent<MeshRendererComponent>();
+	EU::TSharedPointer<MeshRendererComponent> srcMr =
+		src->getComponent<MeshRendererComponent>();
 	if (srcMr) {
 		EU::TSharedPointer<MeshRendererComponent> mr = EU::MakeShared<MeshRendererComponent>();
 		a->addComponent(mr);
@@ -1389,7 +1877,8 @@ BaseApp::copySelected() {
 	m_clipboard.hasMesh = false;
 	m_clipboard.hasLight = false;
 	
-	EU::TSharedPointer<MeshRendererComponent> srcMr = src->getComponent<MeshRendererComponent>();
+	EU::TSharedPointer<MeshRendererComponent> srcMr =
+		src->getComponent<MeshRendererComponent>();
 	if (srcMr) {
 		m_clipboard.hasMesh = true;
 		m_clipboard.mesh = srcMr->getMesh();
@@ -1453,7 +1942,10 @@ BaseApp::savePrefabSelected() {
 	if (!t) return;
 	CreateDirectoryA("Saved", nullptr);
 	std::ofstream f("Saved/actor.prefab", std::ios::trunc);
-	if (!f.is_open()) { ERROR("BaseApp", "savePrefab", "No se pudo abrir el archivo"); return; }
+	if (!f.is_open()) {
+		ERROR("BaseApp", "savePrefab", "No se pudo abrir el archivo");
+		return;
+	}
 	EU::Vector3 p = t->getPosition(), r = t->getRotation(), s = t->getScale();
 	std::string n = src->getName();
 	for (char& ch : n) if (ch == ' ') ch = '_';
@@ -1468,7 +1960,10 @@ BaseApp::savePrefabSelected() {
 void
 BaseApp::loadPrefab() {
 	std::ifstream f("Saved/actor.prefab");
-	if (!f.is_open()) { ERROR("BaseApp", "loadPrefab", "No existe Saved/actor.prefab"); return; }
+	if (!f.is_open()) {
+		ERROR("BaseApp", "loadPrefab", "No existe Saved/actor.prefab");
+		return;
+	}
 	std::string token, name = "Prefab";
 	EU::Vector3 p(0, 0, 0), r(0, 0, 0), s(1, 1, 1);
 	int version = 0;
@@ -1519,56 +2014,106 @@ BaseApp::buildTextureThumbnails() {
 void
 BaseApp::loadModelTextures(LoadedModel& lm, const std::string& folder) {
 	if (lm.materialInstances.empty()) return;
-	MaterialInstance* primaryMat = lm.materialInstances[0].get();
 
-	std::string folderStr = folder;
-	std::vector<std::string> files = listImageFiles(folderStr);
-	if (files.empty()) {
-		primaryMat->setAlbedo(&m_AlbedoSRV);
-		MESSAGE("BaseApp", "loadModelTextures", "Carpeta no encontrada; usando textura fallback");
+	struct
+	TextureCandidate {
+		std::string directory;
+		std::string fileName;
+	};
+
+	auto detectSlot = [](const std::string& lower,
+		const std::string& baseNoExt,
+		bool singleTexture) -> int {
+		if (containsStr(lower, "normal") ||
+			endsWith(baseNoExt, "_n") ||
+			endsWith(baseNoExt, "_nrm")) return 1;
+		if (containsStr(lower, "metallic") ||
+			containsStr(lower, "metalness") ||
+			endsWith(baseNoExt, "_m") ||
+			endsWith(baseNoExt, "_met")) return 2;
+		if (containsStr(lower, "roughness") ||
+			endsWith(baseNoExt, "_r") ||
+			endsWith(baseNoExt, "_rgh")) return 3;
+		if (containsStr(lower, "occlusion") ||
+			containsStr(lower, "ambientocclusion") ||
+			endsWith(baseNoExt, "_ao") ||
+			endsWith(baseNoExt, "_o")) return 4;
+		if (containsStr(lower, "emissive") || containsStr(lower, "emission")) return 5;
+		if (containsStr(lower, "basecolor") ||
+			containsStr(lower, "albedo") ||
+			containsStr(lower, "diffuse") ||
+			containsStr(lower, "base") ||
+			endsWith(baseNoExt, "_bc") ||
+			endsWith(baseNoExt, "_d") ||
+			endsWith(baseNoExt, "_alb") ||
+			singleTexture) {
+			return 0;
+		}
+		return -1;
+	};
+
+	auto applyTexture = [](MaterialInstance* material, int slot, Texture* texture) {
+		if (!material || !texture) return;
+		switch (slot) {
+		case 0: material->setAlbedo(texture); break;
+		case 1: material->setNormal(texture); break;
+		case 2: material->setMetallic(texture); break;
+		case 3: material->setRoughness(texture); break;
+		case 4: material->setAO(texture); break;
+		case 5: material->setEmissive(texture); break;
+		default: break;
+		}
+	};
+
+	std::vector<TextureCandidate> candidates;
+	const std::vector<std::string> folderFiles = listImageFiles(folder);
+	for (const std::string& fileName : folderFiles) {
+		candidates.push_back(TextureCandidate{ folder, fileName });
+	}
+
+	if (candidates.empty()) {
+		const std::string modelName = toLowerCopy(fileBaseName(folder));
+		const std::string rootDir = "Assets/Textures";
+		const std::vector<std::string> rootFiles = listImageFiles(rootDir);
+		for (const std::string& fileName : rootFiles) {
+			if (toLowerCopy(stripExt(fileName)) == modelName) {
+				candidates.push_back(TextureCandidate{ rootDir, fileName });
+			}
+		}
+	}
+
+	if (candidates.empty()) {
+		MESSAGE("BaseApp",
+			"loadModelTextures",
+			"Sin texturas externas; usando defaults PBR");
 		return;
 	}
-	for (const std::string& f : files) {
-		std::string lower = toLowerCopy(f);
-		std::string baseNoExt = toLowerCopy(stripExt(f));
-		std::string path = folder + "/" + stripExt(f);
-		ExtensionType ext = extFromName(lower);
 
-		int slot = -1;
-		if (containsStr(lower, "basecolor") || containsStr(lower, "albedo") || containsStr(lower, "diffuse")) slot = 0;
-		else if (containsStr(lower, "normal")) slot = 1;
-		else if (containsStr(lower, "roughness")) slot = 3;
-		else if (containsStr(lower, "metallic") || containsStr(lower, "metalness")) slot = 2;
-		else if (containsStr(lower, "occlusion")) slot = 4;
-		else if (endsWith(baseNoExt, "_bc") || endsWith(baseNoExt, "_d") || endsWith(baseNoExt, "_alb")) slot = 0;
-		else if (endsWith(baseNoExt, "_n") || endsWith(baseNoExt, "_nrm")) slot = 1;
-		else if (endsWith(baseNoExt, "_r") || endsWith(baseNoExt, "_rgh")) slot = 3;
-		else if (endsWith(baseNoExt, "_m") || endsWith(baseNoExt, "_met")) slot = 2;
-		else if (endsWith(baseNoExt, "_ao") || endsWith(baseNoExt, "_o")) slot = 4;
+	const bool singleTexture = candidates.size() == 1;
+	for (const TextureCandidate& candidate : candidates) {
+		const std::string lower = toLowerCopy(candidate.fileName);
+		const std::string baseNoExt = toLowerCopy(stripExt(candidate.fileName));
+		const std::string path = candidate.directory + "/" + candidate.fileName;
+
+		const int slot = detectSlot(lower, baseNoExt, singleTexture);
 
 		HRESULT hr;
 		auto tex = std::make_unique<Texture>();
-		hr = tex->init(m_device, path, ext);
+		hr = tex->initFromFile(m_device, path);
 		if (SUCCEEDED(hr)) {
-			switch (slot) {
-			case 0: primaryMat->setAlbedo(tex.get()); break;
-			case 1: primaryMat->setNormal(tex.get()); break;
-			case 2: primaryMat->setMetallic(tex.get()); break;
-			case 3: primaryMat->setRoughness(tex.get()); break;
-			case 4: primaryMat->setAO(tex.get()); break;
-			default: break;
+			if (slot >= 0) {
+				for (auto& materialInstance : lm.materialInstances) {
+					applyTexture(materialInstance.get(), slot, tex.get());
+				}
 			}
 			lm.externalTextures.push_back(std::move(tex));
 		}
 	}
-	if (!primaryMat->getAlbedo()) {
-		primaryMat->setAlbedo(&m_AlbedoSRV);
-		MESSAGE("BaseApp", "loadModelTextures", "Sin albedo en la carpeta; usando textura fallback");
-	}
 }
 
 EU::TSharedPointer<Actor>
-BaseApp::loadModelActor(const std::string& modelPath) {
+BaseApp::loadModelActor(const std::string& modelPath,
+	const EU::Vector3& spawnPosition) {
 	std::string lower = toLowerCopy(modelPath);
 	ModelType type = FBX;
 	if (endsWith(lower, ".obj")) type = OBJ;
@@ -1581,16 +2126,56 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 		return EU::TSharedPointer<Actor>();
 	}
 
+	std::vector<MeshComponent> renderMeshes = meshes;
+	if (type == FBX) {
+		EU::Vector3 rawMin(1e9f, 1e9f, 1e9f);
+		EU::Vector3 rawMax(-1e9f, -1e9f, -1e9f);
+		bool hasVertex = false;
+		for (const MeshComponent& mc : renderMeshes) {
+			for (const SimpleVertex& v : mc.m_vertex) {
+				rawMin.x = fminf(rawMin.x, v.Position.x);
+				rawMin.y = fminf(rawMin.y, v.Position.y);
+				rawMin.z = fminf(rawMin.z, v.Position.z);
+				rawMax.x = fmaxf(rawMax.x, v.Position.x);
+				rawMax.y = fmaxf(rawMax.y, v.Position.y);
+				rawMax.z = fmaxf(rawMax.z, v.Position.z);
+				hasVertex = true;
+			}
+		}
+		if (hasVertex) {
+			const EU::Vector3 pivotOffset(
+				(rawMin.x + rawMax.x) * 0.5f,
+				(rawMin.y + rawMax.y) * 0.5f,
+				rawMin.z);
+			for (MeshComponent& mc : renderMeshes) {
+				for (SimpleVertex& v : mc.m_vertex) {
+					v.Position.x -= pivotOffset.x;
+					v.Position.y -= pivotOffset.y;
+					v.Position.z -= pivotOffset.z;
+				}
+			}
+		}
+	}
+
 	std::unique_ptr<LoadedModel> lm(new LoadedModel());
 
 	HRESULT hr;
 	int numMaterials = 1;
-	for (const MeshComponent& mc : meshes) {
+	for (const MeshComponent& mc : renderMeshes) {
+		if (mc.m_vertex.empty() || mc.m_index.empty() || mc.m_numIndex <= 0) {
+			continue;
+		}
 		Submesh sm{};
 		hr = sm.vertexBuffer.init(m_device, mc, D3D11_BIND_VERTEX_BUFFER);
-		if (FAILED(hr)) { ERROR("BaseApp", "loadModelActor", "Fallo vertex buffer"); return EU::TSharedPointer<Actor>(); }
+		if (FAILED(hr)) {
+			ERROR("BaseApp", "loadModelActor", "Fallo vertex buffer");
+			return EU::TSharedPointer<Actor>();
+		}
 		hr = sm.indexBuffer.init(m_device, mc, D3D11_BIND_INDEX_BUFFER);
-		if (FAILED(hr)) { ERROR("BaseApp", "loadModelActor", "Fallo index buffer"); return EU::TSharedPointer<Actor>(); }
+		if (FAILED(hr)) {
+			ERROR("BaseApp", "loadModelActor", "Fallo index buffer");
+			return EU::TSharedPointer<Actor>();
+		}
 		sm.indexCount = mc.m_numIndex;
 		sm.startIndex = 0;
 		sm.materialSlot = mc.m_materialIndex;
@@ -1599,13 +2184,19 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 
 		if (mc.m_materialIndex >= numMaterials) numMaterials = mc.m_materialIndex + 1;
 	}
+	if (lm->mesh.getSubmeshes().empty()) {
+		ERROR("BaseApp", "loadModelActor", "El modelo no genero submallas renderizables");
+		return EU::TSharedPointer<Actor>();
+	}
 
 	lm->localMin = EU::Vector3(1e9f, 1e9f, 1e9f);
 	lm->localMax = EU::Vector3(-1e9f, -1e9f, -1e9f);
-	for (const MeshComponent& mc : meshes) {
+	for (const MeshComponent& mc : renderMeshes) {
 		XMMATRIX localMat = XMLoadFloat4x4(&mc.m_localTransform);
 		for (const SimpleVertex& v : mc.m_vertex) {
-			XMVECTOR p = XMVector3TransformCoord(XMVectorSet(v.Position.x, v.Position.y, v.Position.z, 1.0f), localMat);
+			XMVECTOR p = XMVector3TransformCoord(
+				XMVectorSet(v.Position.x, v.Position.y, v.Position.z, 1.0f),
+				localMat);
 			XMFLOAT3 fpos; XMStoreFloat3(&fpos, p);
 			lm->localMin.x = fminf(lm->localMin.x, fpos.x);
 			lm->localMin.y = fminf(lm->localMin.y, fpos.y);
@@ -1627,8 +2218,14 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 
 		auto inst = std::make_unique<MaterialInstance>();
 		inst->setMaterial(mat.get());
+		inst->setAlbedo(&m_defaultWhiteSRV);
+		inst->setNormal(&m_defaultFlatNormalSRV);
+		inst->setMetallic(&m_defaultBlackSRV);
+		inst->setRoughness(&m_defaultWhiteSRV);
+		inst->setAO(&m_defaultWhiteSRV);
+		inst->setEmissive(&m_defaultBlackSRV);
 		inst->getParams().baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-		inst->getParams().metallic = 1.0f;
+		inst->getParams().metallic = 0.0f;
 		inst->getParams().roughness = 1.0f;
 		inst->getParams().ao = 1.0f;
 		inst->getParams().normalScale = 1.0f;
@@ -1639,28 +2236,161 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 		lm->materialInstances.push_back(std::move(inst));
 	}
 
+	const std::vector<ImportedMaterialInfo>& materialInfos = model.GetMaterialInfos();
+	for (int i = 0; i < numMaterials && i < static_cast<int>(materialInfos.size()); ++i) {
+		const ImportedMaterialInfo& info = materialInfos[i];
+		Material* material = lm->materials[i].get();
+		MaterialInstance* instance = lm->materialInstances[i].get();
+		instance->getParams().baseColor = info.baseColor;
+		instance->getParams().metallic = info.metallic;
+		instance->getParams().roughness = info.roughness;
+		instance->setMetallic(&m_defaultWhiteSRV);
+		instance->setRoughness(&m_defaultWhiteSRV);
+		instance->setAO(&m_defaultWhiteSRV);
+		if (info.alphaBlend || info.baseColor.w < 0.999f) {
+			material->setDomain(MaterialDomain::Transparent);
+			material->setBlendMode(BlendMode::Alpha);
+		}
+	}
+
 	std::string modelName = fileBaseName(modelPath);
 	loadModelTextures(*lm, "Assets/Textures/" + modelName);
+
+	EU::Vector3 actorScale(1.0f, 1.0f, 1.0f);
+	if (type == FBX) {
+		const float sizeX = lm->localMax.x - lm->localMin.x;
+		const float sizeY = lm->localMax.y - lm->localMin.y;
+		const float sizeZ = lm->localMax.z - lm->localMin.z;
+		float maxSize = fmaxf(sizeX, fmaxf(sizeY, sizeZ));
+		if (maxSize > 0.0001f) {
+			const float targetMaxSize = 6.0f;
+			if (maxSize > 12.0f || maxSize < 0.35f) {
+				const float uniformScale = targetMaxSize / maxSize;
+				actorScale = EU::Vector3(uniformScale, uniformScale, uniformScale);
+			}
+		}
+	}
+
+	auto resolveTexturePath = [&](const std::string& rawPath) -> std::string {
+		if (rawPath.empty()) return std::string();
+
+		std::vector<std::string> candidates;
+		candidates.push_back(rawPath);
+		const std::string modelDir = directoryOf(modelPath);
+		const std::string rawFile = fileNameOf(rawPath);
+		if (!modelDir.empty()) {
+			if (!isAbsolutePath(rawPath)) {
+				candidates.push_back(modelDir + "/" + rawPath);
+			}
+			candidates.push_back(modelDir + "/" + rawFile);
+			candidates.push_back(modelDir + "/textures/" + rawFile);
+			candidates.push_back(modelDir + "/Textures/" + rawFile);
+		}
+		candidates.push_back("Assets/Textures/" + modelName + "/" + rawFile);
+		candidates.push_back("Assets/Textures/" + rawFile);
+
+		for (const std::string& candidate : candidates) {
+			if (fileExists(candidate)) return candidate;
+		}
+		return std::string();
+	};
+
+	auto applyTexture = [](MaterialInstance* material, int slot, Texture* texture) {
+		if (!material || !texture) return;
+		switch (slot) {
+		case 0: material->setAlbedo(texture); break;
+		case 1: material->setNormal(texture); break;
+		case 2: material->setMetallic(texture); break;
+		case 3: material->setRoughness(texture); break;
+		case 4: material->setAO(texture); break;
+		case 5: material->setEmissive(texture); break;
+		default: break;
+		}
+	};
+
+	for (int materialIndex = 0;
+		materialIndex < numMaterials &&
+		materialIndex < static_cast<int>(materialInfos.size());
+		++materialIndex) {
+		MaterialInstance* materialInstance =
+			lm->materialInstances[materialIndex].get();
+		for (int slot = 0; slot < 6; ++slot) {
+			const std::string resolvedPath =
+				resolveTexturePath(materialInfos[materialIndex].texturePaths[slot]);
+			if (resolvedPath.empty()) continue;
+
+			auto texture = std::make_unique<Texture>();
+			if (SUCCEEDED(texture->initFromFile(m_device, resolvedPath))) {
+				applyTexture(materialInstance, slot, texture.get());
+				lm->externalTextures.push_back(std::move(texture));
+			}
+		}
+	}
 
 	if (type == GLTF) {
 		const auto& embTextures = model.GetEmbeddedTextures();
 		for (const auto& emb : embTextures) {
+			int targetMat =
+				(emb.materialIndex >= 0 && emb.materialIndex < numMaterials) ?
+				emb.materialIndex :
+				0;
+			MaterialInstance* mInst = lm->materialInstances[targetMat].get();
+
+			if (emb.textureSlot == 6) {
+				auto metallicTex = std::make_unique<Texture>();
+				auto roughnessTex = std::make_unique<Texture>();
+				HRESULT hrMetallic = metallicTex->initSingleChannelFromMemory(
+					m_device,
+					emb.data.data(),
+					emb.data.size(),
+					2,
+					emb.name + "_metallic");
+				HRESULT hrRoughness = roughnessTex->initSingleChannelFromMemory(
+					m_device,
+					emb.data.data(),
+					emb.data.size(),
+					1,
+					emb.name + "_roughness");
+
+				if (SUCCEEDED(hrMetallic)) {
+					mInst->setMetallic(metallicTex.get());
+					lm->externalTextures.push_back(std::move(metallicTex));
+				}
+				if (SUCCEEDED(hrRoughness)) {
+					mInst->setRoughness(roughnessTex.get());
+					lm->externalTextures.push_back(std::move(roughnessTex));
+				}
+				continue;
+			}
+
 			auto tex = std::make_unique<Texture>();
-			HRESULT hrTex = tex->initFromMemory(m_device, emb.data.data(), emb.data.size(), emb.name);
+			HRESULT hrTex = tex->initFromMemory(m_device,
+				emb.data.data(),
+				emb.data.size(),
+				emb.name);
 			if (SUCCEEDED(hrTex)) {
-				std::string lowerName = toLowerCopy(emb.name);
-				int targetMat = (emb.materialIndex >= 0 && emb.materialIndex < numMaterials) ? emb.materialIndex : 0;
-				MaterialInstance* mInst = lm->materialInstances[targetMat].get();
-				
-				if (lowerName.find("normal") != std::string::npos) {
-					mInst->setNormal(tex.get());
-				} else if (lowerName.find("metallic") != std::string::npos || lowerName.find("orm") != std::string::npos || lowerName.find("roughness") != std::string::npos) {
-					mInst->setMetallic(tex.get());
-					mInst->setRoughness(tex.get());
-				} else if (lowerName.find("emissive") != std::string::npos) {
-					mInst->setEmissive(tex.get());
-				} else {
+				switch (emb.textureSlot) {
+				case 0:
 					mInst->setAlbedo(tex.get());
+					break;
+				case 1:
+					mInst->setNormal(tex.get());
+					break;
+				case 2:
+					mInst->setMetallic(tex.get());
+					break;
+				case 3:
+					mInst->setRoughness(tex.get());
+					break;
+				case 4:
+					mInst->setAO(tex.get());
+					break;
+				case 5:
+					mInst->setEmissive(tex.get());
+					break;
+				default:
+					mInst->setAlbedo(tex.get());
+					break;
 				}
 				lm->externalTextures.push_back(std::move(tex));
 			}
@@ -1671,7 +2401,11 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 	if (a.isNull()) return a;
 	a->setName(modelName);
 	EU::TSharedPointer<Transform> t = a->getComponent<Transform>();
-	if (t) t->setTransform(EU::Vector3(0.0f, 2.92f, 5.60f), EU::Vector3(0.0f, 0.0f, 0.0f), EU::Vector3(1.0f, 1.0f, 1.0f));
+	if (t) {
+		t->setTransform(spawnPosition,
+			EU::Vector3(0.0f, 0.0f, 0.0f),
+			actorScale);
+	}
 	EU::TSharedPointer<MeshRendererComponent> mr = a->getComponent<MeshRendererComponent>();
 	if (!mr) { mr = EU::MakeShared<MeshRendererComponent>(); a->addComponent(mr); }
 	if (mr) {
@@ -1688,9 +2422,12 @@ BaseApp::loadModelActor(const std::string& modelPath) {
 }
 
 bool
-BaseApp::getActorAABB(const EU::TSharedPointer<Actor>& actor, EU::Vector3& outMin, EU::Vector3& outMax) {
+BaseApp::getActorAABB(const EU::TSharedPointer<Actor>& actor,
+	EU::Vector3& outMin,
+	EU::Vector3& outMax) {
 	if (actor.isNull()) return false;
-	EU::TSharedPointer<MeshRendererComponent> mr = actor->getComponent<MeshRendererComponent>();
+	EU::TSharedPointer<MeshRendererComponent> mr =
+		actor->getComponent<MeshRendererComponent>();
 	if (!mr) return false;
 	Mesh* mesh = mr->getMesh();
 	if (!mesh) return false;

@@ -145,7 +145,7 @@ LightData {
   /**
    * @brief Dirección utilizada por luces direccionales y spot.
    */
-  EU::Vector3 direction = EU::Vector3(0.0f, -1.0f, 0.0f);
+  EU::Vector3 direction = EU::Vector3(0.0f, 0.0f, -1.0f);
 
   /**
    * @brief Distancia máxima de influencia.
@@ -251,7 +251,7 @@ CBPerFrame {
   /**
    * @brief Dirección de la luz principal.
    */
-  EU::Vector3 LightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
+  EU::Vector3 LightDir = EU::Vector3(0.0f, 0.0f, -1.0f);
 
   float pad1 = 0.0f;
 
@@ -268,7 +268,7 @@ CBPerFrame {
   /**
    * @brief Posición de la luz principal.
    */
-  EU::Vector3 LightPosition = EU::Vector3(0.0f, 3.0f, 0.0f);
+  EU::Vector3 LightPosition = EU::Vector3(0.0f, 0.0f, 3.0f);
 
   /**
    * @brief Tipo de la luz principal.
@@ -367,6 +367,8 @@ RenderObject {
    * @brief Transformación mundial del objeto.
    */
   XMMATRIX world = XMMatrixIdentity();
+  /** @brief Topologia usada al enviar la geometria al input assembler. */
+  D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
   /**
    * @brief Indica si el objeto proyecta sombras.

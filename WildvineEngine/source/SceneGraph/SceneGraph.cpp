@@ -8,6 +8,7 @@
 #include "EngineUtilities/Utilities/Camera.h"
 #include "Rendering/Material.h"
 #include "Rendering/MaterialInstance.h"
+#include "Rendering/Mesh.h"
 #include "Rendering/RenderScene.h"
 
 void SceneGraph::init() {
@@ -258,18 +259,30 @@ SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
 		float dz = objectPos.z - cameraPos.z;
 		renderObject.distanceToCamera = dx * dx + dy * dy + dz * dz;
 
-		MaterialDomain domain = MaterialDomain::Opaque;
-		if (renderObject.materialInstance &&
-			renderObject.materialInstance->getMaterial()) {
-			domain = renderObject.materialInstance->getMaterial()->getDomain();
+		bool hasOpaqueSubmesh = false;
+		bool hasTransparentSubmesh = false;
+		if (renderObject.mesh) {
+			for (const Submesh& submesh : renderObject.mesh->getSubmeshes()) {
+				MaterialInstance* instance = renderObject.materialInstance;
+				if (submesh.materialSlot < renderObject.materialInstances.size() &&
+					renderObject.materialInstances[submesh.materialSlot]) {
+					instance = renderObject.materialInstances[submesh.materialSlot];
+				}
+				Material* material = instance ? instance->getMaterial() : nullptr;
+				const bool transparent =
+					material && material->getDomain() == MaterialDomain::Transparent;
+				hasTransparentSubmesh = hasTransparentSubmesh || transparent;
+				hasOpaqueSubmesh = hasOpaqueSubmesh || !transparent;
+			}
 		}
 
-		renderObject.transparent = (domain == MaterialDomain::Transparent);
-		if (renderObject.transparent) {
-			outScene.transparentObjects.push_back(renderObject);
-		}
-		else {
+		if (hasOpaqueSubmesh) {
+			renderObject.transparent = false;
 			outScene.opaqueObjects.push_back(renderObject);
+		}
+		if (hasTransparentSubmesh) {
+			renderObject.transparent = true;
+			outScene.transparentObjects.push_back(renderObject);
 		}
 	}
 }

@@ -70,8 +70,8 @@ Camera::strafe(float d) {
 
 void
 Camera::yaw(float radians) {
-	// Rotación alrededor del eje Y global
-	XMMATRIX rot = XMMatrixRotationY(radians);
+	// Rotacion alrededor del eje Z global (Z-up).
+	XMMATRIX rot = XMMatrixRotationZ(radians);
 
 	XMVECTOR R = XMVectorSet(m_right.x, m_right.y, m_right.z, 0.0f);
 	XMVECTOR U = XMVectorSet(m_up.x, m_up.y, m_up.z, 0.0f);

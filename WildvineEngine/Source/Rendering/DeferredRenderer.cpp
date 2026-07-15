@@ -261,16 +261,16 @@ DeferredRenderer::updatePerFrame(const Camera& camera,
 	XMStoreFloat4x4(&m_cbPerFrame.View, XMMatrixTranspose(camera.getView()));
 	XMStoreFloat4x4(&m_cbPerFrame.Projection, XMMatrixTranspose(camera.getProj()));
 	m_cbPerFrame.CameraPos = camera.getPosition();
-	m_cbPerFrame.LightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
+	m_cbPerFrame.LightDir = EU::Vector3(0.0f, 0.0f, -1.0f);
 	m_cbPerFrame.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
-	m_cbPerFrame.LightPosition = EU::Vector3(0.0f, 3.0f, 0.0f);
+	m_cbPerFrame.LightPosition = EU::Vector3(0.0f, 0.0f, 3.0f);
 	m_cbPerFrame.LightRange = 10.0f;
 	m_cbPerFrame.LightType = static_cast<int>(LightType::Directional);
 	m_cbPerFrame.LightCount = 0;
 	for (int lightIndex = 0; lightIndex < kMaxSceneLights; ++lightIndex) {
 		m_cbPerFrame.LightPositionsRanges[lightIndex] = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 		m_cbPerFrame.LightColorsTypes[lightIndex] = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-		m_cbPerFrame.LightDirectionsIntensities[lightIndex] = XMFLOAT4(0.0f, -1.0f, 0.0f, 0.0f);
+		m_cbPerFrame.LightDirectionsIntensities[lightIndex] = XMFLOAT4(0.0f, 0.0f, -1.0f, 0.0f);
 	}
 
 	// --- Fill all lights into the per-frame buffer ---
@@ -326,7 +326,7 @@ DeferredRenderer::updatePerFrame(const Camera& camera,
 
 void
 DeferredRenderer::updateLightMatrices(const Camera& camera, const RenderScene& scene) {
-	EU::Vector3 lightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
+	EU::Vector3 lightDir = EU::Vector3(0.0f, 0.0f, -1.0f);
 	const LightData* primaryShadowLight = findPrimaryShadowLight(scene);
 	if (primaryShadowLight) {
 		lightDir = primaryShadowLight->direction;
@@ -424,7 +424,7 @@ DeferredRenderer::renderGeometryObject(DeviceContext& deviceContext, const Rende
 		return;
 	}
 
-	deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	deviceContext.IASetPrimitiveTopology(object.topology);
 
 	std::vector<Submesh>& submeshes = object.mesh->getSubmeshes();
 	for (Submesh& submesh : submeshes) {
@@ -560,7 +560,7 @@ DeferredRenderer::renderForwardObject(DeviceContext& deviceContext,
 		return;
 	}
 
-	deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	deviceContext.IASetPrimitiveTopology(object.topology);
 
 	std::vector<Submesh>& submeshes = object.mesh->getSubmeshes();
 	for (Submesh& submesh : submeshes) {

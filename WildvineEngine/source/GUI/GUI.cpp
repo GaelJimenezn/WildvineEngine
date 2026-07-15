@@ -1787,10 +1787,19 @@ void GUI::drawViewportGrid(Camera& cam) {
 	float view[16], proj[16], identity[16];
 	ToFloatArray(cam.getView(), view);
 	ToFloatArray(cam.getProj(), proj);
-	ToFloatArray(XMMatrixIdentity(), identity);
+	ToFloatArray(XMMatrixRotationX(XM_PIDIV2), identity);
 	if (m_viewportDrawList) ImGuizmo::SetDrawlist(m_viewportDrawList);
 	ImGuizmo::SetRect(m_viewportPos.x, m_viewportPos.y, m_viewportSize.x, m_viewportSize.y);
+	if (m_viewportDrawList) {
+		m_viewportDrawList->PushClipRect(
+			m_viewportPos,
+			ImVec2(m_viewportPos.x + m_viewportSize.x, m_viewportPos.y + m_viewportSize.y),
+			true);
+	}
 	ImGuizmo::DrawGrid(view, proj, identity, m_gridSize);
+	if (m_viewportDrawList) {
+		m_viewportDrawList->PopClipRect();
+	}
 }
 
 void GUI::drawLightingPanel(float* lightDir, float* lightColor) {
@@ -1980,6 +1989,11 @@ void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 				if (ImGui::SmallButton("Spawn")) {
 					m_assetSpawnPath = "Assets/Models/" + m;
 					m_assetSpawnRequested = true;
+				}
+				ImGui::SameLine();
+				if (ImGui::SmallButton("Remove")) {
+					m_assetDeletePath = "Assets/Models/" + m;
+					m_assetDeleteRequested = true;
 				}
 				ImGui::EndGroup();
 				ImGui::PopID();

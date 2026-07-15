@@ -46,9 +46,28 @@ public:
       ExtensionType extensionType);
 
   HRESULT
+    initFromFile(Device& device,
+      const std::string& fullPath);
+
+  HRESULT
     initFromMemory(Device& device,
       const unsigned char* data,
       size_t size,
+      const std::string& textureName);
+
+  HRESULT
+    initSingleChannelFromMemory(Device& device,
+      const unsigned char* data,
+      size_t size,
+      int channelIndex,
+      const std::string& textureName);
+
+  HRESULT
+    initSolidColor(Device& device,
+      unsigned char r,
+      unsigned char g,
+      unsigned char b,
+      unsigned char a,
       const std::string& textureName);
 
   /**

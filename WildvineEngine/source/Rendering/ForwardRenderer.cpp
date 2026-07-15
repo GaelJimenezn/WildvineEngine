@@ -73,7 +73,7 @@ ForwardRenderer::updatePerFrame(const Camera& camera,
   XMStoreFloat4x4(&m_cbPerFrame.View, XMMatrixTranspose(camera.getView()));
   XMStoreFloat4x4(&m_cbPerFrame.Projection, XMMatrixTranspose(camera.getProj()));
   m_cbPerFrame.CameraPos = camera.getPosition();
-  m_cbPerFrame.LightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
+  m_cbPerFrame.LightDir = EU::Vector3(0.0f, 0.0f, -1.0f);
   m_cbPerFrame.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
 
   if (!scene.directionalLights.empty()) {
@@ -276,11 +276,7 @@ ForwardRenderer::renderObject(DeviceContext& deviceContext,
     return;
   }
 
-  XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(object.world));
-  m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
-  m_perObjectBuffer.render(deviceContext, 1, 1, true);
-
-  deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  deviceContext.IASetPrimitiveTopology(object.topology);
 
   std::vector<Submesh>& submeshes = object.mesh->getSubmeshes();
   for (Submesh& submesh : submeshes) {
@@ -318,6 +314,11 @@ ForwardRenderer::renderObject(DeviceContext& deviceContext,
       material->getSamplerState()->render(deviceContext, 0, 1);
     }
 
+    XMMATRIX submeshWorld = XMLoadFloat4x4(&submesh.localTransform) * object.world;
+    XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(submeshWorld));
+    m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
+    m_perObjectBuffer.render(deviceContext, 1, 1, true);
+
     materialInstance->bindTextures(deviceContext);
 
     const MaterialParams& params = materialInstance->getParams();
@@ -346,16 +347,17 @@ ForwardRenderer::renderShadowObject(DeviceContext& deviceContext, const RenderOb
     return;
   }
 
-  XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(object.world));
-  m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
-  m_perObjectBuffer.render(deviceContext, 1, 1, false);
-
   m_shadowShader.render(deviceContext);
   deviceContext.m_deviceContext->PSSetShader(nullptr, nullptr, 0);
   deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
   std::vector<Submesh>& submeshes = object.mesh->getSubmeshes();
   for (Submesh& submesh : submeshes) {
+    XMMATRIX submeshWorld = XMLoadFloat4x4(&submesh.localTransform) * object.world;
+    XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(submeshWorld));
+    m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
+    m_perObjectBuffer.render(deviceContext, 1, 1, false);
+
     submesh.vertexBuffer.render(deviceContext, 0, 1);
     submesh.indexBuffer.render(deviceContext, 0, 1, false, DXGI_FORMAT_R32_UINT);
     deviceContext.DrawIndexed(submesh.indexCount, submesh.startIndex, 0);
@@ -365,7 +367,7 @@ ForwardRenderer::renderShadowObject(DeviceContext& deviceContext, const RenderOb
 // Calcula las matrices de vista y proyección desde la perspectiva de la luz
 void
 ForwardRenderer::updateLightMatrices(const Camera& camera, const RenderScene& scene) {
-  EU::Vector3 lightDir = EU::Vector3(0.0f, -1.0f, 0.0f);
+  EU::Vector3 lightDir = EU::Vector3(0.0f, 0.0f, -1.0f);
   if (!scene.directionalLights.empty()) {
     lightDir = scene.directionalLights.front().direction;
   }

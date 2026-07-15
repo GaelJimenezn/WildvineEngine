@@ -83,7 +83,7 @@ public:
 	void
 	lookAt(const EU::Vector3& pos,
 				const EU::Vector3& target,
-				const EU::Vector3& up = EU::Vector3(0, 1, 0));
+				const EU::Vector3& up = EU::Vector3(0, 0, 1));
 
 
 	/**
@@ -230,12 +230,12 @@ private:
 	/**
 	 * @brief Vector Up (base ortonormal en mundo).
 	 */
-	EU::Vector3 m_up{ 0.0f, 1.0f, 0.0f };
+	EU::Vector3 m_up{ 0.0f, 0.0f, 1.0f };
 
 	/**
 	 * @brief Vector Forward (dirección de vista).
 	 */
-	EU::Vector3 m_forward{ 0.0f, 0.0f, 1.0f };
+	EU::Vector3 m_forward{ 0.0f, 1.0f, 0.0f };
 
 	/**
 	 * @brief Matriz de vista almacenada.
