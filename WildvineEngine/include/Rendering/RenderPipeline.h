@@ -11,7 +11,10 @@
  * @enum RendererType
  * @brief Tipos de renderer soportados por el pipeline.
  */
-enum class RendererType { Forward = 0, Deferred = 1 };
+enum
+/** @brief Declara class RendererType. */
+class
+RendererType { Forward = 0, Deferred = 1 };
 
 /**
  * @class RenderPipeline
@@ -26,7 +29,8 @@ public:
 	 * @param initialRenderer  Tipo de renderer inicial (Forward o Deferred).
 	 * @return S_OK en éxito.
 	 */
-	HRESULT init(Device& device, RendererType initialRenderer = RendererType::Deferred);
+	HRESULT
+	init(Device& device, RendererType initialRenderer = RendererType::Deferred);
 
 	/**
 	 * @brief Cambia el renderer activo en tiempo de ejecución.
@@ -34,7 +38,8 @@ public:
 	 * @param device       Dispositivo D3D11 (para inicializar si es necesario).
 	 * @return S_OK en éxito.
 	 */
-	HRESULT setRendererType(RendererType rendererType, Device& device);
+	HRESULT
+	setRendererType(RendererType rendererType, Device& device);
 
 	/**
 	 * @brief Redimensiona los recursos internos del renderer activo.
@@ -42,7 +47,8 @@ public:
 	 * @param width  Nuevo ancho en píxeles.
 	 * @param height Nuevo alto en píxeles.
 	 */
-	void resize(Device& device, unsigned int width, unsigned int height);
+	void
+	resize(Device& device, unsigned int width, unsigned int height);
 
 	/**
 	 * @brief Ejecuta el render del frame completo usando el renderer activo.
@@ -51,49 +57,66 @@ public:
 	 * @param scene         Datos de la escena para este frame.
 	 * @param viewportPass  Pass de render del viewport del editor.
 	 */
-	void render(DeviceContext& deviceContext,
+	void
+	render(DeviceContext& deviceContext,
 		const Camera& camera,
 		RenderScene& scene,
 		EditorViewportPass& viewportPass);
 
 	/** @brief Libera todos los recursos de los renderers. */
-	void destroy();
+	void
+	destroy();
 
 	/**
 	 * @brief Devuelve el tipo de renderer activo.
 	 * @return RendererType actual (Forward o Deferred).
 	 */
-	RendererType getRendererType() const { return m_activeRendererType; }
+	RendererType
+	getRendererType() const { return m_activeRendererType; }
 
 	/**
 	 * @brief Devuelve el nombre del renderer activo como cadena.
 	 * @return Cadena literal con el nombre del renderer.
 	 */
-	const char* getActiveRendererName() const;
+	const char*
+	getActiveRendererName() const;
 
 	/** @brief @return SRV del shadow map generado en el shadow pass. */
-	ID3D11ShaderResourceView* getShadowMapSRV() const;
+	ID3D11ShaderResourceView*
+	getShadowMapSRV() const;
 	/** @brief @return SRV del pre-shadow debug pass. */
-	ID3D11ShaderResourceView* getPreShadowSRV() const;
+	ID3D11ShaderResourceView*
+	getPreShadowSRV() const;
 	/** @brief @return SRV del GBuffer Albedo+Metallic. */
-	ID3D11ShaderResourceView* getGBufferAlbedoMetallicSRV() const;
+	ID3D11ShaderResourceView*
+	getGBufferAlbedoMetallicSRV() const;
 	/** @brief @return SRV del GBuffer Normal+Roughness. */
-	ID3D11ShaderResourceView* getGBufferNormalRoughnessSRV() const;
+	ID3D11ShaderResourceView*
+	getGBufferNormalRoughnessSRV() const;
 	/** @brief @return SRV del GBuffer WorldPos+AO. */
-	ID3D11ShaderResourceView* getGBufferWorldAoSRV() const;
+	ID3D11ShaderResourceView*
+	getGBufferWorldAoSRV() const;
 	/** @brief @return SRV del GBuffer Emissive+Alpha. */
-	ID3D11ShaderResourceView* getGBufferEmissiveAlphaSRV() const;
+	ID3D11ShaderResourceView*
+	getGBufferEmissiveAlphaSRV() const;
 
 	/**
 	 * @brief Activa o desactiva el modo debug de shadow factor.
 	 * @param enabled true para activar la visualización de shadow factor.
 	 */
-	void setShadowFactorDebugEnabled(bool enabled);
+	void
+	setShadowFactorDebugEnabled(bool enabled);
 
 private:
-	HRESULT ensureRendererInitialized(RendererType rendererType, Device& device);
-	ISceneRenderer* resolveRenderer(RendererType rendererType);
-	const ISceneRenderer* resolveRenderer(RendererType rendererType) const;
+	/** @brief Declara o ejecuta ensureRendererInitialized. */
+	HRESULT
+	ensureRendererInitialized(RendererType rendererType, Device& device);
+	/** @brief Declara o ejecuta resolveRenderer. */
+	ISceneRenderer*
+	resolveRenderer(RendererType rendererType);
+	/** @brief Declara o ejecuta resolveRenderer. */
+	const ISceneRenderer*
+	resolveRenderer(RendererType rendererType) const;
 
 private:
 	ForwardRenderer m_forwardRenderer;

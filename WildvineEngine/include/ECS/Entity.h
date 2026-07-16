@@ -1,16 +1,22 @@
+/**
+ * @file Entity.h
+ * @brief Declara la API de Entity dentro del sistema de entidades.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "Component.h"
 
-class DeviceContext;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 /**
  * @class Entity
  * @brief Clase base para todas las entidades del motor.
  *
  * Define un conjunto de funciones virtuales puras para administrar el ciclo de vida
- * de una entidad: inicialización, actualización, renderizado y destrucción.
- * Las entidades pueden contener múltiples componentes derivados de Component.
+ * de una entidad: inicializaciÃ³n, actualizaciÃ³n, renderizado y destrucciÃ³n.
+ * Las entidades pueden contener mÃºltiples componentes derivados de Component.
  */
 class
 Entity {
@@ -26,6 +32,7 @@ public:
   virtual
   ~Entity() = default;
 
+  /** @brief Declara o ejecuta awake. */
   virtual void
   awake() = 0;
 
@@ -39,7 +46,7 @@ public:
   /**
    * @brief Actualiza la entidad por frame.
    * @param deltaTime Tiempo entre frames.
-   * @param deviceContext Contexto del dispositivo para operaciones gráficas.
+   * @param deviceContext Contexto del dispositivo para operaciones grÃ¡ficas.
    */
   virtual void
   update(float deltaTime, DeviceContext& deviceContext) = 0;
@@ -64,20 +71,26 @@ public:
    */
   template <typename T> void
   addComponent(EU::TSharedPointer<T> component) {
-    static_assert(std::is_base_of<Component, T>::value, "T must be derived from Component");
+    static_assert(
+      std::is_base_of<Component,
+      T>::value,
+      "T must be derived from Component"
+    );
     m_components.push_back(component.template dynamic_pointer_cast<Component>());
   }
 
   /**
    * @brief Obtiene un componente del tipo solicitado, si existe.
    * @tparam T Tipo del componente a buscar.
-   * @return Puntero compartido al componente encontrado, o vacío si no existe.
+   * @return Puntero compartido al componente encontrado, o vacÃ­o si no existe.
    */
   template<typename T>
+  /** @brief Declara o ejecuta getComponent. */
   EU::TSharedPointer<T>
     getComponent() {
     for (auto& component : m_components) {
-      EU::TSharedPointer<T> specificComponent = component.template dynamic_pointer_cast<T>();
+      EU::TSharedPointer<T> specificComponent =
+        component.template dynamic_pointer_cast<T>();
       if (specificComponent) {
         return specificComponent;
       }
@@ -87,7 +100,10 @@ public:
 
 private:
 protected:
-  bool m_isActive;                                      ///< Indica si la entidad está activa.
-  int m_id;                                            ///< Identificador único de la entidad.
-  std::vector<EU::TSharedPointer<Component>> m_components; ///< Lista de componentes asociados a la entidad.
+  /** @brief Indica si la entidad estÃ¡ activa.. */
+  bool m_isActive;
+  /** @brief Identificador Ãºnico de la entidad.. */
+  int m_id;
+  /** @brief Lista de componentes asociados a la entidad.. */
+  std::vector<EU::TSharedPointer<Component>> m_components;
 };

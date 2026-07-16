@@ -1,19 +1,31 @@
+/**
+ * @file SceneGraph.h
+ * @brief Declara la API de SceneGraph para la jerarqu√≠a de escena.
+ */
 #pragma once
 #include "Prerequisites.h"
 
 
-class Entity;
-class DeviceContext;
-class Camera;
-class RenderScene;
+/** @brief Declara class Entity. */
+class
+Entity;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
+/** @brief Declara class Camera. */
+class
+Camera;
+/** @brief Declara class RenderScene. */
+class
+RenderScene;
 
 /**
  * @class SceneGraph
- * @brief Grafo de escena jer·rquico del motor.
+ * @brief Grafo de escena jer√°rquico del motor.
  *
- * El SceneGraph administra la relaciÛn padre-hijo entre entidades,
- * permite la propagaciÛn de transformaciones y controla la actualizaciÛn
- * y renderizado jer·rquico de la escena.
+ * El SceneGraph administra la relaci√≥n padre-hijo entre entidades,
+ * permite la propagaci√≥n de transformaciones y controla la actualizaci√≥n
+ * y renderizado jer√°rquico de la escena.
  */
 class
 SceneGraph {
@@ -65,9 +77,9 @@ public:
 	/**
 	 * @brief Adjunta una entidad hija a una entidad padre.
 	 *
-	 * @param child Entidad que ser· hija.
-	 * @param parent Entidad que ser· el padre.
-	 * @return true si la operaciÛn fue exitosa.
+	 * @param child Entidad que ser√° hija.
+	 * @param parent Entidad que ser√° el padre.
+	 * @return true si la operaci√≥n fue exitosa.
 	 */
 	bool
 	attach(Entity* child, Entity* parent);
@@ -76,7 +88,7 @@ public:
 	 * @brief Desacopla una entidad de su padre.
 	 *
 	 * @param child Entidad a desacoplar.
-	 * @return true si la operaciÛn fue exitosa.
+	 * @return true si la operaci√≥n fue exitosa.
 	 */
 	bool
 	detach(Entity* child);
@@ -84,11 +96,11 @@ public:
 	/**
 	 * @brief Actualiza el estado del grafo de escena.
 	 *
-	 * Propaga transformaciones y ejecuta la lÛgica de actualizaciÛn
+	 * Propaga transformaciones y ejecuta la l√≥gica de actualizaci√≥n
 	 * de cada entidad registrada.
 	 *
-	 * @param deltaTime Tiempo transcurrido desde el ˙ltimo frame.
-	 * @param deviceContext Contexto del dispositivo para la actualizaciÛn.
+	 * @param deltaTime Tiempo transcurrido desde el √∫ltimo frame.
+	 * @param deviceContext Contexto del dispositivo para la actualizaci√≥n.
 	 */
 	void
 	update(float deltaTime, DeviceContext& deviceContext);
@@ -96,13 +108,14 @@ public:
 	/**
 	 * @brief Renderiza todas las entidades del grafo de escena.
 	 *
-	 * El render se realiza respetando la jerarquÌa del grafo.
+	 * El render se realiza respetando la jerarqu√≠a del grafo.
 	 *
 	 * @param deviceContext Contexto del dispositivo para renderizado.
 	 */
 	void
 	render(DeviceContext& deviceContext);
 
+	/** @brief Declara o ejecuta gatherRenderScene. */
 	void
 	gatherRenderScene(RenderScene& outScene, const Camera& camera);
 
@@ -123,7 +136,7 @@ private:
 	updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld);
 
 	/**
-	 * @brief Comprueba si una entidad es raÌz del grafo.
+	 * @brief Comprueba si una entidad es ra√≠z del grafo.
 	 *
 	 * @param e Entidad a comprobar.
 	 * @return true si la entidad no tiene padre.
@@ -132,10 +145,10 @@ private:
 	isRoot(Entity* e) const;
 
 	/**
-	 * @brief Comprueba si una entidad est· registrada en el grafo.
+	 * @brief Comprueba si una entidad est√° registrada en el grafo.
 	 *
 	 * @param e Entidad a comprobar.
-	 * @return true si la entidad est· registrada.
+	 * @return true si la entidad est√° registrada.
 	 */
 	bool
   isRegistered(Entity* e) const;

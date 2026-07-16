@@ -11,7 +11,9 @@
 #include "Prerequisites.h"
 #include "Rendering/RenderTypes.h"
 
-class Skybox;
+/** @brief Declara class Skybox. */
+class
+Skybox;
 
 /**
  * @class RenderScene

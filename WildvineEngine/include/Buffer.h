@@ -1,23 +1,27 @@
+/**
+ * @file Buffer.h
+ * @brief Declara la API p煤blica de Buffer dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "MeshComponent.h"
 
 /**
- * @brief Declaraci髇 adelantada de la clase Device.
+ * @brief Declaraci贸n adelantada de la clase Device.
  */
 class
 Device;
 
 /**
- * @brief Declaraci髇 adelantada de la clase DeviceContext.
+ * @brief Declaraci贸n adelantada de la clase DeviceContext.
  */
 class
 DeviceContext;
 
 /**
  * @class Buffer
- * @brief Clase encargada de manejar la creaci髇, actualizaci髇, renderizado
- *        y destrucci髇 de buffers utilizados en DirectX.
+ * @brief Clase encargada de manejar la creaci贸n, actualizaci贸n, renderizado
+ *        y destrucci贸n de buffers utilizados en DirectX.
  */
 class
 Buffer {
@@ -36,30 +40,30 @@ public:
    * @brief Inicializa el buffer utilizando los datos de un componente de malla.
    * @param device Referencia al dispositivo de renderizado.
    * @param mesh Referencia al componente de malla que contiene los datos del modelo.
-   * @param bindFlag Indicador de tipo de enlace (por ejemplo, v閞tices o 韓dices).
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @param bindFlag Indicador de tipo de enlace (por ejemplo, v茅rtices o 铆ndices).
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   init(Device& device, const MeshComponent& mesh, unsigned int bindFlag);
 
   /**
-   * @brief Inicializa un buffer vac韔 con un tama駉 en bytes determinado.
+   * @brief Inicializa un buffer vac铆o con un tama帽o en bytes determinado.
    * @param device Referencia al dispositivo de renderizado.
-   * @param ByteWidth Tama駉 del buffer en bytes.
-   * @return HRESULT que indica el resultado de la creaci髇.
+   * @param ByteWidth Tama帽o del buffer en bytes.
+   * @return HRESULT que indica el resultado de la creaci贸n.
    */
   HRESULT
   init(Device& device, unsigned int ByteWidth);
 
   /**
    * @brief Actualiza el contenido del buffer con nuevos datos.
-   * @param deviceContext Contexto del dispositivo para la actualizaci髇.
+   * @param deviceContext Contexto del dispositivo para la actualizaci贸n.
    * @param pDstResource Recurso de destino a actualizar.
-   * @param DstSubresource 蚽dice del subrecurso de destino.
-   * @param pDstBox Caja que define el 醨ea del recurso a actualizar.
+   * @param DstSubresource 脥ndice del subrecurso de destino.
+   * @param pDstBox Caja que define el 谩rea del recurso a actualizar.
    * @param pSrcData Puntero a los datos fuente.
-   * @param SrcRowPitch Tama駉 de la fila de datos fuente.
-   * @param SrcDepthPitch Tama駉 de la profundidad de los datos fuente.
+   * @param SrcRowPitch Tama帽o de la fila de datos fuente.
+   * @param SrcDepthPitch Tama帽o de la profundidad de los datos fuente.
    */
   void
   update(DeviceContext& deviceContext,
@@ -73,9 +77,9 @@ public:
   /**
    * @brief Asocia el buffer al pipeline para su renderizado.
    * @param deviceContext Contexto del dispositivo para el renderizado.
-   * @param StartSlot Posici髇 inicial del buffer en el pipeline.
-   * @param NumBuffers N鷐ero de buffers a establecer.
-   * @param setPixelShader Indica si el buffer se usa tambi閚 en el pixel shader.
+   * @param StartSlot Posici贸n inicial del buffer en el pipeline.
+   * @param NumBuffers N煤mero de buffers a establecer.
+   * @param setPixelShader Indica si el buffer se usa tambi茅n en el pixel shader.
    * @param format Formato DXGI utilizado por el buffer (opcional).
    */
   void
@@ -92,11 +96,11 @@ public:
   destroy();
 
   /**
-   * @brief Crea un buffer con la descripci髇 y los datos iniciales proporcionados.
+   * @brief Crea un buffer con la descripci贸n y los datos iniciales proporcionados.
    * @param device Referencia al dispositivo de renderizado.
-   * @param desc Descripci髇 del buffer (tipo, tama駉, uso, etc.).
+   * @param desc Descripci贸n del buffer (tipo, tama帽o, uso, etc.).
    * @param initData Datos iniciales para llenar el buffer (puede ser nullptr).
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   createBuffer(Device& device,
@@ -107,7 +111,7 @@ public:
   ID3D11Buffer* m_buffer = nullptr;
 
 private:
-  /** @brief Tama駉 en bytes de cada elemento del buffer (stride). */
+  /** @brief Tama帽o en bytes de cada elemento del buffer (stride). */
   unsigned int m_stride = 0;
 
   /** @brief Desplazamiento en bytes desde el inicio del buffer. */

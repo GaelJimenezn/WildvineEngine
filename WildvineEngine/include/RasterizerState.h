@@ -1,15 +1,23 @@
+/**
+ * @file RasterizerState.h
+ * @brief Declara la API p煤blica de RasterizerState dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
-class Device;
-class DeviceContext;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 
 /**
  * @class RasterizerState
- * @brief Encapsula el estado de rasterizaci髇 para el pipeline gr醘ico.
+ * @brief Encapsula el estado de rasterizaci贸n para el pipeline gr谩fico.
  *
- * Esta clase gestiona la configuraci髇 de c髆o se rasterizan los pol韌onos,
+ * Esta clase gestiona la configuraci贸n de c贸mo se rasterizan los pol铆gonos,
  * incluyendo modo de relleno, culling y clipping de profundidad.
  */
 class
@@ -28,23 +36,23 @@ public:
 
 
   /**
-   * @brief Inicializa el estado de rasterizaci髇 con configuraci髇 por defecto.
+   * @brief Inicializa el estado de rasterizaci贸n con configuraci贸n por defecto.
    *
-   * @param device Dispositivo gr醘ico.
-   * @return HRESULT Resultado de la operaci髇.
+   * @param device Dispositivo gr谩fico.
+   * @return HRESULT Resultado de la operaci贸n.
    */
   HRESULT
     init(Device device);
 
   /**
-   * @brief Inicializa el estado de rasterizaci髇 con par醡etros personalizados.
+   * @brief Inicializa el estado de rasterizaci贸n con par谩metros personalizados.
    *
-   * @param device Referencia al dispositivo gr醘ico.
-   * @param fill Modo de relleno (wireframe o s髄ido).
+   * @param device Referencia al dispositivo gr谩fico.
+   * @param fill Modo de relleno (wireframe o s贸lido).
    * @param cull Modo de descarte de caras.
-   * @param frontCCW Indica si las caras frontales est醤 en sentido antihorario.
+   * @param frontCCW Indica si las caras frontales est谩n en sentido antihorario.
    * @param depthClip Habilita o deshabilita el clipping de profundidad.
-   * @return HRESULT Resultado de la operaci髇.
+   * @return HRESULT Resultado de la operaci贸n.
    */
   HRESULT
     init(Device& device,
@@ -55,13 +63,13 @@ public:
 
 
   /**
-   * @brief Actualiza el estado de rasterizaci髇 si es necesario.
+   * @brief Actualiza el estado de rasterizaci贸n si es necesario.
    */
   void
   update();
 
   /**
-   * @brief Aplica el estado de rasterizaci髇 al contexto de renderizado.
+   * @brief Aplica el estado de rasterizaci贸n al contexto de renderizado.
    *
    * @param deviceContext Contexto del dispositivo.
    */
@@ -70,7 +78,7 @@ public:
 
 
   /**
-   * @brief Libera los recursos asociados al estado de rasterizaci髇.
+   * @brief Libera los recursos asociados al estado de rasterizaci贸n.
    */
   void
     destroy();
@@ -78,7 +86,7 @@ public:
 private:
 
   /**
-   * @brief Puntero al estado de rasterizaci髇 de Direct3D.
+   * @brief Puntero al estado de rasterizaci贸n de Direct3D.
    */
   ID3D11RasterizerState* m_rasterizerState = nullptr;
 };

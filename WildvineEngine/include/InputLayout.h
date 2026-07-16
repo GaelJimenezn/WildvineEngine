@@ -1,23 +1,27 @@
+/**
+ * @file InputLayout.h
+ * @brief Declara la API p煤blica de InputLayout dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
 /**
- * @brief Declaraci髇 adelantada de la clase Device.
+ * @brief Declaraci贸n adelantada de la clase Device.
  */
 class
 Device;
 
 /**
- * @brief Declaraci髇 adelantada de la clase DeviceContext.
+ * @brief Declaraci贸n adelantada de la clase DeviceContext.
  */
 class
 DeviceContext;
 
 /**
  * @class InputLayout
- * @brief Clase encargada de gestionar la creaci髇, actualizaci髇, renderizado
- *        y destrucci髇 del Input Layout en DirectX. Define c髆o los datos de
- *        los v閞tices se env韆n al pipeline gr醘ico.
+ * @brief Clase encargada de gestionar la creaci贸n, actualizaci贸n, renderizado
+ *        y destrucci贸n del Input Layout en DirectX. Define c贸mo los datos de
+ *        los v茅rtices se env铆an al pipeline gr谩fico.
  */
 class
 InputLayout {
@@ -33,11 +37,14 @@ public:
   ~InputLayout() = default;
 
   /**
-   * @brief Inicializa el Input Layout a partir de la descripci髇 de entrada y los datos del Vertex Shader.
+   * @brief Inicializa el Input Layout a partir de la descripci贸n de entrada y los datos
+   * del Vertex Shader.
    * @param device Referencia al dispositivo de renderizado.
-   * @param Layout Vector con la descripci髇 de los elementos de entrada (atributos de v閞tice).
-   * @param VertexShaderData Datos compilados del Vertex Shader necesarios para validar el layout.
-   * @return HRESULT que indica el resultado de la creaci髇.
+   * @param Layout Vector con la descripci贸n de los elementos de entrada (atributos de
+   * v茅rtice).
+   * @param VertexShaderData Datos compilados del Vertex Shader necesarios para validar el
+   * layout.
+   * @return HRESULT que indica el resultado de la creaci贸n.
    */
   HRESULT
   init(Device& device,
@@ -46,7 +53,7 @@ public:
        ID3DBlob* vertexShaderData);
 
   /**
-   * @brief Actualiza la informaci髇 o el estado del Input Layout si es necesario.
+   * @brief Actualiza la informaci贸n o el estado del Input Layout si es necesario.
    */
   void
   update();

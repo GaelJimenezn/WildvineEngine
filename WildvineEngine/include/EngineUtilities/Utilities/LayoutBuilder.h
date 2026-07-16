@@ -1,30 +1,35 @@
+/**
+ * @file LayoutBuilder.h
+ * @brief Declara utilidades de LayoutBuilder usadas por WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
 /**
  * @class LayoutBuilder
- * @brief Facilita la construcciÛn de descripciones de layout de entrada para Direct3D.
+ * @brief Facilita la construcci√≥n de descripciones de layout de entrada para Direct3D.
  *
  * Permite agregar elementos de entrada (input elements) de manera encadenada,
- * soportando tanto datos por vÈrtice como por instancia.
+ * soportando tanto datos por v√©rtice como por instancia.
  */
 class
 LayoutBuilder {
 public:
   // **Add() base** (per-vertex por defecto)
   /**
-   * @brief Agrega un elemento de layout de entrada por vÈrtice.
+   * @brief Agrega un elemento de layout de entrada por v√©rtice.
    *
-   * @param semantic Nombre sem·ntico del elemento (ej. POSITION, NORMAL).
+   * @param semantic Nombre sem√°ntico del elemento (ej. POSITION, NORMAL).
    * @param format Formato de datos (DXGI_FORMAT).
-   * @param semanticIndex Õndice sem·ntico.
+   * @param semanticIndex √çndice sem√°ntico.
    * @param inputSlot Slot de entrada.
    * @param alignedByteOffset Offset en bytes alineado.
-   * @param slotClass ClasificaciÛn del slot (por vÈrtice o por instancia).
+   * @param slotClass Clasificaci√≥n del slot (por v√©rtice o por instancia).
    * @param instanceStepRate Frecuencia de avance para instancing.
    * @return LayoutBuilder& Referencia al builder para encadenamiento.
    */
-  LayoutBuilder& Add(
+  LayoutBuilder&
+  Add(
     const char* semantic,
     DXGI_FORMAT format,
     UINT semanticIndex = 0,
@@ -49,15 +54,16 @@ public:
   /**
    * @brief Agrega un elemento de layout para datos por instancia.
    *
-   * @param semantic Nombre sem·ntico del elemento.
+   * @param semantic Nombre sem√°ntico del elemento.
    * @param format Formato de datos.
-   * @param semanticIndex Õndice sem·ntico.
+   * @param semanticIndex √çndice sem√°ntico.
    * @param inputSlot Slot de entrada (por defecto 1).
    * @param alignedByteOffset Offset en bytes alineado.
    * @param instanceStepRate Frecuencia de avance por instancia.
    * @return LayoutBuilder& Referencia al builder para encadenamiento.
    */
-  LayoutBuilder& AddInstance(
+  LayoutBuilder&
+  AddInstance(
     const char* semantic,
     DXGI_FORMAT format,
     UINT semanticIndex = 0,
@@ -74,14 +80,16 @@ public:
    *
    * @return Referencia constante al vector de descriptores.
    */
-  const std::vector<D3D11_INPUT_ELEMENT_DESC>& Get() const { return m_elems; }
+  const std::vector<D3D11_INPUT_ELEMENT_DESC>&
+  Get() const { return m_elems; }
 
   /**
    * @brief Obtiene la cantidad de elementos en el layout.
    *
-   * @return UINT N˙mero de elementos.
+   * @return UINT N√∫mero de elementos.
    */
-  UINT Count() const { return (UINT)m_elems.size(); }
+  UINT
+  Count() const { return (UINT)m_elems.size(); }
 
 private:
   /**

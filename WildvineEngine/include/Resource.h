@@ -1,3 +1,7 @@
+/**
+ * @file Resource.h
+ * @brief Declara la API pública de Resource dentro de WildvineEngine.
+ */
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by NaviEngine.rc

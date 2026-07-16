@@ -1,15 +1,23 @@
+/**
+ * @file DepthStencilState.h
+ * @brief Declara la API p煤blica de DepthStencilState dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
-class Device;
-class DeviceContext;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 
 /**
  * @class DepthStencilState
- * @brief Gestiona el estado de profundidad y stencil en el pipeline gr醘ico.
+ * @brief Gestiona el estado de profundidad y stencil en el pipeline gr谩fico.
  *
- * Permite configurar c髆o se manejan las pruebas de profundidad y las operaciones
+ * Permite configurar c贸mo se manejan las pruebas de profundidad y las operaciones
  * de stencil durante el renderizado.
  */
 class
@@ -30,11 +38,11 @@ public:
   /**
    * @brief Inicializa el estado de profundidad y stencil.
    *
-   * @param device Referencia al dispositivo gr醘ico.
+   * @param device Referencia al dispositivo gr谩fico.
    * @param depthEnable Habilita o deshabilita la prueba de profundidad.
-   * @param writeMask M醩cara de escritura de profundidad.
-   * @param depthFunc Funci髇 de comparaci髇 de profundidad.
-   * @return HRESULT Resultado de la operaci髇.
+   * @param writeMask M谩scara de escritura de profundidad.
+   * @param depthFunc Funci贸n de comparaci贸n de profundidad.
+   * @return HRESULT Resultado de la operaci贸n.
    */
   HRESULT
   init(Device& device,

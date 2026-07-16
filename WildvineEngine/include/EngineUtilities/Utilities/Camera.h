@@ -1,13 +1,17 @@
+/**
+ * @file Camera.h
+ * @brief Declara utilidades de Camera usadas por WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "EngineUtilities\Vectors\Vector3.h"
 
 /**
  * @class Camera
- * @brief Representa una c·mara 3D para renderizado en un motor gr·fico.
+ * @brief Representa una c√°mara 3D para renderizado en un motor gr√°fico.
  *
- * Gestiona la posiciÛn, orientaciÛn (basis ortonormal),
- * matriz de vista y matriz de proyecciÛn.
+ * Gestiona la posici√≥n, orientaci√≥n (basis ortonormal),
+ * matriz de vista y matriz de proyecci√≥n.
  * Permite movimiento tipo FPS (walk, strafe) y rotaciones
  * mediante yaw y pitch.
  */
@@ -27,10 +31,10 @@ public:
 
 
 	/**
-	 * @brief Configura los par·metros de la proyecciÛn perspectiva.
+	 * @brief Configura los par√°metros de la proyecci√≥n perspectiva.
 	 *
-	 * @param fovYRadians Campo de visiÛn vertical en radianes.
-	 * @param aspectRatio RelaciÛn de aspecto (ancho/alto).
+	 * @param fovYRadians Campo de visi√≥n vertical en radianes.
+	 * @param aspectRatio Relaci√≥n de aspecto (ancho/alto).
 	 * @param nearPlane Distancia del plano cercano.
 	 * @param farPlane Distancia del plano lejano.
 	 */
@@ -42,7 +46,7 @@ public:
 
 
 	/**
-	 * @brief Establece la posiciÛn de la c·mara mediante coordenadas individuales.
+	 * @brief Establece la posici√≥n de la c√°mara mediante coordenadas individuales.
 	 *
 	 * @param x Coordenada X en mundo.
 	 * @param y Coordenada Y en mundo.
@@ -53,31 +57,32 @@ public:
 
 
 	/**
-	 * @brief Establece la posiciÛn de la c·mara.
+	 * @brief Establece la posici√≥n de la c√°mara.
 	 *
-	 * @param pos Vector de posiciÛn en espacio mundo.
+	 * @param pos Vector de posici√≥n en espacio mundo.
 	 */
 	void
 	setPosition(const EU::Vector3& pos);
 
 
 	/**
-	 * @brief Obtiene la posiciÛn actual de la c·mara.
+	 * @brief Obtiene la posici√≥n actual de la c√°mara.
 	 *
-	 * @return EU::Vector3 PosiciÛn en mundo.
+	 * @return EU::Vector3 Posici√≥n en mundo.
 	 */
 	EU::Vector3
 	getPosition() const { return m_position; }
 
+	/** @brief Declara o ejecuta getPosition. */
 	EU::Vector3&
 	getPosition() { return m_position; }
 
 
 	/**
-	 * @brief Orienta la c·mara hacia un objetivo.
+	 * @brief Orienta la c√°mara hacia un objetivo.
 	 *
-	 * @param pos PosiciÛn de la c·mara.
-	 * @param target Punto al que la c·mara mirar·.
+	 * @param pos Posici√≥n de la c√°mara.
+	 * @param target Punto al que la c√°mara mirar√°.
 	 * @param up Vector arriba (por defecto eje Y positivo).
 	 */
 	void
@@ -87,7 +92,7 @@ public:
 
 
 	/**
-	 * @brief Mueve la c·mara hacia adelante o atr·s en su eje forward.
+	 * @brief Mueve la c√°mara hacia adelante o atr√°s en su eje forward.
 	 *
 	 * @param d Distancia a mover.
 	 */
@@ -96,7 +101,7 @@ public:
 
 
 	/**
-	 * @brief Mueve la c·mara lateralmente en su eje right.
+	 * @brief Mueve la c√°mara lateralmente en su eje right.
 	 *
 	 * @param d Distancia a mover.
 	 */
@@ -105,24 +110,24 @@ public:
 
 
 	/**
-	 * @brief Rota la c·mara alrededor del eje Y global.
+	 * @brief Rota la c√°mara alrededor del eje Y global.
 	 *
-	 * @param radians ¡ngulo en radianes.
+	 * @param radians √Ångulo en radianes.
 	 */
 	void
 	yaw(float radians);
 
 	/**
-	 * @brief Rota la c·mara alrededor del eje X local.
+	 * @brief Rota la c√°mara alrededor del eje X local.
 	 *
-	 * @param radians ¡ngulo en radianes.
+	 * @param radians √Ångulo en radianes.
 	 */
 	void
 	pitch(float radians);
 
 
 	/**
-	 * @brief Actualiza la matriz de vista si el estado cambiÛ.
+	 * @brief Actualiza la matriz de vista si el estado cambi√≥.
 	 */
 	void
 	updateViewMatrix();
@@ -138,38 +143,38 @@ public:
 
 
 	/**
-	 * @brief Obtiene la matriz de proyecciÛn.
+	 * @brief Obtiene la matriz de proyecci√≥n.
 	 *
-	 * @return XMMATRIX Matriz de proyecciÛn.
+	 * @return XMMATRIX Matriz de proyecci√≥n.
 	 */
 	XMMATRIX
 	getProj() const { return XMLoadFloat4x4(&m_proj); }
 
 
 	/**
-	 * @brief Obtiene la matriz de vista sin traslaciÛn.
+	 * @brief Obtiene la matriz de vista sin traslaci√≥n.
 	 *
-	 * ⁄til para skyboxes u objetos que no deben trasladarse con la c·mara.
+	 * √ötil para skyboxes u objetos que no deben trasladarse con la c√°mara.
 	 *
-	 * @return XMMATRIX Matriz de vista sin componente de traslaciÛn.
+	 * @return XMMATRIX Matriz de vista sin componente de traslaci√≥n.
 	 */
 	XMMATRIX
 	GetViewNoTranslation() const {
 		XMMATRIX v = getView();
-		// Quitar traslaciÛn (fila 4)
+		// Quitar traslaci√≥n (fila 4)
 		v.r[3] = XMVectorSet(0, 0, 0, 1);
 		return v;
 	}
 
 
 	/**
-	 * @brief Obtiene el campo de visiÛn vertical.
+	 * @brief Obtiene el campo de visi√≥n vertical.
 	 */
 	float 
 	getFovY()   const { return m_fovY; }
 
 	/**
-	 * @brief Obtiene la relaciÛn de aspecto.
+	 * @brief Obtiene la relaci√≥n de aspecto.
 	 */
 	float 
 	getAspect() const { return m_aspectRatio; }
@@ -188,19 +193,22 @@ public:
 
 
 	/**
-	 * @brief Obtiene el vector Right de la c·mara.
+	 * @brief Obtiene el vector Right de la c√°mara.
 	 */
-	EU::Vector3 GetRight()   const { return m_right; }
+	EU::Vector3
+	GetRight()   const { return m_right; }
 
 	/**
-	 * @brief Obtiene el vector Up de la c·mara.
+	 * @brief Obtiene el vector Up de la c√°mara.
 	 */
-	EU::Vector3 GetUp()      const { return m_up; }
+	EU::Vector3
+	GetUp()      const { return m_up; }
 
 	/**
-	 * @brief Obtiene el vector Forward de la c·mara.
+	 * @brief Obtiene el vector Forward de la c√°mara.
 	 */
-	EU::Vector3 GetForward() const { return m_forward; }
+	EU::Vector3
+	GetForward() const { return m_forward; }
 
 	/**
 	 * @brief Convierte un FXMVECTOR a EU::Vector3.
@@ -218,7 +226,7 @@ public:
 
 private:
 	/**
-	 * @brief PosiciÛn de la c·mara en espacio mundo.
+	 * @brief Posici√≥n de la c√°mara en espacio mundo.
 	 */
 	EU::Vector3 m_position;
 
@@ -233,7 +241,7 @@ private:
 	EU::Vector3 m_up{ 0.0f, 0.0f, 1.0f };
 
 	/**
-	 * @brief Vector Forward (direcciÛn de vista).
+	 * @brief Vector Forward (direcci√≥n de vista).
 	 */
 	EU::Vector3 m_forward{ 0.0f, 1.0f, 0.0f };
 
@@ -243,18 +251,18 @@ private:
 	XMFLOAT4X4 m_view{};
 
 	/**
-	 * @brief Matriz de proyecciÛn almacenada.
+	 * @brief Matriz de proyecci√≥n almacenada.
 	 */
 	XMFLOAT4X4 m_proj{};
 
 	/**
-	 * @brief Campo de visiÛn vertical en radianes.
+	 * @brief Campo de visi√≥n vertical en radianes.
 	 */
 	float 
 	m_fovY{ XM_PIDIV4 };
 
 	/**
-	 * @brief RelaciÛn de aspecto (width / height).
+	 * @brief Relaci√≥n de aspecto (width / height).
 	 */
 	float
 	m_aspectRatio = 1.0f;

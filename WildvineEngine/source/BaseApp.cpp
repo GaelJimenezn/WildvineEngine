@@ -2,6 +2,7 @@
 #include "ResourceManager.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <limits>
@@ -52,6 +53,60 @@ fileExists(const std::string& path) {
 	const DWORD attributes = GetFileAttributesA(path.c_str());
 	return attributes != INVALID_FILE_ATTRIBUTES &&
 		!(attributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+constexpr uint32_t kSceneBinaryMagic = 0x4E435357;  // WSCN
+constexpr uint32_t kSceneBinaryVersion = 1;
+constexpr uint32_t kPrefabBinaryMagic = 0x46505657; // WVPF
+constexpr uint32_t kPrefabBinaryVersion = 1;
+
+template<typename T>
+static bool
+writeBinaryValue(std::ofstream& stream, const T& value) {
+	stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
+	return stream.good();
+}
+
+template<typename T>
+static bool
+readBinaryValue(std::ifstream& stream, T& value) {
+	stream.read(reinterpret_cast<char*>(&value), sizeof(T));
+	return stream.good();
+}
+
+static bool
+writeBinaryString(std::ofstream& stream, const std::string& value) {
+	const uint32_t length = static_cast<uint32_t>(value.size());
+	if (!writeBinaryValue(stream, length)) return false;
+	if (length > 0) {
+		stream.write(value.data(), length);
+	}
+	return stream.good();
+}
+
+static bool
+readBinaryString(std::ifstream& stream, std::string& value) {
+	uint32_t length = 0;
+	if (!readBinaryValue(stream, length)) return false;
+	value.resize(length);
+	if (length > 0) {
+		stream.read(&value[0], length);
+	}
+	return stream.good();
+}
+
+static bool
+writeBinaryVector3(std::ofstream& stream, const EU::Vector3& value) {
+	return writeBinaryValue(stream, value.x) &&
+		writeBinaryValue(stream, value.y) &&
+		writeBinaryValue(stream, value.z);
+}
+
+static bool
+readBinaryVector3(std::ifstream& stream, EU::Vector3& value) {
+	return readBinaryValue(stream, value.x) &&
+		readBinaryValue(stream, value.y) &&
+		readBinaryValue(stream, value.z);
 }
 
 static bool
@@ -1941,44 +1996,56 @@ BaseApp::savePrefabSelected() {
 	EU::TSharedPointer<Transform> t = src->getComponent<Transform>();
 	if (!t) return;
 	CreateDirectoryA("Saved", nullptr);
-	std::ofstream f("Saved/actor.prefab", std::ios::trunc);
+	std::ofstream f("Saved/actor.prefab", std::ios::binary | std::ios::trunc);
 	if (!f.is_open()) {
 		ERROR("BaseApp", "savePrefab", "No se pudo abrir el archivo");
 		return;
 	}
 	EU::Vector3 p = t->getPosition(), r = t->getRotation(), s = t->getScale();
 	std::string n = src->getName();
-	for (char& ch : n) if (ch == ' ') ch = '_';
-	f << "PREFAB 1\n";
-	f << "NAME " << n << "\n";
-	f << "POSITION " << p.x << " " << p.y << " " << p.z << "\n";
-	f << "ROTATION " << r.x << " " << r.y << " " << r.z << "\n";
-	f << "SCALE " << s.x << " " << s.y << " " << s.z << "\n";
-	MESSAGE("BaseApp", "savePrefab", "Prefab guardado en Saved/actor.prefab");
+	const bool ok =
+		writeBinaryValue(f, kPrefabBinaryMagic) &&
+		writeBinaryValue(f, kPrefabBinaryVersion) &&
+		writeBinaryString(f, n) &&
+		writeBinaryVector3(f, p) &&
+		writeBinaryVector3(f, r) &&
+		writeBinaryVector3(f, s);
+	if (!ok) {
+		ERROR("BaseApp", "savePrefab", "No se pudo escribir el prefab binario");
+		return;
+	}
+	MESSAGE("BaseApp", "savePrefab", "Prefab binario guardado en Saved/actor.prefab");
 }
 
 void
 BaseApp::loadPrefab() {
-	std::ifstream f("Saved/actor.prefab");
+	std::ifstream f("Saved/actor.prefab", std::ios::binary);
 	if (!f.is_open()) {
 		ERROR("BaseApp", "loadPrefab", "No existe Saved/actor.prefab");
 		return;
 	}
-	std::string token, name = "Prefab";
+	std::string name = "Prefab";
 	EU::Vector3 p(0, 0, 0), r(0, 0, 0), s(1, 1, 1);
-	int version = 0;
-	f >> token >> version;
-	while (f >> token) {
-		if (token == "NAME") f >> name;
-		else if (token == "POSITION") f >> p.x >> p.y >> p.z;
-		else if (token == "ROTATION") f >> r.x >> r.y >> r.z;
-		else if (token == "SCALE")    f >> s.x >> s.y >> s.z;
+	uint32_t magic = 0;
+	uint32_t version = 0;
+	const bool ok =
+		readBinaryValue(f, magic) &&
+		readBinaryValue(f, version) &&
+		magic == kPrefabBinaryMagic &&
+		version == kPrefabBinaryVersion &&
+		readBinaryString(f, name) &&
+		readBinaryVector3(f, p) &&
+		readBinaryVector3(f, r) &&
+		readBinaryVector3(f, s);
+	if (!ok) {
+		ERROR("BaseApp", "loadPrefab", "Prefab binario invalido");
+		return;
 	}
 	EU::TSharedPointer<Actor> a = spawnPistol(name, p, r, s);
 	addActorToScene(a);
 	m_commands.push(std::unique_ptr<ICommand>(new SpawnActorCommand(this, a)));
 	m_gui.selectedActorIndex = (int)m_actors.size() - 1;
-	MESSAGE("BaseApp", "loadPrefab", "Prefab cargado");
+	MESSAGE("BaseApp", "loadPrefab", "Prefab binario cargado");
 }
 
 void
@@ -2457,57 +2524,183 @@ bool
 BaseApp::saveScene(const std::string& path) {
 	enforceDefaultSceneLayout();
 
-	std::ofstream stream(path, std::ios::trunc);
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
 	if (!stream.is_open()) {
 		ERROR("Main", "saveScene", ("Failed to open scene file for writing: " + path).c_str());
 		return false;
 	}
 
-	stream << "WVSCENE 1\n";
-	stream << "ACTOR_COUNT " << m_actors.size() << "\n";
+	uint32_t actorCount = 0;
+	for (const EU::TSharedPointer<Actor>& actor : m_actors) {
+		if (!actor.isNull()) ++actorCount;
+	}
+
+	bool ok =
+		writeBinaryValue(stream, kSceneBinaryMagic) &&
+		writeBinaryValue(stream, kSceneBinaryVersion) &&
+		writeBinaryValue(stream, actorCount);
 
 	for (size_t actorIndex = 0; actorIndex < m_actors.size(); ++actorIndex) {
 		const EU::TSharedPointer<Actor>& actor = m_actors[actorIndex];
 		if (actor.isNull()) continue;
 
-		stream << "ACTOR " << actorIndex << " " << std::quoted(actor->getName()) << "\n";
+		const uint32_t savedIndex = static_cast<uint32_t>(actorIndex);
+		ok = ok &&
+			writeBinaryValue(stream, savedIndex) &&
+			writeBinaryString(stream, actor->getName());
 
 		EU::TSharedPointer<Transform> transform = actor->getComponent<Transform>();
+		const uint8_t hasTransform = transform ? 1 : 0;
+		ok = ok && writeBinaryValue(stream, hasTransform);
 		if (transform) {
 			const EU::Vector3& position = transform->getPosition();
 			const EU::Vector3& rotation = transform->getRotation();
 			const EU::Vector3& scale = transform->getScale();
-			stream << "POSITION " << position.x << " " << position.y << " " << position.z << "\n";
-			stream << "ROTATION " << rotation.x << " " << rotation.y << " " << rotation.z << "\n";
-			stream << "SCALE " << scale.x << " " << scale.y << " " << scale.z << "\n";
+			ok = ok &&
+				writeBinaryVector3(stream, position) &&
+				writeBinaryVector3(stream, rotation) &&
+				writeBinaryVector3(stream, scale);
 		}
 
 		EU::TSharedPointer<MeshRendererComponent> meshRenderer =
 			actor->getComponent<MeshRendererComponent>();
+		const uint8_t hasMeshRenderer = meshRenderer ? 1 : 0;
+		ok = ok && writeBinaryValue(stream, hasMeshRenderer);
 		if (meshRenderer) {
-			stream << "VISIBLE " << (meshRenderer->isVisible() ? 1 : 0) << "\n";
-			stream << "CAST_SHADOW " << (meshRenderer->canCastShadow() ? 1 : 0) << "\n";
+			const uint8_t visible = meshRenderer->isVisible() ? 1 : 0;
+			const uint8_t castShadow = meshRenderer->canCastShadow() ? 1 : 0;
+			ok = ok &&
+				writeBinaryValue(stream, visible) &&
+				writeBinaryValue(stream, castShadow);
 		}
 
 		EU::TSharedPointer<LightComponent> lightComponent =
 			actor->getComponent<LightComponent>();
+		const uint8_t hasLight = lightComponent ? 1 : 0;
+		ok = ok && writeBinaryValue(stream, hasLight);
 		if (lightComponent) {
 			const LightData& light = lightComponent->getLightData();
-			stream << "LIGHT " << static_cast<int>(light.type) << " "
-				<< light.color.x << " " << light.color.y << " " << light.color.z << " "
-				<< light.intensity << " "
-				<< light.direction.x << " " << light.direction.y << " " << light.direction.z << " "
-				<< light.range << "\n";
+			const int32_t lightType = static_cast<int32_t>(light.type);
+			ok = ok &&
+				writeBinaryValue(stream, lightType) &&
+				writeBinaryVector3(stream, light.color) &&
+				writeBinaryValue(stream, light.intensity) &&
+				writeBinaryVector3(stream, light.direction) &&
+				writeBinaryValue(stream, light.range) &&
+				writeBinaryVector3(stream, light.position) &&
+				writeBinaryValue(stream, light.spotAngle) &&
+				writeBinaryValue(stream, light.width) &&
+				writeBinaryValue(stream, light.height);
 		}
 	}
 
-	MESSAGE("Main", "saveScene", ("Scene saved to " + path).c_str());
+	if (!ok) {
+		ERROR("Main", "saveScene", "Failed to write binary scene data");
+		return false;
+	}
+
+	MESSAGE("Main", "saveScene", ("Binary scene saved to " + path).c_str());
 	return true;
 }
 
 bool
 BaseApp::loadScene(const std::string& path) {
-	std::ifstream stream(path);
+	std::ifstream stream(path, std::ios::binary);
+	if (!stream.is_open()) return false;
+
+	uint32_t magic = 0;
+	uint32_t binaryVersion = 0;
+	if (readBinaryValue(stream, magic) &&
+		readBinaryValue(stream, binaryVersion) &&
+		magic == kSceneBinaryMagic &&
+		binaryVersion == kSceneBinaryVersion) {
+		uint32_t actorCount = 0;
+		if (!readBinaryValue(stream, actorCount)) return false;
+
+		for (uint32_t i = 0; i < actorCount; ++i) {
+			uint32_t actorIndex = 0;
+			std::string name;
+			if (!readBinaryValue(stream, actorIndex) ||
+				!readBinaryString(stream, name)) {
+				return false;
+			}
+
+			EU::TSharedPointer<Actor> actor;
+			if (actorIndex < m_actors.size()) {
+				actor = m_actors[actorIndex];
+			}
+			if (!actor.isNull()) {
+				actor->setName(name);
+			}
+
+			uint8_t hasTransform = 0;
+			if (!readBinaryValue(stream, hasTransform)) return false;
+			if (hasTransform) {
+				EU::Vector3 position(0, 0, 0);
+				EU::Vector3 rotation(0, 0, 0);
+				EU::Vector3 scale(1, 1, 1);
+				if (!readBinaryVector3(stream, position) ||
+					!readBinaryVector3(stream, rotation) ||
+					!readBinaryVector3(stream, scale)) {
+					return false;
+				}
+				if (!actor.isNull()) {
+					EU::TSharedPointer<Transform> t = actor->getComponent<Transform>();
+					if (t) t->setTransform(position, rotation, scale);
+				}
+			}
+
+			uint8_t hasMeshRenderer = 0;
+			if (!readBinaryValue(stream, hasMeshRenderer)) return false;
+			if (hasMeshRenderer) {
+				uint8_t visible = 0;
+				uint8_t castShadow = 0;
+				if (!readBinaryValue(stream, visible) ||
+					!readBinaryValue(stream, castShadow)) {
+					return false;
+				}
+				if (!actor.isNull()) {
+					EU::TSharedPointer<MeshRendererComponent> mr =
+						actor->getComponent<MeshRendererComponent>();
+					if (mr) {
+						mr->setVisible(visible != 0);
+						mr->setCastShadow(castShadow != 0);
+					}
+				}
+			}
+
+			uint8_t hasLight = 0;
+			if (!readBinaryValue(stream, hasLight)) return false;
+			if (hasLight) {
+				int32_t type = 0;
+				LightData light;
+				if (!readBinaryValue(stream, type) ||
+					!readBinaryVector3(stream, light.color) ||
+					!readBinaryValue(stream, light.intensity) ||
+					!readBinaryVector3(stream, light.direction) ||
+					!readBinaryValue(stream, light.range) ||
+					!readBinaryVector3(stream, light.position) ||
+					!readBinaryValue(stream, light.spotAngle) ||
+					!readBinaryValue(stream, light.width) ||
+					!readBinaryValue(stream, light.height)) {
+					return false;
+				}
+				light.type = static_cast<LightType>(type);
+				if (!actor.isNull()) {
+					EU::TSharedPointer<LightComponent> lc =
+						actor->getComponent<LightComponent>();
+					if (lc) lc->getLightData() = light;
+				}
+			}
+		}
+
+		MESSAGE("Main", "loadScene", ("Binary scene loaded from " + path).c_str());
+		return true;
+	}
+
+	stream.close();
+	stream.clear();
+	stream.open(path);
 	if (!stream.is_open()) return false;
 
 	std::string token;
@@ -2517,6 +2710,7 @@ BaseApp::loadScene(const std::string& path) {
 
 	int actorCount = 0;
 	stream >> token >> actorCount;
+	EU::TSharedPointer<Actor> currentActor;
 
 	while (stream >> token) {
 		if (token == "ACTOR") {
@@ -2524,45 +2718,39 @@ BaseApp::loadScene(const std::string& path) {
 			std::string name;
 			stream >> index >> std::quoted(name);
 
-			EU::TSharedPointer<Actor> actor;
+			currentActor.reset();
 			if (index < (int)m_actors.size()) {
-				actor = m_actors[index];
+				currentActor = m_actors[index];
 			}
-			if (!actor.isNull()) {
-				actor->setName(name);
+			if (!currentActor.isNull()) {
+				currentActor->setName(name);
 			}
 		}
 		else if (token == "POSITION") {
 			float x, y, z;
 			stream >> x >> y >> z;
-			if (!m_actors.empty()) {
-				EU::TSharedPointer<Actor>& lastActor = m_actors.back();
-				if (!lastActor.isNull()) {
-					EU::TSharedPointer<Transform> t = lastActor->getComponent<Transform>();
-					if (t) t->setPosition(EU::Vector3(x, y, z));
-				}
+			if (!currentActor.isNull()) {
+				EU::TSharedPointer<Transform> t =
+					currentActor->getComponent<Transform>();
+				if (t) t->setPosition(EU::Vector3(x, y, z));
 			}
 		}
 		else if (token == "ROTATION") {
 			float x, y, z;
 			stream >> x >> y >> z;
-			if (!m_actors.empty()) {
-				EU::TSharedPointer<Actor>& lastActor = m_actors.back();
-				if (!lastActor.isNull()) {
-					EU::TSharedPointer<Transform> t = lastActor->getComponent<Transform>();
-					if (t) t->setRotation(EU::Vector3(x, y, z));
-				}
+			if (!currentActor.isNull()) {
+				EU::TSharedPointer<Transform> t =
+					currentActor->getComponent<Transform>();
+				if (t) t->setRotation(EU::Vector3(x, y, z));
 			}
 		}
 		else if (token == "SCALE") {
 			float x, y, z;
 			stream >> x >> y >> z;
-			if (!m_actors.empty()) {
-				EU::TSharedPointer<Actor>& lastActor = m_actors.back();
-				if (!lastActor.isNull()) {
-					EU::TSharedPointer<Transform> t = lastActor->getComponent<Transform>();
-					if (t) t->setScale(EU::Vector3(x, y, z));
-				}
+			if (!currentActor.isNull()) {
+				EU::TSharedPointer<Transform> t =
+					currentActor->getComponent<Transform>();
+				if (t) t->setScale(EU::Vector3(x, y, z));
 			}
 		}
 		else if (token == "LIGHT") {

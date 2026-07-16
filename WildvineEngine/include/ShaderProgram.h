@@ -1,26 +1,31 @@
+/**
+ * @file ShaderProgram.h
+ * @brief Declara la API p煤blica de ShaderProgram dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "InputLayout.h"
 
 /**
- * @brief Declaraci髇 adelantada de la clase Device.
+ * @brief Declaraci贸n adelantada de la clase Device.
  */
 class
 Device;
 
 /**
- * @brief Declaraci髇 adelantada de la clase DeviceContext.
+ * @brief Declaraci贸n adelantada de la clase DeviceContext.
  */
 class
 DeviceContext;
 
+/** @brief Declara class LayoutBuilder. */
 class
 LayoutBuilder;
 
 /**
  * @class ShaderProgram
- * @brief Clase encargada de manejar la inicializaci髇, compilaci髇,
- *        creaci髇 y renderizado de shaders dentro del motor gr醘ico.
+ * @brief Clase encargada de manejar la inicializaci贸n, compilaci贸n,
+ *        creaci贸n y renderizado de shaders dentro del motor gr谩fico.
  */
 class
 ShaderProgram {
@@ -37,11 +42,12 @@ public:
   ~ShaderProgram() = default;
 
   /**
-   * @brief Inicializa el programa de shaders cargando los archivos necesarios y configurando el layout.
+   * @brief Inicializa el programa de shaders cargando los archivos necesarios y
+   * configurando el layout.
    * @param device Referencia al dispositivo de renderizado.
    * @param fileName Nombre del archivo del shader.
-   * @param Layout Vector con la descripci髇 de los elementos de entrada del shader.
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @param Layout Vector con la descripci贸n de los elementos de entrada del shader.
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   init(Device& device,
@@ -49,7 +55,7 @@ public:
       LayoutBuilder layoutBuilder);
 
   /**
-   * @brief Actualiza los par醡etros o recursos del shader si es necesario.
+   * @brief Actualiza los par谩metros o recursos del shader si es necesario.
    */
   void
   update();
@@ -62,7 +68,7 @@ public:
   render(DeviceContext& deviceContext);
 
   /**
-   * @brief Renderiza utilizando un tipo de shader espec韋ico (Vertex, Pixel, etc.).
+   * @brief Renderiza utilizando un tipo de shader espec铆fico (Vertex, Pixel, etc.).
    * @param deviceContext Contexto del dispositivo utilizado para dibujar.
    * @param type Tipo de shader a usar.
    */
@@ -76,10 +82,10 @@ public:
   destroy();
 
   /**
-   * @brief Crea el Input Layout del shader para definir la estructura de los v閞tices.
+   * @brief Crea el Input Layout del shader para definir la estructura de los v茅rtices.
    * @param device Referencia al dispositivo de renderizado.
-   * @param Layout Vector con la descripci髇 de los elementos de entrada.
-   * @return HRESULT que indica el resultado de la creaci髇.
+   * @param Layout Vector con la descripci贸n de los elementos de entrada.
+   * @return HRESULT que indica el resultado de la creaci贸n.
    */
   HRESULT
   CreateInputLayout(Device& device,
@@ -89,7 +95,7 @@ public:
    * @brief Crea un shader del tipo especificado.
    * @param device Referencia al dispositivo de renderizado.
    * @param type Tipo de shader a crear.
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   CreateShader(Device& device, ShaderType type);
@@ -99,7 +105,7 @@ public:
    * @param device Referencia al dispositivo de renderizado.
    * @param type Tipo de shader a crear.
    * @param fileName Nombre del archivo del shader.
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   CreateShader(Device& device, ShaderType type, const std::string& fileName);
@@ -110,7 +116,7 @@ public:
    * @param szEntryPoint Punto de entrada del shader.
    * @param szShaderModel Modelo de shader (por ejemplo, "vs_5_0", "ps_5_0").
    * @param ppBlobOut Puntero de salida donde se guarda el blob compilado.
-   * @return HRESULT que indica el resultado de la compilaci髇.
+   * @return HRESULT que indica el resultado de la compilaci贸n.
    */
   HRESULT
   CompileShaderFromFile(char* szFileName,
@@ -125,7 +131,7 @@ public:
   /** @brief Puntero al Pixel Shader actual. */
   ID3D11PixelShader* m_PixelShader = nullptr;
 
-  /** @brief Layout de entrada usado para definir la estructura de los v閞tices. */
+  /** @brief Layout de entrada usado para definir la estructura de los v茅rtices. */
   InputLayout m_inputLayout;
 
 private:

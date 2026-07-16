@@ -44,62 +44,62 @@ objl
 
   /**
    * @struct Vertex
-   * @brief Estructura de vértice compatible con lo que ModelLoader.cpp
-   * espera leer de objl::Vertex. Contiene Posición, Normal y Textura.
+   * @brief Estructura de vÃ©rtice compatible con lo que ModelLoader.cpp
+   * espera leer de objl::Vertex. Contiene PosiciÃ³n, Normal y Textura.
    */
   struct 
   Vertex {
-    Vector3 Position;        /**< Posición del vértice (X, Y, Z) */
-    Vector3 Normal;          /**< Normal del vértice (X, Y, Z) */
-    Vector2 TextureCoordinate; /**< Coordenada de textura del vértice (U, V) */
+    Vector3 Position;        /**< PosiciÃ³n del vÃ©rtice (X, Y, Z) */
+    Vector3 Normal;          /**< Normal del vÃ©rtice (X, Y, Z) */
+    Vector2 TextureCoordinate; /**< Coordenada de textura del vÃ©rtice (U, V) */
   };
 
   /**
    * @class Loader
    * @brief Clase principal que simula la interfaz 'objl::Loader'.
    * ModelLoader.cpp crea una instancia de esta clase. Internamente,
-   * utiliza nuestro propio código de parsing (en ParserOBJ.cpp)
+   * utiliza nuestro propio cÃ³digo de parsing (en ParserOBJ.cpp)
    * para llenar los datos que ModelLoader.cpp espera.
    */
   class 
   Loader
   {
   public:
-    // --- Miembros Públicos (Leídos por ModelLoader.cpp) ---
+    // --- Miembros PÃºblicos (LeÃ­dos por ModelLoader.cpp) ---
 
     /**
-     * @brief Vector que almacena los vértices únicos cargados.
+     * @brief Vector que almacena los vÃ©rtices Ãºnicos cargados.
      * Nuestro parser personalizado llena este vector para que
      * ModelLoader.cpp pueda leerlo.
      */
     std::vector<Vertex> LoadedVertices;
 
     /**
-     * @brief Vector que almacena los índices del modelo.
+     * @brief Vector que almacena los Ã­ndices del modelo.
      * Nuestro parser personalizado llena este vector para que
      * ModelLoader.cpp pueda leerlo.
      */
     std::vector<unsigned int> LoadedIndices;
 
 
-    // --- Métodos Públicos (Llamados por ModelLoader.cpp) ---
+    // --- MÃ©todos PÃºblicos (Llamados por ModelLoader.cpp) ---
 
     /**
      * @brief Carga y parsea un archivo .obj desde una ruta.
-     * Esta es la función principal que ModelLoader.cpp llama.
+     * Esta es la funciÃ³n principal que ModelLoader.cpp llama.
      * @param fileName Ruta al archivo .obj (ej. "Assets/Link.obj").
-     * @return true si la carga fue exitosa (se encontraron vértices),
-     * @return false si la carga falló (archivo no encontrado o vacío).
+     * @return true si la carga fue exitosa (se encontraron vÃ©rtices),
+     * @return false si la carga fallÃ³ (archivo no encontrado o vacÃ­o).
      */
     bool 
     LoadFile(std::string fileName);
 
   private:
     /**
-     * @brief Función de parsing interna y privada.
-     * Contiene la lógica de nuestro parser personalizado
-     * (leer el archivo, manejar el caché de vértices, etc.).
-     * @note Esta función es llamada por LoadFile() y llena
+     * @brief FunciÃ³n de parsing interna y privada.
+     * Contiene la lÃ³gica de nuestro parser personalizado
+     * (leer el archivo, manejar el cachÃ© de vÃ©rtices, etc.).
+     * @note Esta funciÃ³n es llamada por LoadFile() y llena
      * LoadedVertices y LoadedIndices.
      * @param fileName Ruta al archivo .obj.
      */

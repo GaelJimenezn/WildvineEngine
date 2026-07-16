@@ -26,6 +26,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file Quaternion.h
+ * @brief Declara utilidades de Quaternion usadas por WildvineEngine.
+ */
 #pragma once
 
 #include "EngineUtilities/Utilities/EngineMath.h"
@@ -37,7 +42,8 @@ namespace EU {
  * This class represents a quaternion, providing operations such as addition,
  * subtraction, scalar multiplication, normalization, and quaternion multiplication.
  */
-	class Quaternion {
+	class
+	Quaternion {
 	public:
 		float w; /**< The real part of the quaternion. */
 		float x; /**< The i component of the quaternion. */
@@ -69,7 +75,8 @@ namespace EU {
 		 * @param other The quaternion to add.
 		 * @return The result of the addition.
 		 */
-		Quaternion operator+(const Quaternion& other) const {
+		Quaternion
+		operator+(const Quaternion& other) const {
 			return Quaternion(w + other.w, x + other.x, y + other.y, z + other.z);
 		}
 
@@ -79,7 +86,8 @@ namespace EU {
 		 * @param other The quaternion to subtract.
 		 * @return The result of the subtraction.
 		 */
-		Quaternion operator-(const Quaternion& other) const {
+		Quaternion
+		operator-(const Quaternion& other) const {
 			return Quaternion(w - other.w, x - other.x, y - other.y, z - other.z);
 		}
 
@@ -89,7 +97,8 @@ namespace EU {
 		 * @param scalar The scalar to multiply by.
 		 * @return The result of the multiplication.
 		 */
-		Quaternion operator*(float scalar) const {
+		Quaternion
+		operator*(float scalar) const {
 			return Quaternion(w * scalar, x * scalar, y * scalar, z * scalar);
 		}
 
@@ -99,7 +108,8 @@ namespace EU {
 		 * @param other The quaternion to multiply by.
 		 * @return The result of the multiplication.
 		 */
-		Quaternion operator*(const Quaternion& other) const {
+		Quaternion
+		operator*(const Quaternion& other) const {
 			return Quaternion(
 				w * other.w - x * other.x - y * other.y - z * other.z,
 				w * other.x + x * other.w + y * other.z - z * other.y,
@@ -114,7 +124,8 @@ namespace EU {
 		 * @param other The quaternion to compare with.
 		 * @return True if the quaternions are equal, false otherwise.
 		 */
-		bool operator==(const Quaternion& other) const {
+		bool
+		operator==(const Quaternion& other) const {
 			return (w == other.w && x == other.x && y == other.y && z == other.z);
 		}
 
@@ -124,7 +135,8 @@ namespace EU {
 		 * @param other The quaternion to compare with.
 		 * @return True if the quaternions are not equal, false otherwise.
 		 */
-		bool operator!=(const Quaternion& other) const {
+		bool
+		operator!=(const Quaternion& other) const {
 			return !(*this == other);
 		}
 
@@ -133,7 +145,8 @@ namespace EU {
 		 *
 		 * @return The magnitude of the quaternion.
 		 */
-		float magnitude() const {
+		float
+		magnitude() const {
 			return EU::sqrt(w * w + x * x + y * y + z * z);
 		}
 
@@ -142,7 +155,8 @@ namespace EU {
 		 *
 		 * @return The normalized quaternion.
 		 */
-		Quaternion normalize() const {
+		Quaternion
+		normalize() const {
 			float mag = magnitude();
 			if (mag == 0) {
 				return Quaternion(1, 0, 0, 0);
@@ -155,7 +169,8 @@ namespace EU {
 		 *
 		 * @return The conjugated quaternion.
 		 */
-		Quaternion conjugate() const {
+		Quaternion
+		conjugate() const {
 			return Quaternion(w, -x, -y, -z);
 		}
 
@@ -164,7 +179,8 @@ namespace EU {
 		 *
 		 * @return The inverted quaternion.
 		 */
-		Quaternion inverse() const {
+		Quaternion
+		inverse() const {
 			float magSquared = w * w + x * x + y * y + z * z;
 			if (magSquared == 0) {
 				// Handling division by zero
@@ -179,8 +195,11 @@ namespace EU {
 		 * @param v The vector to rotate.
 		 * @return The rotated vector.
 		 */
-		Vector3 rotate(const Vector3& v) const {
-			Quaternion qv(0, v.x, v.y, v.z);
+		Vector3
+		rotate(const Vector3& v) const {
+			/** @brief Declara o ejecuta qv. */
+			Quaternion
+			qv(0, v.x, v.y, v.z);
 			Quaternion result = (*this) * qv * this->inverse();
 			return Vector3(result.x, result.y, result.z);
 		}
@@ -192,7 +211,8 @@ namespace EU {
 		 * @param angle The angle of rotation in radians.
 		 * @return The quaternion representing the rotation.
 		 */
-		static Quaternion fromAxisAngle(const Vector3& axis, float angle) {
+		static Quaternion
+		fromAxisAngle(const Vector3& axis, float angle) {
 			float halfAngle = angle * 0.5f;
 			float sinHalfAngle = EU::sin(halfAngle);
 			return Quaternion(
@@ -208,7 +228,8 @@ namespace EU {
 		 *
 		 * @return Pointer to the first element (w, x, y, z).
 		 */
-		const float* data() const {
+		const float*
+		data() const {
 			return &w;
 		}
 

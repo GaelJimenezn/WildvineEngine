@@ -1,23 +1,35 @@
 /**
  * @file ISceneRenderer.h
- * @brief Declara una interfaz com˙n para los renderers de escena.
+ * @brief Declara una interfaz com√∫n para los renderers de escena.
  * @ingroup rendering
  */
 #pragma once
 #include "Prerequisites.h"
 
-class Device;
-class DeviceContext;
-class Camera;
-class RenderScene;
-class EditorViewportPass;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
+/** @brief Declara class Camera. */
+class
+Camera;
+/** @brief Declara class RenderScene. */
+class
+RenderScene;
+/** @brief Declara class EditorViewportPass. */
+class
+EditorViewportPass;
 //class Texture;
 
 /**
  * @enum RenderType
  * @brief Tipos de renderizado soportados por el motor.
  */
-enum class
+enum
+/** @brief Declara class RenderType. */
+class
   RenderType {
   /**
    * @brief Renderizado Forward tradicional.
@@ -34,17 +46,17 @@ enum class
  * @class ISceneRenderer
  * @brief Contrato base para cualquier renderer consumido por el pipeline principal.
  *
- * Esta interfaz define las operaciones mÌnimas que debe implementar
+ * Esta interfaz define las operaciones m√≠nimas que debe implementar
  * cualquier sistema de renderizado de escena dentro del motor.
  *
  * Entre sus responsabilidades se encuentran:
- * - InicializaciÛn de recursos gr·ficos.
- * - GestiÛn de cambios de resoluciÛn.
+ * - Inicializaci√≥n de recursos gr√°ficos.
+ * - Gesti√≥n de cambios de resoluci√≥n.
  * - Renderizado de la escena.
- * - LiberaciÛn de recursos.
- * - ExposiciÛn de recursos de depuraciÛn cuando corresponda.
+ * - Liberaci√≥n de recursos.
+ * - Exposici√≥n de recursos de depuraci√≥n cuando corresponda.
  *
- * Implementaciones tÌpicas:
+ * Implementaciones t√≠picas:
  * - ForwardRenderer
  * - DeferredRenderer
  */
@@ -55,20 +67,22 @@ public:
   /**
    * @brief Destructor virtual por defecto.
    */
-  virtual ~ISceneRenderer() = default;
+  virtual
+  ~ISceneRenderer() = default;
 
   /**
    * @brief Inicializa los recursos necesarios para el renderer.
    *
-   * @param device Dispositivo gr·fico utilizado para crear recursos.
-   * @return HRESULT Resultado de la operaciÛn.
+   * @param device Dispositivo gr√°fico utilizado para crear recursos.
+   * @return HRESULT Resultado de la operaci√≥n.
    */
-  virtual HRESULT init(Device& device) = 0;
+  virtual HRESULT
+  init(Device& device) = 0;
 
   /**
-   * @brief Reconfigura los recursos dependientes de la resoluciÛn.
+   * @brief Reconfigura los recursos dependientes de la resoluci√≥n.
    *
-   * @param device Dispositivo gr·fico.
+   * @param device Dispositivo gr√°fico.
    * @param width Nuevo ancho de renderizado.
    * @param height Nueva altura de renderizado.
    */
@@ -79,7 +93,7 @@ public:
    * @brief Ejecuta el proceso de renderizado de una escena.
    *
    * @param deviceContext Contexto de dispositivo utilizado para emitir comandos.
-   * @param camera C·mara activa de la escena.
+   * @param camera C√°mara activa de la escena.
    * @param scene Escena a renderizar.
    * @param viewport Render target de salida.
    */
@@ -99,50 +113,56 @@ public:
   /**
    * @brief Obtiene el Shader Resource View del Shadow Map.
    *
-   * @return SRV del Shadow Map o nullptr si no est· soportado.
+   * @return SRV del Shadow Map o nullptr si no est√° soportado.
    */
-  virtual ID3D11ShaderResourceView* getShadowMapSRV() const { return nullptr; }
+  virtual ID3D11ShaderResourceView*
+  getShadowMapSRV() const { return nullptr; }
 
   /**
-   * @brief Obtiene el SRV utilizado para depuraciÛn previa al pase de sombras.
+   * @brief Obtiene el SRV utilizado para depuraci√≥n previa al pase de sombras.
    *
-   * @return Shader Resource View o nullptr si no est· disponible.
+   * @return Shader Resource View o nullptr si no est√° disponible.
    */
-  virtual ID3D11ShaderResourceView* getPreShadowSRV() const { return nullptr; }
+  virtual ID3D11ShaderResourceView*
+  getPreShadowSRV() const { return nullptr; }
 
   /**
    * @brief Obtiene el SRV del buffer Albedo/Metallic.
    *
    * @return Shader Resource View o nullptr si no aplica.
    */
-  virtual ID3D11ShaderResourceView* getGBufferAlbedoMetallicSRV() const { return nullptr; }
+  virtual ID3D11ShaderResourceView*
+  getGBufferAlbedoMetallicSRV() const { return nullptr; }
 
   /**
    * @brief Obtiene el SRV del buffer Normal/Roughness.
    *
    * @return Shader Resource View o nullptr si no aplica.
    */
-  virtual ID3D11ShaderResourceView* getGBufferNormalRoughnessSRV() const { return nullptr; }
+  virtual ID3D11ShaderResourceView*
+  getGBufferNormalRoughnessSRV() const { return nullptr; }
 
   /**
    * @brief Obtiene el SRV del buffer World Position/Ambient Occlusion.
    *
    * @return Shader Resource View o nullptr si no aplica.
    */
-  virtual ID3D11ShaderResourceView* getGBufferWorldAoSRV() const { return nullptr; }
+  virtual ID3D11ShaderResourceView*
+  getGBufferWorldAoSRV() const { return nullptr; }
 
   /**
    * @brief Obtiene el SRV del buffer Emissive/Alpha.
    *
    * @return Shader Resource View o nullptr si no aplica.
    */
-  virtual ID3D11ShaderResourceView* getGBufferEmissiveAlphaSRV() const { return nullptr; }
+  virtual ID3D11ShaderResourceView*
+  getGBufferEmissiveAlphaSRV() const { return nullptr; }
 
   /**
-   * @brief Activa o desactiva la visualizaciÛn del factor de sombras.
+   * @brief Activa o desactiva la visualizaci√≥n del factor de sombras.
    *
-   * Implementaciones que no soporten esta caracterÌstica
-   * pueden ignorar el par·metro.
+   * Implementaciones que no soporten esta caracter√≠stica
+   * pueden ignorar el par√°metro.
    *
    * @param enabled Estado deseado.
    */
@@ -150,12 +170,12 @@ public:
   setShadowFactorDebugEnabled(bool enabled) { (void)enabled; }
 
   /**
-   * @brief Configura el modo de visualizaciÛn de depuraciÛn Deferred.
+   * @brief Configura el modo de visualizaci√≥n de depuraci√≥n Deferred.
    *
    * Implementaciones que no utilicen Deferred Rendering
-   * pueden ignorar este par·metro.
+   * pueden ignorar este par√°metro.
    *
-   * @param mode Modo de depuraciÛn.
+   * @param mode Modo de depuraci√≥n.
    */
   virtual void
   setDeferredDebugViewMode(int mode) { (void)mode; }
@@ -163,10 +183,12 @@ public:
   /**
    * @brief Obtiene el nombre descriptivo del renderer.
    *
-   * Utilizado principalmente para depuraciÛn y herramientas de editor.
+   * Utilizado principalmente para depuraci√≥n y herramientas de editor.
    *
    * @return Nombre del renderer.
    */
   virtual 
-  const char* getDebugName() const = 0;
+  /** @brief Declara o ejecuta getDebugName. */
+  const char*
+  getDebugName() const = 0;
 };

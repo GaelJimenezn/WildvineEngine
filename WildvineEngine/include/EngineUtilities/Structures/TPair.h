@@ -26,6 +26,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file TPair.h
+ * @brief Declara utilidades de TPair usadas por WildvineEngine.
+ */
 #pragma once
 
 namespace EU {
@@ -35,15 +40,19 @@ namespace EU {
 	/**
 	 * @brief Clase TPair para representar un par de valores.
 	 *
-	 * La clase TPair almacena un par de valores de tipos específicos. Es similar a std::pair,
-	 * pero se ha diseñado para ser simple y adaptable a tus necesidades. Esta clase proporciona
-	 * una manera eficiente de manejar pares de datos en tu código.
+	 * La clase TPair almacena un par de valores de tipos especÃ­ficos. Es similar a
+	 * std::pair,
+	 * pero se ha diseÃ±ado para ser simple y adaptable a tus necesidades. Esta clase
+	 * proporciona
+	 * una manera eficiente de manejar pares de datos en tu cÃ³digo.
 	 *
 	 * @tparam KeyType Tipo del primer valor (clave) del par.
 	 * @tparam ValueType Tipo del segundo valor (valor) del par.
 	 */
 	template <typename KeyType, typename ValueType>
-	class TPair {
+	/** @brief Declara class TPair. */
+	class
+	TPair {
 	public:
 		/**
 		 * @brief Constructor por defecto que inicializa el par con valores predeterminados.
@@ -75,7 +84,8 @@ namespace EU {
 		 * @return true Si los pares son iguales.
 		 * @return false Si los pares son diferentes.
 		 */
-		bool operator==(const TPair<KeyType, ValueType>& Other) const {
+		bool
+		operator==(const TPair<KeyType, ValueType>& Other) const {
 			return Key == Other.Key && Value == Other.Value;
 		}
 
@@ -86,7 +96,8 @@ namespace EU {
 		 * @return true Si los pares son diferentes.
 		 * @return false Si los pares son iguales.
 		 */
-		bool operator!=(const TPair<KeyType, ValueType>& Other) const {
+		bool
+		operator!=(const TPair<KeyType, ValueType>& Other) const {
 			return !(*this == Other);
 		}
 
@@ -97,7 +108,8 @@ namespace EU {
 		 * @return true Si el par actual es menor que el otro.
 		 * @return false Si el par actual no es menor que el otro.
 		 */
-		bool operator<(const TPair<KeyType, ValueType>& Other) const {
+		bool
+		operator<(const TPair<KeyType, ValueType>& Other) const {
 			return Key < Other.Key || (Key == Other.Key && Value < Other.Value);
 		}
 
@@ -108,7 +120,8 @@ namespace EU {
 		 * @return true Si el par actual es mayor que el otro.
 		 * @return false Si el par actual no es mayor que el otro.
 		 */
-		bool operator>(const TPair<KeyType, ValueType>& Other) const {
+		bool
+		operator>(const TPair<KeyType, ValueType>& Other) const {
 			return Other < *this;
 		}
 
@@ -119,7 +132,8 @@ namespace EU {
 		 * @return true Si el par actual es menor o igual al otro.
 		 * @return false Si el par actual no es menor o igual al otro.
 		 */
-		bool operator<=(const TPair<KeyType, ValueType>& Other) const {
+		bool
+		operator<=(const TPair<KeyType, ValueType>& Other) const {
 			return !(Other < *this);
 		}
 
@@ -130,7 +144,8 @@ namespace EU {
 		 * @return true Si el par actual es mayor o igual al otro.
 		 * @return false Si el par actual no es mayor o igual al otro.
 		 */
-		bool operator>=(const TPair<KeyType, ValueType>& Other) const {
+		bool
+		operator>=(const TPair<KeyType, ValueType>& Other) const {
 			return !(*this < Other);
 		}
 
@@ -139,7 +154,8 @@ namespace EU {
 		 *
 		 * Muestra el valor de la clave y del valor en la consola.
 		 */
-		void Print() const {
+		void
+		Print() const {
 			std::cout << "Key: " << Key << ", Value: " << Value << std::endl;
 		}
 	};

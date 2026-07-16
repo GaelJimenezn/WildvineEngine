@@ -1,20 +1,32 @@
-﻿#pragma once
+/**
+ * @file MaterialInstance.h
+ * @brief Declara la API de MaterialInstance dentro del subsistema de renderizado.
+ */
+#pragma once
 #include "Prerequisites.h"
 #include "Rendering/RenderTypes.h"
 
-class Material;
-class DeviceContext;
-class Texture;
+/** @brief Declara class Material. */
+class
+Material;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
+/** @brief Declara class Texture. */
+class
+Texture;
 
 /**
  * @class MaterialInstance
- * @brief Representa una instancia concreta de un material con texturas y parámetros propios.
+ * @brief Representa una instancia concreta de un material con texturas y parámetros
+ * propios.
  *
  * Permite reutilizar un Material base mientras se modifican:
  * - Texturas (albedo, normal, metallic, etc.)
  * - Parámetros específicos (MaterialParams)
  *
- * Es útil para renderizar múltiples objetos con el mismo shader pero diferentes propiedades visuales.
+ * Es útil para renderizar múltiples objetos con el mismo shader pero diferentes
+ * propiedades visuales.
  */
 class
 MaterialInstance {
@@ -72,56 +84,66 @@ public:
 	 * @brief Obtiene el material base.
 	 * @return Puntero a Material.
 	 */
-	Material* getMaterial() const { return m_material; }
+	Material*
+	getMaterial() const { return m_material; }
 
 	/**
 	 * @brief Obtiene la textura de albedo.
 	 * @return Puntero a Texture.
 	 */
-	Texture* getAlbedo() const { return m_albedo; }
+	Texture*
+	getAlbedo() const { return m_albedo; }
 
 	/**
 	 * @brief Obtiene la textura de normales.
 	 * @return Puntero a Texture.
 	 */
-	Texture* getNormal() const { return m_normal; }
+	Texture*
+	getNormal() const { return m_normal; }
 
 	/**
 	 * @brief Obtiene la textura metálica.
 	 * @return Puntero a Texture.
 	 */
-	Texture* getMetallic() const { return m_metallic; }
+	Texture*
+	getMetallic() const { return m_metallic; }
 
 	/**
 	 * @brief Obtiene la textura de rugosidad.
 	 * @return Puntero a Texture.
 	 */
-	Texture* getRoughness() const { return m_roughness; }
+	Texture*
+	getRoughness() const { return m_roughness; }
 
 	/**
 	 * @brief Obtiene la textura de ambient occlusion.
 	 * @return Puntero a Texture.
 	 */
-	Texture* getAO() const { return m_ao; }
+	Texture*
+	getAO() const { return m_ao; }
 
 	/**
 	 * @brief Obtiene la textura emisiva.
 	 * @return Puntero a Texture.
 	 */
-	Texture* getEmissive() const { return m_emissive; }
+	Texture*
+	getEmissive() const { return m_emissive; }
 
 	/**
 	 * @brief Obtiene los parámetros modificables del material.
 	 * @return Referencia a MaterialParams.
 	 */
-	MaterialParams& getParams() { return m_params; }
+	MaterialParams&
+	getParams() { return m_params; }
 
 	/**
 	 * @brief Obtiene los parámetros del material (const).
 	 * @return Referencia constante a MaterialParams.
 	 */
 	const 
-	MaterialParams& getParams() const { return m_params; }
+	/** @brief Declara o ejecuta getParams. */
+	MaterialParams&
+	getParams() const { return m_params; }
 
 	/**
 	 * @brief Vincula las texturas al pipeline gráfico.

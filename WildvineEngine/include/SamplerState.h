@@ -3,20 +3,27 @@
 
 /**
  * @file SamplerState.h
- * @brief DeclaraciÛn de la clase SamplerState, encargada de administrar el estado del muestreador (Sampler) en DirectX 11.
+ * @brief Declaraci√≥n de la clase SamplerState, encargada de administrar el estado del
+ * muestreador (Sampler) en DirectX 11.
  */
 
-class Device;
+class
+Device;
 
-class DeviceContext;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 /**
  * @class SamplerState
- * @brief Clase responsable de inicializar, actualizar, renderizar y destruir el estado del muestreador en DirectX.
+ * @brief Clase responsable de inicializar, actualizar, renderizar y destruir el estado
+ * del muestreador en DirectX.
  *
- * Esta clase maneja el objeto ID3D11SamplerState que define cÛmo se muestrean las texturas
- * durante el proceso de renderizado. Permite configurar y aplicar el estado del muestreador
- * a la etapa correspondiente del pipeline gr·fico.
+ * Esta clase maneja el objeto ID3D11SamplerState que define c√≥mo se muestrean las
+ * texturas
+ * durante el proceso de renderizado. Permite configurar y aplicar el estado del
+ * muestreador
+ * a la etapa correspondiente del pipeline gr√°fico.
  */
 class
 SamplerState {
@@ -25,7 +32,7 @@ public:
   /**
    * @brief Constructor por defecto.
    *
-   * Inicializa un objeto SamplerState sin ning˙n estado configurado.
+   * Inicializa un objeto SamplerState sin ning√∫n estado configurado.
    */
   SamplerState() = default;
 
@@ -41,16 +48,17 @@ public:
    *
    * Crea y configura el objeto ID3D11SamplerState utilizando el dispositivo de DirectX.
    *
-   * @param device Referencia al objeto Device utilizado para la creaciÛn del sampler.
-   * @return Devuelve un cÛdigo HRESULT que indica si la inicializaciÛn fue exitosa o no.
+   * @param device Referencia al objeto Device utilizado para la creaci√≥n del sampler.
+   * @return Devuelve un c√≥digo HRESULT que indica si la inicializaci√≥n fue exitosa o no.
    */
   HRESULT
   init(Device& device);
 
   /**
-   * @brief Actualiza los par·metros del muestreador.
+   * @brief Actualiza los par√°metros del muestreador.
    *
-   * Permite modificar configuraciones internas del estado si se requiere durante la ejecuciÛn.
+   * Permite modificar configuraciones internas del estado si se requiere durante la
+   * ejecuci√≥n.
    */
   void
   update();
@@ -58,11 +66,12 @@ public:
   /**
    * @brief Aplica el estado del muestreador al contexto de renderizado.
    *
-   * Asigna el sampler al pipeline gr·fico en las ranuras indicadas.
+   * Asigna el sampler al pipeline gr√°fico en las ranuras indicadas.
    *
-   * @param deviceContext Referencia al contexto del dispositivo donde se aplicar· el sampler.
-   * @param StartSlot Õndice inicial de la ranura en la que se establecer· el sampler.
-   * @param NumSamplers N˙mero de samplers a establecer comenzando desde StartSlot.
+   * @param deviceContext Referencia al contexto del dispositivo donde se aplicar√° el
+   * sampler.
+   * @param StartSlot √çndice inicial de la ranura en la que se establecer√° el sampler.
+   * @param NumSamplers N√∫mero de samplers a establecer comenzando desde StartSlot.
    */
   void
   render(DeviceContext& deviceContext,
@@ -81,7 +90,7 @@ public:
   /**
    * @brief Puntero al objeto ID3D11SamplerState de DirectX.
    *
-   * Representa el estado del muestreador activo en el pipeline gr·fico.
+   * Representa el estado del muestreador activo en el pipeline gr√°fico.
    */
   ID3D11SamplerState* m_sampler = nullptr;
 

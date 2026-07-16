@@ -34,7 +34,7 @@ public:
                 rotation(),
                 scale(), 
                 matrix(), 
-                worldMatrix(),                                                       //<----------------
+                worldMatrix(),
                 Component(ComponentType::TRANSFORM) {}
 
   /**
@@ -46,7 +46,7 @@ public:
   init() {
     scale.one();
     matrix = XMMatrixIdentity();
-    worldMatrix = XMMatrixIdentity();                                                //<----------------
+    worldMatrix = XMMatrixIdentity();
   }
 
   /**
@@ -58,12 +58,16 @@ public:
    * @param deltaTime Tiempo transcurrido desde el último frame.
    */
   void
-  update(float deltaTime) override {                                                  //<----------------
+  update(float deltaTime) override {
     // Aplicar escala
     XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
 
     // Aplicar rotacion
-    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+      rotation.x,
+      rotation.y,
+      rotation.z
+    );
 
     // Aplicar traslacion
     XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
@@ -156,21 +160,29 @@ public:
 
   // Método para trasladar la posición del objeto
   // @param translation: Vector que representa la cantidad de traslado en cada eje
+  /** @brief Declara o ejecuta translate. */
   void
   translate(const EU::Vector3& translation);
 
   /**
- * @brief Reconstruye la matriz de transformación local a partir de los vectores de posición, rotación y escala.
+ * @brief Reconstruye la matriz de transformación local a partir de los vectores de
+ * posición, rotación y escala.
  *
  * Este método compone la matriz en el orden: escala -> rotación -> traslación.
- * Es útil cuando se modifican los vectores manualmente y se requiere actualizar la matriz.
+ * Es útil cuando se modifican los vectores manualmente y se requiere actualizar la
+ * matriz.
  */
-  void rebuildMatrixFromVectors() {
+  void
+  rebuildMatrixFromVectors() {
     // Aplicar escala
     XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
 
     // Aplicar rotación (en radianes)
-    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+      rotation.x,
+      rotation.y,
+      rotation.z
+    );
 
     // Aplicar traslación
     XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);

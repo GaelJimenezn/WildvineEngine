@@ -1,4 +1,8 @@
-﻿#pragma once
+/**
+ * @file ForwardRenderer.h
+ * @brief Declara la API de ForwardRenderer dentro del subsistema de renderizado.
+ */
+#pragma once
 #include "Prerequisites.h"
 #include "Buffer.h"
 #include "DepthStencilState.h"
@@ -11,10 +15,18 @@
 #include "Texture.h"
 #include "EngineUtilities/Utilities/EditorViewportPass.h"
 
-class Device;
-class DeviceContext;
-class Camera;
-class Material;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
+/** @brief Declara class Camera. */
+class
+Camera;
+/** @brief Declara class Material. */
+class
+Material;
 
 /**
  * @class ForwardRenderer
@@ -34,7 +46,8 @@ public:
    * @param device Referencia al dispositivo gráfico.
    * @return HRESULT indicando éxito o fallo.
    */
-  HRESULT init(Device& device) override;
+  HRESULT
+  init(Device& device) override;
 
   /**
    * @brief Ajusta el tamaño del render target.
@@ -81,18 +94,21 @@ public:
    * @brief Obtiene el Shader Resource View del shadow map.
    * @return Puntero a ID3D11ShaderResourceView.
    */
-  ID3D11ShaderResourceView* getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
+  ID3D11ShaderResourceView*
+  getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
 
   /**
    * @brief Obtiene el SRV del pre-shadow debug pass.
    * @return Puntero a ID3D11ShaderResourceView.
    */
-  ID3D11ShaderResourceView* getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
+  ID3D11ShaderResourceView*
+  getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
 
   /**
    * @brief Obtiene el nombre descriptivo del renderer.
    */
-  const char* getDebugName() const override { return "ForwardRenderer"; }
+  const char*
+  getDebugName() const override { return "ForwardRenderer"; }
 
 private:
   /**
@@ -138,7 +154,11 @@ private:
    * @param passType Tipo de pass.
    */
   void 
-  renderObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
+  renderObject(
+    DeviceContext& deviceContext,
+    const RenderObject& object,
+    RenderPassType passType
+  );
 
   /**
    * @brief Renderiza un objeto en el pass de sombras.
@@ -153,7 +173,8 @@ private:
    * @param device Dispositivo gráfico.
    * @return HRESULT indicando éxito o fallo.
    */
-  HRESULT createShadowResources(Device& device);
+  HRESULT
+  createShadowResources(Device& device);
 
   /**
    * @brief Actualiza las matrices de iluminación para sombras.
@@ -168,14 +189,16 @@ private:
    * @param device Dispositivo gráfico.
    * @return HRESULT indicando éxito o fallo.
    */
-  HRESULT createBlendStates(Device& device);
+  HRESULT
+  createBlendStates(Device& device);
 
   /**
    * @brief Resuelve el estado de blending según el material.
    * @param material Material del objeto.
    * @return Puntero a ID3D11BlendState.
    */
-  ID3D11BlendState* resolveBlendState(const Material* material) const;
+  ID3D11BlendState*
+  resolveBlendState(const Material* material) const;
 
 private:
   /** @brief Buffer constante por frame. */

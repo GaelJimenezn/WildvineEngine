@@ -26,6 +26,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file Vector3.h
+ * @brief Declara utilidades de Vector3 usadas por WildvineEngine.
+ */
 #pragma once
 
 #include "EngineUtilities\Utilities\EngineMath.h"
@@ -37,7 +42,8 @@ namespace EU {
  * basic vector operations such as addition, subtraction, scalar multiplication,
  * and normalization.
  */
-	class Vector3 {
+	class
+	Vector3 {
 	public:
 		float x; /**< The x-coordinate of the vector. */
 		float y; /**< The y-coordinate of the vector. */
@@ -67,12 +73,15 @@ namespace EU {
 		 * @param other The vector to add.
 		 * @return The result of the addition.
 		 */
-		Vector3 operator+(const Vector3& other) const {
+		Vector3
+		operator+(const Vector3& other) const {
 			return Vector3(x + other.x, y + other.y, z + other.z);
 		}
 
 		// Operador += (para acumuladores de tangentes/bitangentes)
-		Vector3& operator+=(const Vector3& other) {
+		/** @brief Declara o ejecuta operator+=. */
+		Vector3&
+		operator+=(const Vector3& other) {
 			x += other.x; y += other.y; z += other.z;
 			return *this;
 		}
@@ -83,7 +92,8 @@ namespace EU {
 		 * @param other The vector to subtract.
 		 * @return The result of the subtraction.
 		 */
-		Vector3 operator-(const Vector3& other) const {
+		Vector3
+		operator-(const Vector3& other) const {
 			return Vector3(x - other.x, y - other.y, z - other.z);
 		}
 
@@ -93,7 +103,8 @@ namespace EU {
 		 * @param scalar The scalar to multiply by.
 		 * @return The result of the multiplication.
 		 */
-		Vector3 operator*(float scalar) const {
+		Vector3
+		operator*(float scalar) const {
 			return Vector3(x * scalar, y * scalar, z * scalar);
 		}
 
@@ -102,7 +113,8 @@ namespace EU {
 		 *
 		 * @return The magnitude of the vector.
 		 */
-		float magnitude() const {
+		float
+		magnitude() const {
 			return EU::sqrt(x * x + y * y + z * z);
 		}
 
@@ -111,7 +123,8 @@ namespace EU {
 		 *
 		 * @return The normalized vector.
 		 */
-		Vector3 normalize() const {
+		Vector3
+		normalize() const {
 			float mag = magnitude();
 			if (mag == 0) {
 				return Vector3(0, 0, 0);
@@ -119,11 +132,13 @@ namespace EU {
 			return Vector3(x / mag, y / mag, z / mag);
 		}
 
+		/** @brief Declara o ejecuta zero. */
 		void
     zero() {
       Vector3(0, 0, 0);
     }
     
+    /** @brief Declara o ejecuta one. */
     void
     one() {
       Vector3(1,1,1);
@@ -131,11 +146,15 @@ namespace EU {
 
 
 		// ---- helpers con tu Vector3 ----
-		float dot(const Vector3& a, const Vector3& b) {
+		/** @brief Declara o ejecuta dot. */
+		float
+		dot(const Vector3& a, const Vector3& b) {
 			return a.x * b.x + a.y * b.y + a.z * b.z;
 		}
 
-		Vector3 cross(const Vector3& a, const Vector3& b) {
+		/** @brief Declara o ejecuta cross. */
+		Vector3
+		cross(const Vector3& a, const Vector3& b) {
 			return Vector3(
 				a.y * b.z - a.z * b.y,
 				a.z * b.x - a.x * b.z,
@@ -143,9 +162,13 @@ namespace EU {
 			);
 		}
 
-		// Método para obtener un puntero a los datos como un arreglo
+		// MÃ©todo para obtener un puntero a los datos como un arreglo
 		// @return: Puntero a los componentes del vector
-		float* data() { return &x; }
-		const float* data() const { return &x; }
+		/** @brief Declara o ejecuta data. */
+		float*
+		data() { return &x; }
+		/** @brief Declara o ejecuta data. */
+		const float*
+		data() const { return &x; }
 	};
 }

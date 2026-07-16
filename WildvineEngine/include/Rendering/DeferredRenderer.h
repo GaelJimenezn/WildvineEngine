@@ -16,10 +16,18 @@
 #include "Texture.h"
 #include "EngineUtilities/Utilities/EditorViewportPass.h"
 
-class Device;
-class DeviceContext;
-class Camera;
-class Material;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
+/** @brief Declara class Camera. */
+class
+Camera;
+/** @brief Declara class Material. */
+class
+Material;
 
 /**
  * @class DeferredRenderer
@@ -32,77 +40,162 @@ class Material;
 class
 	DeferredRenderer : public ISceneRenderer {
 public:
+	/** @brief Declara o ejecuta init. */
 	HRESULT
 		init(Device& device) override;
 
+	/** @brief Declara o ejecuta resize. */
 	void
 		resize(Device& device, unsigned int width, unsigned int height) override;
 
+	/** @brief Declara o ejecuta render. */
 	void
 		render(DeviceContext& deviceContext,
 			const Camera& camera,
 			RenderScene& scene,
 			EditorViewportPass& viewportPass) override;
 
+	/** @brief Declara o ejecuta destroy. */
 	void
 		destroy() override;
 
+	/** @brief Declara o ejecuta getShadowMapSRV. */
 	ID3D11ShaderResourceView*
 		getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
 
+	/** @brief Declara o ejecuta getPreShadowSRV. */
 	ID3D11ShaderResourceView*
 		getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
 
+	/** @brief Declara o ejecuta getGBufferAlbedoMetallicSRV. */
 	ID3D11ShaderResourceView*
-		getGBufferAlbedoMetallicSRV() const override { return m_gBufferAlbedoMetallicSRV.m_textureFromImg; }
+		getGBufferAlbedoMetallicSRV() const override {
+			return m_gBufferAlbedoMetallicSRV.m_textureFromImg;
+		}
 
+	/** @brief Declara o ejecuta getGBufferNormalRoughnessSRV. */
 	ID3D11ShaderResourceView*
-		getGBufferNormalRoughnessSRV() const override { return m_gBufferNormalRoughnessSRV.m_textureFromImg; }
+		getGBufferNormalRoughnessSRV() const override {
+			return m_gBufferNormalRoughnessSRV.m_textureFromImg;
+		}
 
+	/** @brief Declara o ejecuta getGBufferWorldAoSRV. */
 	ID3D11ShaderResourceView*
 		getGBufferWorldAoSRV() const override { return m_gBufferWorldAoSRV.m_textureFromImg; }
 
+	/** @brief Declara o ejecuta getGBufferEmissiveAlphaSRV. */
 	ID3D11ShaderResourceView*
-		getGBufferEmissiveAlphaSRV() const override { return m_gBufferEmissiveAlphaSRV.m_textureFromImg; }
+		getGBufferEmissiveAlphaSRV() const override {
+			return m_gBufferEmissiveAlphaSRV.m_textureFromImg;
+		}
 
+	/** @brief Declara o ejecuta setShadowFactorDebugEnabled. */
 	void
-		setShadowFactorDebugEnabled(bool enabled) override { m_shadowFactorDebugEnabled = enabled; }
+		setShadowFactorDebugEnabled(bool enabled) override {
+			m_shadowFactorDebugEnabled = enabled;
+		}
 
+	/** @brief Declara o ejecuta setDeferredDebugViewMode. */
 	void
 		setDeferredDebugViewMode(int mode) override { m_deferredDebugViewMode = mode; }
 
+	/** @brief Declara o ejecuta getDebugName. */
 	const char*
 		getDebugName() const override { return "DeferredRenderer"; }
 
 private:
-	void buildQueues(RenderScene& scene, const Camera& camera);
-	void updatePerFrame(const Camera& camera, const RenderScene& scene, DeviceContext& deviceContext);
-	void updateLightMatrices(const Camera& camera, const RenderScene& scene);
-	void renderSceneToTarget(DeviceContext& deviceContext, RenderScene& scene, EditorViewportPass& targetPass, bool applyShadows);
-	void bindGBufferTargets(DeviceContext& deviceContext, ID3D11DepthStencilView* depthStencilView);
-	void bindFinalTarget(DeviceContext& deviceContext, ID3D11RenderTargetView* renderTargetView, ID3D11DepthStencilView* depthStencilView);
-	void clearDeferredSRVs(DeviceContext& deviceContext);
-	void renderGeometryPass(DeviceContext& deviceContext);
-	void renderGeometryObject(DeviceContext& deviceContext, const RenderObject& object);
-	void renderLightingPass(DeviceContext& deviceContext);
-	void renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
-	void renderTransparentPass(DeviceContext& deviceContext);
-	void renderForwardObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
-	void renderShadowPass(DeviceContext& deviceContext);
-	void renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
-	HRESULT createShadowResources(Device& device);
-	HRESULT createGBufferResources(Device& device, unsigned int width, unsigned int height);
-	HRESULT createGBufferTarget(Device& device,
+	/** @brief Declara o ejecuta buildQueues. */
+	void
+	buildQueues(RenderScene& scene, const Camera& camera);
+	/** @brief Declara o ejecuta updatePerFrame. */
+	void
+	updatePerFrame(
+	  const Camera& camera,
+	  const RenderScene& scene,
+	  DeviceContext& deviceContext
+	);
+	/** @brief Declara o ejecuta updateLightMatrices. */
+	void
+	updateLightMatrices(const Camera& camera, const RenderScene& scene);
+	/** @brief Declara o ejecuta renderSceneToTarget. */
+	void
+	renderSceneToTarget(
+	  DeviceContext& deviceContext,
+	  RenderScene& scene,
+	  EditorViewportPass& targetPass,
+	  bool applyShadows
+	);
+	/** @brief Declara o ejecuta bindGBufferTargets. */
+	void
+	bindGBufferTargets(
+	  DeviceContext& deviceContext,
+	  ID3D11DepthStencilView* depthStencilView
+	);
+	/** @brief Declara o ejecuta bindFinalTarget. */
+	void
+	bindFinalTarget(
+	  DeviceContext& deviceContext,
+	  ID3D11RenderTargetView* renderTargetView,
+	  ID3D11DepthStencilView* depthStencilView
+	);
+	/** @brief Declara o ejecuta clearDeferredSRVs. */
+	void
+	clearDeferredSRVs(DeviceContext& deviceContext);
+	/** @brief Declara o ejecuta renderGeometryPass. */
+	void
+	renderGeometryPass(DeviceContext& deviceContext);
+	/** @brief Declara o ejecuta renderGeometryObject. */
+	void
+	renderGeometryObject(DeviceContext& deviceContext, const RenderObject& object);
+	/** @brief Declara o ejecuta renderLightingPass. */
+	void
+	renderLightingPass(DeviceContext& deviceContext);
+	/** @brief Declara o ejecuta renderSkyboxPass. */
+	void
+	renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
+	/** @brief Declara o ejecuta renderTransparentPass. */
+	void
+	renderTransparentPass(DeviceContext& deviceContext);
+	/** @brief Declara o ejecuta renderForwardObject. */
+	void
+	renderForwardObject(
+	  DeviceContext& deviceContext,
+	  const RenderObject& object,
+	  RenderPassType passType
+	);
+	/** @brief Declara o ejecuta renderShadowPass. */
+	void
+	renderShadowPass(DeviceContext& deviceContext);
+	/** @brief Declara o ejecuta renderShadowObject. */
+	void
+	renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
+	/** @brief Declara o ejecuta createShadowResources. */
+	HRESULT
+	createShadowResources(Device& device);
+	/** @brief Declara o ejecuta createGBufferResources. */
+	HRESULT
+	createGBufferResources(Device& device, unsigned int width, unsigned int height);
+	/** @brief Declara o ejecuta createGBufferTarget. */
+	HRESULT
+	createGBufferTarget(Device& device,
 		unsigned int width,
 		unsigned int height,
 		DXGI_FORMAT format,
 		Texture& texture,
 		Texture& srv,
 		RenderTargetView& rtv);
-	HRESULT createLightingResources(Device& device);
-	HRESULT createFullScreenQuad(Device& device);
-	HRESULT createBlendStates(Device& device);
-	ID3D11BlendState* resolveBlendState(const Material* material) const;
+	/** @brief Declara o ejecuta createLightingResources. */
+	HRESULT
+	createLightingResources(Device& device);
+	/** @brief Declara o ejecuta createFullScreenQuad. */
+	HRESULT
+	createFullScreenQuad(Device& device);
+	/** @brief Declara o ejecuta createBlendStates. */
+	HRESULT
+	createBlendStates(Device& device);
+	/** @brief Declara o ejecuta resolveBlendState. */
+	ID3D11BlendState*
+	resolveBlendState(const Material* material) const;
 
 private:
 	Buffer m_perFrameBuffer;
@@ -158,7 +251,9 @@ private:
 	CBPerFrame m_cbPerFrame{};
 	CBPerObject m_cbPerObject{};
 	CBPerMaterial m_cbPerMaterial{};
-	struct DeferredLightingDebugData {
+	/** @brief Declara struct DeferredLightingDebugData. */
+	struct
+	DeferredLightingDebugData {
 		int DebugViewMode = 0;
 		float ShadowStrength = 1.0f;
 		float pad0 = 0.0f;

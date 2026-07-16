@@ -26,20 +26,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file TWeakPointer.h
+ * @brief Declara utilidades de TWeakPointer usadas por WildvineEngine.
+ */
 #pragma once
 #include "TSharedPointer.h"
 
 namespace
 	EU {
 	/**
-		 * @brief Clase TWeakPointer para observar objetos gestionados por TSharedPointer sin aumentar el recuento de referencias.
+		 * @brief Clase TWeakPointer para observar objetos gestionados por TSharedPointer sin
+		 * aumentar el recuento de referencias.
 		 *
-		 * La clase TWeakPointer proporciona una manera de observar un objeto gestionado por un TSharedPointer
-		 * sin tener influencia sobre el recuento de referencias del objeto. Permite acceder al objeto solo si
-		 * a˙n existe.
+		 * La clase TWeakPointer proporciona una manera de observar un objeto gestionado por un
+		 * TSharedPointer
+		 * sin tener influencia sobre el recuento de referencias del objeto. Permite acceder al
+		 * objeto solo si
+		 * a√∫n existe.
 		 */
 	template<typename T>
-	class TWeakPointer {
+	/** @brief Declara class TWeakPointer. */
+	class
+	TWeakPointer {
 	public:
 		/**
 		 * @brief Constructor por defecto.
@@ -49,7 +59,7 @@ namespace
 		/**
 		 * @brief Constructor que toma un TSharedPointer.
 		 *
-		 * @param sharedPtr TSharedPointer desde el cual se observar· el objeto.
+		 * @param sharedPtr TSharedPointer desde el cual se observar√° el objeto.
 		 */
 		TWeakPointer(const TSharedPointer<T>& sharedPtr)
 			: ptr(sharedPtr.ptr), refCount(sharedPtr.refCount) {
@@ -58,7 +68,8 @@ namespace
 		/**
 		 * @brief Convertir TWeakPointer a TSharedPointer.
 		 *
-		 * @return Un TSharedPointer al objeto gestionado, o nullptr si el objeto ha sido destruido.
+		 * @return Un TSharedPointer al objeto gestionado, o nullptr si el objeto ha sido
+		 * destruido.
 		 */
 		TSharedPointer<T>
 			lock() const {
@@ -70,6 +81,7 @@ namespace
 
 
 		// Reset
+		/** @brief Declara o ejecuta reset. */
 		void
 			reset() {
 			ptr = nullptr;
@@ -114,7 +126,7 @@ int main()
 				EU::TSharedPointer<MyClass> sp2 = wp1.lock();
 				if (!sp2.isNull())
 				{
-						sp2->display(); // DeberÌa mostrar el valor 10
+						sp2->display(); // Deber√≠a mostrar el valor 10
 				}
 				else
 				{
@@ -125,23 +137,24 @@ int main()
 				EU::TSharedPointer<MyClass> sp3 = EU::MakeShared<MyClass>(20);
 				sp3 = std::move(sp1); // Mueve la propiedad de sp1 a sp3
 
-				// El puntero compartido original (sp1) ahora est· vacÌo
+				// El puntero compartido original (sp1) ahora est√° vac√≠o
 				EU::TSharedPointer<MyClass> sp4 = wp1.lock();
 				if (sp4.isNull())
 				{
 						std::cout << "sp1 has been moved and is now null." << std::endl;
 				}
 
-				// Intentar obtener un TSharedPointer despuÈs del movimiento
+				// Intentar obtener un TSharedPointer despu√©s del movimiento
 				if (sp3.isNull())
 				{
 						std::cout << "sp3 is null." << std::endl;
 				}
 				else
 				{
-						sp3->display(); // DeberÌa mostrar el valor 20
+						sp3->display(); // Deber√≠a mostrar el valor 20
 				}
-		} // AquÌ, tanto sp2 como sp4 se destruyen y la memoria de MyClass se libera autom·ticamente
+		} // Aqu√≠, tanto sp2 como sp4 se destruyen y la memoria de
+		  // MyClass se libera autom√°ticamente
 
 		return 0;
 }

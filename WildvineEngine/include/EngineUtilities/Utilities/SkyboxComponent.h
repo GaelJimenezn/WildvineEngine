@@ -1,3 +1,7 @@
+/**
+ * @file SkyboxComponent.h
+ * @brief Declara utilidades de SkyboxComponent usadas por WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "MeshComponent.h"
@@ -7,8 +11,8 @@
  * @class SkyboxComponent
  * @brief Componente especializado para manejar un skybox dentro del sistema ECS.
  *
- * Hereda de MeshComponent y encapsula la información necesaria para representar
- * un skybox, incluyendo los vértices específicos del cubo.
+ * Hereda de MeshComponent y encapsula la informaciÃ³n necesaria para representar
+ * un skybox, incluyendo los vÃ©rtices especÃ­ficos del cubo.
  */
 class
 SkyboxComponent :
@@ -28,7 +32,7 @@ public:
 
 private:
   /**
-   * @brief Contenedor de vértices del skybox.
+   * @brief Contenedor de vÃ©rtices del skybox.
    */
   std::vector<SkyboxVertex> m_skyVertex;
 

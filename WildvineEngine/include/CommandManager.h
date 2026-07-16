@@ -18,22 +18,27 @@
  * Toda acción que deba poder deshacerse debe implementar esta interfaz.
  * El CommandManager almacena punteros a ICommand en las pilas de undo/redo.
  */
-class ICommand {
+class
+ICommand {
 public:
   /** @brief Destructor virtual. */
-  virtual ~ICommand() = default;
+  virtual
+  ~ICommand() = default;
 
   /** @brief Deshace la acción realizada por este comando. */
-  virtual void undo() = 0;
+  virtual void
+  undo() = 0;
 
   /** @brief Re-aplica la acción después de un undo. */
-  virtual void redo() = 0;
+  virtual void
+  redo() = 0;
 
   /**
    * @brief Devuelve el nombre descriptivo del comando.
    * @return Cadena literal con el nombre del comando.
    */
-  virtual const char* name() const { return "Command"; }
+  virtual const char*
+  name() const { return "Command"; }
 };
 
 /**
@@ -44,7 +49,8 @@ public:
  * configurable (por defecto 100 entradas). Al ejecutar push() la pila
  * de redo se limpia, tal como es convención en editores tipo Unreal.
  */
-class CommandManager {
+class
+CommandManager {
 public:
   /**
    * @brief Añade un comando al historial y limpia la pila de redo.
@@ -53,7 +59,8 @@ public:
    *
    * @param cmd Comando a registrar (ownership transferido).
    */
-  void push(std::unique_ptr<ICommand> cmd) {
+  void
+  push(std::unique_ptr<ICommand> cmd) {
       if (!cmd) return;
       m_redo.clear();
       m_undo.push_back(std::move(cmd));
@@ -65,7 +72,8 @@ public:
    *
    * El comando se mueve de la pila undo a la pila redo.
    */
-  void undo() {
+  void
+  undo() {
       if (m_undo.empty()) return;
       std::unique_ptr<ICommand> c = std::move(m_undo.back());
       m_undo.pop_back();
@@ -78,7 +86,8 @@ public:
    *
    * El comando se mueve de la pila redo a la pila undo.
    */
-  void redo() {
+  void
+  redo() {
       if (m_redo.empty()) return;
       std::unique_ptr<ICommand> c = std::move(m_redo.back());
       m_redo.pop_back();
@@ -86,22 +95,28 @@ public:
       m_undo.push_back(std::move(c));
   }
   /** @brief Indica si hay acciones disponibles para deshacer. */
-  bool canUndo() const { return !m_undo.empty(); }
+  bool
+  canUndo() const { return !m_undo.empty(); }
 
   /** @brief Indica si hay acciones disponibles para re-aplicar. */
-  bool canRedo() const { return !m_redo.empty(); }
+  bool
+  canRedo() const { return !m_redo.empty(); }
 
   /** @brief Vacía ambas pilas (undo y redo). */
-  void clear() { m_undo.clear(); m_redo.clear(); }
+  void
+  clear() { m_undo.clear(); m_redo.clear(); }
 
   /**
    * @brief Devuelve el número de comandos en la pila de undo.
    * @return Número de acciones deshacibles.
    */
-  size_t undoCount() const { return m_undo.size(); }
+  size_t
+  undoCount() const { return m_undo.size(); }
 
 private:
-  std::vector<std::unique_ptr<ICommand>> m_undo; /**< @brief Pila de comandos deshacibles. */
-  std::vector<std::unique_ptr<ICommand>> m_redo; /**< @brief Pila de comandos re-aplicables. */
+  /** @brief Pila de comandos deshacibles.. */
+  std::vector<std::unique_ptr<ICommand>> m_undo;
+  /** @brief Pila de comandos re-aplicables.. */
+  std::vector<std::unique_ptr<ICommand>> m_redo;
   size_t m_maxDepth = 100; /**< @brief Profundidad máxima del historial de undo. */
 };

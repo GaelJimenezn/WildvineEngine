@@ -11,9 +11,11 @@
 #include "Prerequisites.h"
 #include "ECS/Component.h"
 
+/** @brief Declara class DeviceContext. */
 class 
 DeviceContext;
 
+/** @brief Declara class Entity. */
 class 
 Entity;
 

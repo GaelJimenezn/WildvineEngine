@@ -26,22 +26,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file TStaticPtr.h
+ * @brief Declara utilidades de TStaticPtr usadas por WildvineEngine.
+ */
 #pragma once
 namespace EU {
   /**
- * @brief Clase TStaticPtr para manejo de un puntero est·tico.
+ * @brief Clase TStaticPtr para manejo de un puntero est√°tico.
  *
- * La clase TStaticPtr gestiona un ˙nico objeto est·tico y proporciona mÈtodos
+ * La clase TStaticPtr gestiona un √∫nico objeto est√°tico y proporciona m√©todos
  * para acceder al objeto, verificar si el puntero es nulo y realizar operaciones
- * b·sicas de manejo de memoria.
+ * b√°sicas de manejo de memoria.
  */
   template<typename T>
-  class TStaticPtr {
+  /** @brief Declara class TStaticPtr. */
+  class
+  TStaticPtr {
   public:
     /**
-     * @brief Inicializa el puntero est·tico al objeto.
+     * @brief Inicializa el puntero est√°tico al objeto.
      *
-     * Inicializa el puntero est·tico a nullptr.
+     * Inicializa el puntero est√°tico a nullptr.
      */
     TStaticPtr() = default;
 
@@ -50,7 +57,8 @@ namespace EU {
      *
      * @param rawPtr Puntero crudo al objeto que se va a gestionar.
      */
-    explicit TStaticPtr(T* rawPtr) {
+    explicit
+    TStaticPtr(T* rawPtr) {
       if (instance != nullptr) {
         delete instance;
       }
@@ -60,7 +68,7 @@ namespace EU {
     /**
      * @brief Destructor.
      *
-     * Libera la memoria del objeto gestionado si es la ˙ltima instancia.
+     * Libera la memoria del objeto gestionado si es la √∫ltima instancia.
      */
     ~TStaticPtr() {
       if (instance != nullptr) {
@@ -90,9 +98,10 @@ namespace EU {
     }
 
     /**
-     * @brief Reiniciar el puntero est·tico con un nuevo objeto.
+     * @brief Reiniciar el puntero est√°tico con un nuevo objeto.
      *
-     * Libera la memoria del objeto actual (si existe) y toma la propiedad de un nuevo puntero crudo.
+     * Libera la memoria del objeto actual (si existe) y toma la propiedad de un nuevo
+     * puntero crudo.
      *
      * @param rawPtr Puntero crudo al nuevo objeto que se va a gestionar.
      */
@@ -105,11 +114,11 @@ namespace EU {
     }
 
   private:
-    static T* instance; ///< Puntero est·tico al objeto gestionado.
+    static T* instance; ///< Puntero est√°tico al objeto gestionado.
   };
 
   /*
-  // Inicializar el puntero est·tico
+  // Inicializar el puntero est√°tico
   template<typename T>
   T* TStaticPtr<T>::instance = nullptr;
 

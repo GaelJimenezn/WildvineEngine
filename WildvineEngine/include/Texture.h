@@ -1,9 +1,15 @@
+/**
+ * @file Texture.h
+ * @brief Declara la API pública de Texture dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
+/** @brief Declara class Device. */
 class
   Device;
 
+/** @brief Declara class DeviceContext. */
 class
   DeviceContext;
 
@@ -45,16 +51,19 @@ public:
       const std::string& textureName,
       ExtensionType extensionType);
 
+  /** @brief Declara o ejecuta initFromFile. */
   HRESULT
     initFromFile(Device& device,
       const std::string& fullPath);
 
+  /** @brief Declara o ejecuta initFromMemory. */
   HRESULT
     initFromMemory(Device& device,
       const unsigned char* data,
       size_t size,
       const std::string& textureName);
 
+  /** @brief Declara o ejecuta initSingleChannelFromMemory. */
   HRESULT
     initSingleChannelFromMemory(Device& device,
       const unsigned char* data,
@@ -62,6 +71,7 @@ public:
       int channelIndex,
       const std::string& textureName);
 
+  /** @brief Declara o ejecuta initSolidColor. */
   HRESULT
     initSolidColor(Device& device,
       unsigned char r,

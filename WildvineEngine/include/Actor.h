@@ -21,8 +21,12 @@
 
 //DepthStencilState.h
 
-class Device;
-class MeshComponent;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class MeshComponent. */
+class
+MeshComponent;
 
 /**
  * @class Actor

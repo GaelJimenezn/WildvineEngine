@@ -1,3 +1,7 @@
+/**
+ * @file MeshComponent.h
+ * @brief Declara la API pública de MeshComponent dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "ECS\Component.h"
@@ -80,5 +84,22 @@ public:
   int m_materialIndex = 0;
 
   /** @brief Transform local original del nodo. */
-  XMFLOAT4X4 m_localTransform = XMFLOAT4X4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+  XMFLOAT4X4 m_localTransform = XMFLOAT4X4(
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1
+  );
 };

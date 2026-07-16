@@ -1,16 +1,24 @@
+/**
+ * @file RenderTargetView.h
+ * @brief Declara la API pÃºblica de RenderTargetView dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
 //Forward Declarations
+/** @brief Declara class Device. */
 class 
 Device;
 
+/** @brief Declara class DeviceContext. */
 class 
 DeviceContext;
 
+/** @brief Declara class Texture. */
 class 
 Texture;
 
+/** @brief Declara class DepthStencilView. */
 class
 DepthStencilView;
 
@@ -19,9 +27,9 @@ DepthStencilView;
  * @class RenderTargetView
  * @brief Encapsula un Render Target View (RTV) de DirectX 11.
  *
- * Esta clase administra la creación, uso y destrucción de un
+ * Esta clase administra la creaciÃ³n, uso y destrucciÃ³n de un
  * ID3D11RenderTargetView, el cual se utiliza para renderizar
- * gráficos en una textura o en el back buffer.
+ * grÃ¡ficos en una textura o en el back buffer.
  */
 class
 RenderTargetView {
@@ -43,7 +51,7 @@ public:
    * @param device Referencia al dispositivo de DirectX.
    * @param backBuffer Textura del back buffer.
    * @param format Formato de la textura (DXGI_FORMAT).
-   * @return HRESULT Código de resultado (S_OK si se inicializó correctamente).
+   * @return HRESULT CÃ³digo de resultado (S_OK si se inicializÃ³ correctamente).
    */
   HRESULT
   init(Device& device, Texture& backBuffer, DXGI_FORMAT Format);
@@ -53,9 +61,10 @@ public:
    *
    * @param device Referencia al dispositivo de DirectX.
    * @param inTex Textura de entrada.
-   * @param viewDimension Dimensión del RTV (por ejemplo, TEXTURE2D, TEXTURE2DARRAY, etc.).
+   * @param viewDimension DimensiÃ³n del RTV (por ejemplo, TEXTURE2D, TEXTURE2DARRAY,
+   * etc.).
    * @param format Formato de la textura (DXGI_FORMAT).
-   * @return HRESULT Código de resultado (S_OK si se inicializó correctamente).
+   * @return HRESULT CÃ³digo de resultado (S_OK si se inicializÃ³ correctamente).
    */
   HRESULT
   init(Device& device,
@@ -66,7 +75,7 @@ public:
   /**
    * @brief Actualiza el estado del Render Target View.
    *
-   * Función placeholder que puede usarse para lógica de actualización
+   * FunciÃ³n placeholder que puede usarse para lÃ³gica de actualizaciÃ³n
    * relacionada al render target.
    */
   void
@@ -77,7 +86,7 @@ public:
    *
    * @param deviceContext Contexto del dispositivo para emitir comandos de render.
    * @param depthStencilView Referencia al DepthStencilView asociado.
-   * @param numViews Número de vistas a aplicar.
+   * @param numViews NÃºmero de vistas a aplicar.
    * @param clearColor Color con el que se limpia el render target (RGBA, 4 componentes).
    */
   void
@@ -90,7 +99,7 @@ public:
    * @brief Renderiza utilizando este Render Target View sin un DepthStencilView.
    *
    * @param deviceContext Contexto del dispositivo.
-   * @param numViews Número de vistas a aplicar.
+   * @param numViews NÃºmero de vistas a aplicar.
    */
   void
   render(DeviceContext& deviceContext,

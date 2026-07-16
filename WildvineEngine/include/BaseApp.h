@@ -47,6 +47,7 @@
 #include <future>
 #include <string>
 
+/** @brief Declara o ejecuta ImGui_ImplWin32_WndProcHandler. */
 extern IMGUI_IMPL_API
 LRESULT
 ImGui_ImplWin32_WndProcHandler(HWND hWnd,
@@ -100,6 +101,7 @@ LoadedModel {
   EU::Vector3                                    localMax = EU::Vector3(0.0f, 0.0f, 0.0f);
 };
 
+/** @brief Declara struct PendingModelImport. */
 struct
 PendingModelImport {
   std::string path;
@@ -215,7 +217,7 @@ public:
   handleEditorViewportResize();
 
   /**
-   * @brief Serializa la escena actual a un archivo JSON en disco.
+   * @brief Serializa la escena actual a un archivo binario en disco.
    * @param path Ruta completa del archivo de destino.
    * @return true si la serialización tuvo éxito.
    */
@@ -223,7 +225,7 @@ public:
   saveScene(const std::string& path);
 
   /**
-   * @brief Deserializa y carga una escena desde un archivo JSON.
+   * @brief Deserializa y carga una escena desde un archivo binario.
    * @param path Ruta completa del archivo fuente.
    * @return true si la carga tuvo éxito.
    */
@@ -302,16 +304,20 @@ private:
     const std::string& path,
     const char* debugName);
 
+  /** @brief Declara o ejecuta buildEditorGridMesh. */
   HRESULT
   buildEditorGridMesh();
 
+  /** @brief Declara o ejecuta addEditorGridToRenderScene. */
   void
   addEditorGridToRenderScene();
 
+  /** @brief Declara o ejecuta rebuildEditorSelectionMesh. */
   HRESULT
   rebuildEditorSelectionMesh(const EU::Vector3& localMin,
     const EU::Vector3& localMax);
 
+  /** @brief Declara o ejecuta addEditorSelectionToRenderScene. */
   void
   addEditorSelectionToRenderScene();
 
@@ -478,10 +484,10 @@ private:
   /** @brief Crea un actor nuevo a partir de los datos del clipboard. */
   void
   pasteClipboard();
-  /** @brief Exporta el actor seleccionado como archivo prefab JSON. */
+  /** @brief Exporta el actor seleccionado como archivo prefab binario. */
   void
   savePrefabSelected();
-  /** @brief Importa un prefab JSON y lo instancia en la escena. */
+  /** @brief Importa un prefab binario y lo instancia en la escena. */
   void
   loadPrefab();
 
@@ -501,7 +507,11 @@ private:
   PendingModelImport                             m_pendingModelImport;
   bool                                           m_queuedModelSpawnActive = false;
   std::string                                    m_queuedModelSpawnPath;
-  EU::Vector3                                    m_queuedModelSpawnPosition = EU::Vector3(0.0f, 0.0f, 0.0f);
+  EU::Vector3                                    m_queuedModelSpawnPosition = EU::Vector3(
+    0.0f,
+    0.0f,
+    0.0f
+  );
 
   /**
    * @brief Carga un archivo de modelo (FBX/GLB/OBJ) y crea un actor con él en la escena.
@@ -512,6 +522,7 @@ private:
   loadModelActor(const std::string& modelPath,
     const EU::Vector3& spawnPosition);
 
+  /** @brief Declara o ejecuta getViewportMouseGroundPosition. */
   bool
   getViewportMouseGroundPosition(EU::Vector3& outPosition) const;
 

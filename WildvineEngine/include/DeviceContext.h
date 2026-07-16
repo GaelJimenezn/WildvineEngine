@@ -1,3 +1,7 @@
+/**
+ * @file DeviceContext.h
+ * @brief Declara la API pública de DeviceContext dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
@@ -268,6 +272,7 @@ public:
  
   
 public:
-ID3D11DeviceContext* m_deviceContext = nullptr; /**< Puntero al contexto de dispositivo de DirectX. */
+/** @brief Puntero al contexto de dispositivo de DirectX.. */
+ID3D11DeviceContext* m_deviceContext = nullptr;
 unsigned int m_drawCallCount = 0; /**< Contador de draw calls por frame. */
 };

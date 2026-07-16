@@ -1,18 +1,24 @@
+/**
+ * @file Component.h
+ * @brief Declara la API de Component dentro del sistema de entidades.
+ */
 #pragma once
 #include "Prerequisites.h"
 
 /**
  * @class DeviceContext
- * @brief Declaraci髇 adelantada del contexto de dispositivo usado para operaciones de render.
+ * @brief Declaraci贸n adelantada del contexto de dispositivo usado para operaciones de
+ * render.
  */
-class DeviceContext;
+class
+DeviceContext;
 
 /**
  * @class Component
  * @brief Clase base abstracta para todos los componentes del motor.
  *
  * Define la interfaz fundamental que todos los componentes deben implementar:
- * inicializaci髇, actualizaci髇, renderizado y destrucci髇.
+ * inicializaci贸n, actualizaci贸n, renderizado y destrucci贸n.
  * Cada componente posee un tipo definido por ComponentType.
  */
 class
@@ -26,7 +32,7 @@ public:
 
   /**
    * @brief Constructor que asigna un tipo de componente.
-   * @param type Tipo del componente seg鷑 ComponentType.
+   * @param type Tipo del componente seg煤n ComponentType.
    */
   Component(const ComponentType type) : m_type(type) {}
 
@@ -51,7 +57,7 @@ public:
 
   /**
    * @brief Renderiza el componente.
-   * @param deviceContext Contexto del dispositivo para operaciones gr醘icas.
+   * @param deviceContext Contexto del dispositivo para operaciones gr谩ficas.
    */
   virtual void
   render(DeviceContext& deviceContext) = 0;

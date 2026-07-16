@@ -1,22 +1,32 @@
+/**
+ * @file EditorViewportPass.h
+ * @brief Declara utilidades de EditorViewportPass usadas por WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "Texture.h"
 #include "RenderTargetView.h"
 #include "DepthStencilView.h"
 
-class Device;
-class DeviceContext;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 /**
  * @class EditorViewportPass
- * @brief Representa un render pass utilizado para visualizar contenido en el viewport del editor.
+ * @brief Representa un render pass utilizado para visualizar contenido en el viewport del
+ * editor.
  *
  * Este pass maneja sus propios recursos de render:
  * - Render target (color)
  * - Depth stencil
  * - Viewport
  *
- * Permite renderizar la escena a una textura que posteriormente puede ser mostrada en el editor.
+ * Permite renderizar la escena a una textura que posteriormente puede ser mostrada en el
+ * editor.
  */
 class
 EditorViewportPass {
@@ -29,20 +39,20 @@ public:
 
 	/**
 	 * @brief Inicializa los recursos del viewport.
-	 * @param device Dispositivo gr·fico.
+	 * @param device Dispositivo gr√°fico.
 	 * @param width Ancho del viewport.
 	 * @param height Alto del viewport.
-	 * @return HRESULT indicando Èxito o fallo.
+	 * @return HRESULT indicando √©xito o fallo.
 	 */
 	HRESULT 
   init(Device& device, unsigned int width, unsigned int height);
 
 	/**
 	 * @brief Redimensiona los recursos del viewport.
-	 * @param device Dispositivo gr·fico.
+	 * @param device Dispositivo gr√°fico.
 	 * @param width Nuevo ancho.
 	 * @param height Nuevo alto.
-	 * @return HRESULT indicando Èxito o fallo.
+	 * @return HRESULT indicando √©xito o fallo.
 	 */
 	HRESULT 
 	resize(Device& device, unsigned int width, unsigned int height);
@@ -86,25 +96,30 @@ public:
 	 * @brief Obtiene el Shader Resource View del render target.
 	 * @return Puntero a ID3D11ShaderResourceView.
 	 */
-	ID3D11ShaderResourceView* getSRV() const { return m_colorSRV.m_textureFromImg; }
+	ID3D11ShaderResourceView*
+	getSRV() const { return m_colorSRV.m_textureFromImg; }
 
 	/**
 	 * @brief Obtiene el ancho del viewport.
-	 * @return Ancho en pÌxeles.
+	 * @return Ancho en p√≠xeles.
 	 */
 	unsigned 
-	int getWidth() const { return m_width; }
+	/** @brief Declara o ejecuta getWidth. */
+	int
+	getWidth() const { return m_width; }
 
 	/**
 	 * @brief Obtiene el alto del viewport.
-	 * @return Alto en pÌxeles.
+	 * @return Alto en p√≠xeles.
 	 */
 	unsigned
-	int getHeight() const { return m_height; }
+	/** @brief Declara o ejecuta getHeight. */
+	int
+	getHeight() const { return m_height; }
 
 	/**
-	 * @brief Verifica si los recursos son v·lidos.
-	 * @return true si todos los recursos est·n correctamente inicializados.
+	 * @brief Verifica si los recursos son v√°lidos.
+	 * @return true si todos los recursos est√°n correctamente inicializados.
 	 */
 	bool
 	isValid() const
@@ -117,10 +132,10 @@ public:
 private:
 	/**
 	 * @brief Crea los recursos internos del viewport.
-	 * @param device Dispositivo gr·fico.
+	 * @param device Dispositivo gr√°fico.
 	 * @param width Ancho.
 	 * @param height Alto.
-	 * @return HRESULT indicando Èxito o fallo.
+	 * @return HRESULT indicando √©xito o fallo.
 	 */
 	HRESULT 
 	createResources(Device& device, unsigned int width, unsigned int height);

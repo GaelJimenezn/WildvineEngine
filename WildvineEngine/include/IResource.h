@@ -1,3 +1,7 @@
+/**
+ * @file IResource.h
+ * @brief Declara la API pÃºblica de IResource dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
@@ -5,7 +9,9 @@
  * @enum ResourceType
  * @brief Define los tipos de recursos soportados por el sistema.
  */
-enum class
+enum
+/** @brief Declara class ResourceType. */
+class
 ResourceType {
   Unknow,
   Model3D,
@@ -19,7 +25,9 @@ ResourceType {
  * @enum ResourceState
  * @brief Define el estado actual de un recurso.
  */
-enum class
+enum
+/** @brief Declara class ResourceState. */
+class
 ResourceState {
   Unloaded,
   Loading,
@@ -31,8 +39,8 @@ ResourceState {
  * @class IResource
  * @brief Interfaz base para todos los recursos del sistema.
  *
- * Define el ciclo de vida de un recurso, incluyendo carga, inicialización,
- * liberación y monitoreo de estado.
+ * Define el ciclo de vida de un recurso, incluyendo carga, inicializaciÃ³n,
+ * liberaciÃ³n y monitoreo de estado.
  */
 class
 IResource {
@@ -54,15 +62,17 @@ public:
   /**
    * @brief Destructor virtual.
    */
-  virtual ~IResource() = default;
+  virtual
+  ~IResource() = default;
 
   //Cargar recurso CPU
   /**
    * @brief Inicializa el recurso en memoria (CPU/GPU).
    *
-   * @return true si la inicialización fue exitosa.
+   * @return true si la inicializaciÃ³n fue exitosa.
    */
-  virtual bool init() = 0;
+  virtual bool
+  init() = 0;
 
   //Cargar desde disco duro
   /**
@@ -71,21 +81,24 @@ public:
    * @param filename Ruta del archivo.
    * @return true si la carga fue exitosa.
    */
-  virtual bool load(const std::string& filename) = 0;
+  virtual bool
+  load(const std::string& filename) = 0;
 
   //Liberar memoria
   /**
    * @brief Libera la memoria asociada al recurso.
    */
-  virtual void unload() = 0;
+  virtual void
+  unload() = 0;
 
   //Para profiler
   /**
-   * @brief Obtiene el tamaño del recurso en bytes.
+   * @brief Obtiene el tamaÃ±o del recurso en bytes.
    *
-   * @return size_t Tamaño en memoria.
+   * @return size_t TamaÃ±o en memoria.
    */
-  virtual size_t getSizeInBytes() const = 0;
+  virtual size_t
+  getSizeInBytes() const = 0;
 
   /**
    * @brief Establece la ruta del archivo del recurso.
@@ -115,31 +128,36 @@ public:
    * @brief Obtiene el nombre del recurso.
    * @return Referencia constante al nombre.
    */
-  const std::string& GetName() const { return m_name; }
+  const std::string&
+  GetName() const { return m_name; }
 
   /**
    * @brief Obtiene la ruta del recurso.
    * @return Referencia constante a la ruta.
    */
-  const std::string& GetPath() const { return m_filePath; }
+  const std::string&
+  GetPath() const { return m_filePath; }
 
   /**
    * @brief Obtiene el tipo del recurso.
    * @return Tipo del recurso.
    */
-  ResourceType GetType() const { return m_type; }
+  ResourceType
+  GetType() const { return m_type; }
 
   /**
    * @brief Obtiene el estado del recurso.
    * @return Estado del recurso.
    */
-  ResourceState GetState() const { return m_state; }
+  ResourceState
+  GetState() const { return m_state; }
 
   /**
-   * @brief Obtiene el identificador único del recurso.
+   * @brief Obtiene el identificador Ãºnico del recurso.
    * @return ID del recurso.
    */
-  uint64_t GetID() const { return m_id; }
+  uint64_t
+  GetID() const { return m_id; }
 
 protected:
   /** @brief Nombre del recurso. */
@@ -154,16 +172,17 @@ protected:
   /** @brief Estado actual del recurso. */
   ResourceState m_state;
 
-  /** @brief Identificador único del recurso. */
+  /** @brief Identificador Ãºnico del recurso. */
   uint64_t m_id;
 
 private:
   /**
-   * @brief Genera un ID único incremental.
+   * @brief Genera un ID Ãºnico incremental.
    *
    * @return uint64_t Nuevo ID generado.
    */
-  static uint64_t GenerateID()
+  static uint64_t
+  GenerateID()
   {
     static uint64_t nextID = 1;
     return nextID++;

@@ -37,7 +37,8 @@ public:
 	 *
 	 * @return Referencia a la instancia singleton.
 	 */
-	static ResourceManager& getInstance() {
+	static ResourceManager&
+	getInstance() {
 		static ResourceManager instance;
 		return instance;
 	}
@@ -50,7 +51,8 @@ public:
 	/**
 	 * @brief Operador de asignación eliminado.
 	 */
-	ResourceManager& operator=(const ResourceManager&) = delete;
+	ResourceManager&
+	operator=(const ResourceManager&) = delete;
 
 	/// Obtener o cargar un recurso de tipo T (T debe heredar de IResource).
 	/**
@@ -64,7 +66,9 @@ public:
 	 * @return std::shared_ptr<T> Recurso cargado o existente.
 	 */
 	template<typename T, typename... Args>
-	std::shared_ptr<T> GetOrLoad(const std::string& key,
+	/** @brief Declara o ejecuta GetOrLoad. */
+	std::shared_ptr<T>
+	GetOrLoad(const std::string& key,
 		const std::string& filename,
 		Args&&... args) {
 		static_assert(std::is_base_of<IResource, T>::value,
@@ -105,7 +109,9 @@ public:
 	 * @return std::shared_ptr<T> Recurso encontrado o nullptr si no existe.
 	 */
 	template<typename T>
-	std::shared_ptr<T> Get(const std::string& key) const
+	/** @brief Declara o ejecuta Get. */
+	std::shared_ptr<T>
+	Get(const std::string& key) const
 	{
 		auto it = m_resources.find(key);
 		if (it == m_resources.end()) return nullptr;

@@ -1,11 +1,23 @@
-﻿#pragma once
+/**
+ * @file Material.h
+ * @brief Declara la API de Material dentro del subsistema de renderizado.
+ */
+#pragma once
 #include "Prerequisites.h"
 #include "Rendering/RenderTypes.h"
 
-class ShaderProgram;
-class RasterizerState;
-class DepthStencilState;
-class SamplerState;
+/** @brief Declara class ShaderProgram. */
+class
+ShaderProgram;
+/** @brief Declara class RasterizerState. */
+class
+RasterizerState;
+/** @brief Declara class DepthStencilState. */
+class
+DepthStencilState;
+/** @brief Declara class SamplerState. */
+class
+SamplerState;
 
 /**
  * @class Material
@@ -67,37 +79,43 @@ public:
 	 * @brief Obtiene el shader del material.
 	 * @return Puntero a ShaderProgram.
 	 */
-	ShaderProgram* getShader() const { return m_shader; }
+	ShaderProgram*
+	getShader() const { return m_shader; }
 
 	/**
 	 * @brief Obtiene el estado de rasterización.
 	 * @return Puntero a RasterizerState.
 	 */
-	RasterizerState* getRasterizerState() const { return m_rasterizerState; }
+	RasterizerState*
+	getRasterizerState() const { return m_rasterizerState; }
 
 	/**
 	 * @brief Obtiene el estado de profundidad y stencil.
 	 * @return Puntero a DepthStencilState.
 	 */
-	DepthStencilState* getDepthStencilState() const { return m_depthStencilState; }
+	DepthStencilState*
+	getDepthStencilState() const { return m_depthStencilState; }
 
 	/**
 	 * @brief Obtiene el estado de sampler.
 	 * @return Puntero a SamplerState.
 	 */
-	SamplerState* getSamplerState() const { return m_samplerState; }
+	SamplerState*
+	getSamplerState() const { return m_samplerState; }
 
 	/**
 	 * @brief Obtiene el dominio del material.
 	 * @return MaterialDomain actual.
 	 */
-	MaterialDomain getDomain() const { return m_domain; }
+	MaterialDomain
+	getDomain() const { return m_domain; }
 
 	/**
 	 * @brief Obtiene el modo de blending.
 	 * @return BlendMode actual.
 	 */
-	BlendMode getBlendMode() const { return m_blendMode; }
+	BlendMode
+	getBlendMode() const { return m_blendMode; }
 
 private:
 	/** @brief Shader asociado al material. */

@@ -26,18 +26,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file TSharedPointer.h
+ * @brief Declara utilidades de TSharedPointer usadas por WildvineEngine.
+ */
 #pragma once
 
 namespace EU {
 	/**
-	 * @brief Clase TSharedPointer para manejar la gesti髇 de memoria compartida.
+	 * @brief Clase TSharedPointer para manejar la gesti贸n de memoria compartida.
 	 *
 	 * La clase TSharedPointer gestiona la memoria de un objeto de tipo T y lleva un
-	 * recuento de referencias para permitir la compartici髇 segura de un mismo objeto
-	 * en m鷏tiples instancias de TSharedPointer.
+	 * recuento de referencias para permitir la compartici贸n segura de un mismo objeto
+	 * en m煤ltiples instancias de TSharedPointer.
 	 */
 	template<typename T>
-	class TSharedPointer
+	/** @brief Declara class TSharedPointer. */
+	class
+	TSharedPointer
 	{
 	public:
 		/**
@@ -52,7 +59,8 @@ namespace EU {
 		 *
 		 * @param rawPtr Puntero crudo al objeto que se va a gestionar.
 		 */
-		explicit TSharedPointer(T* rawPtr) : ptr(rawPtr), refCount(new int(1)) {}
+		explicit
+		TSharedPointer(T* rawPtr) : ptr(rawPtr), refCount(new int(1)) {}
 
 		/**
 		 * @brief Constructor desde un puntero crudo y un recuento de referencias.
@@ -60,7 +68,11 @@ namespace EU {
 		 * @param rawPtr Puntero crudo al objeto gestionado.
 		 * @param existingRefCount Puntero al recuento de referencias existente.
 		 */
-		TSharedPointer(T* rawPtr, int* existingRefCount) : ptr(rawPtr), refCount(existingRefCount)
+		TSharedPointer(
+		  T* rawPtr,
+		  int* existingRefCount) : ptr(rawPtr),
+		  refCount(existingRefCount
+		)
 		{
 			if (refCount)
 			{
@@ -76,7 +88,10 @@ namespace EU {
 		 *
 		 * @param other Otro objeto TSharedPointer del mismo tipo T.
 		 */
-		TSharedPointer(const TSharedPointer<T>& other) : ptr(other.ptr), refCount(other.refCount)
+		TSharedPointer(
+		  const TSharedPointer<T>& other) : ptr(other.ptr),
+		  refCount(other.refCount
+		)
 		{
 			if (refCount)
 			{
@@ -92,14 +107,17 @@ namespace EU {
 		 *
 		 * @param other Otro objeto TSharedPointer del mismo tipo T.
 		 */
-		TSharedPointer(TSharedPointer<T>&& other) noexcept : ptr(other.ptr), refCount(other.refCount)
+		TSharedPointer(
+		  TSharedPointer<T>&& other) noexcept : ptr(other.ptr),
+		  refCount(other.refCount
+		)
 		{
 			other.ptr = nullptr;
 			other.refCount = nullptr;
 		}
 
 		/**
-		 * @brief Operador de asignaci髇 de copia.
+		 * @brief Operador de asignaci贸n de copia.
 		 *
 		 * Libera el objeto actual, copia el puntero y el recuento de referencias del otro
 		 * TSharedPointer, y aumenta el recuento de referencias.
@@ -107,7 +125,8 @@ namespace EU {
 		 * @param other Otro objeto TSharedPointer del mismo tipo T.
 		 * @return Referencia al objeto TSharedPointer actual.
 		 */
-		TSharedPointer<T>& operator=(const TSharedPointer<T>& other)
+		TSharedPointer<T>&
+		operator=(const TSharedPointer<T>& other)
 		{
 			if (this != &other)
 			{
@@ -129,7 +148,7 @@ namespace EU {
 		}
 
 		/**
-		 * @brief Operador de asignaci髇 de movimiento.
+		 * @brief Operador de asignaci贸n de movimiento.
 		 *
 		 * Libera el objeto actual, transfiere la propiedad del puntero y el recuento de
 		 * referencias del otro TSharedPointer al actual.
@@ -137,7 +156,8 @@ namespace EU {
 		 * @param other Otro objeto TSharedPointer del mismo tipo T.
 		 * @return Referencia al objeto TSharedPointer actual.
 		 */
-		TSharedPointer<T>& operator=(TSharedPointer<T>&& other) noexcept
+		TSharedPointer<T>&
+		operator=(TSharedPointer<T>&& other) noexcept
 		{
 			if (this != &other)
 			{
@@ -172,21 +192,25 @@ namespace EU {
 		}
 
 		/**
-		 * @brief Operador de desreferenciaci髇.
+		 * @brief Operador de desreferenciaci贸n.
 		 *
 		 * @return Referencia al objeto gestionado.
 		 */
-		T& operator*() const { return *ptr; }
+		T&
+		operator*() const { return *ptr; }
 
 		/**
 		 * @brief Operador de acceso a miembros.
 		 *
 		 * @return Puntero al objeto gestionado.
 		 */
-		T* operator->() const { return ptr; }
+		T*
+		operator->() const { return ptr; }
 
-		// Agregar una funci髇 para comprobar si el puntero es v醠ido
-		operator bool() const {
+		// Agregar una funci贸n para comprobar si el puntero es v谩lido
+		/** @brief Declara o ejecuta operatorbool. */
+		operator
+		bool() const {
 			return ptr != nullptr;
 		}
 
@@ -195,14 +219,16 @@ namespace EU {
 		 *
 		 * @return Puntero crudo al objeto gestionado.
 		 */
-		T* get() const { return ptr; }
+		T*
+		get() const { return ptr; }
 
 		/**
 		 * @brief Comprobar si el puntero es nulo.
 		 *
 		 * @return true si el puntero es nulo, false en caso contrario.
 		 */
-		bool isNull() const { return ptr == nullptr; }
+		bool
+		isNull() const { return ptr == nullptr; }
 
 
 	public:
@@ -210,13 +236,14 @@ namespace EU {
 		int* refCount; ///< Puntero al recuento de referencias.
 
 		/**
-		 * @brief M閠odo swap.
+		 * @brief M茅todo swap.
 		 *
 		 * Intercambia los datos de dos objetos TSharedPointer.
 		 *
 		 * @param other Otro objeto TSharedPointer del mismo tipo T.
 		 */
-		void swap(TSharedPointer<T>& other) noexcept
+		void
+		swap(TSharedPointer<T>& other) noexcept
 		{
 			T* tempPtr = other.ptr;
 			int* tempRefCount = other.refCount;
@@ -231,9 +258,11 @@ namespace EU {
 		/**
 				 * @brief Libera el objeto actual y opcionalmente asigna un nuevo objeto.
 				 *
-				 * @param newPtr Nuevo puntero crudo al objeto que se va a gestionar (por defecto es nullptr).
+				 * @param newPtr Nuevo puntero crudo al objeto que se va a gestionar (por defecto es
+				 * nullptr).
 				 */
-		void reset(T* newPtr = nullptr)
+		void
+		reset(T* newPtr = nullptr)
 		{
 			// Disminuir el recuento de referencias del objeto actual
 			if (refCount && --(*refCount) == 0)
@@ -256,17 +285,19 @@ namespace EU {
 			}
 		}
 
-		// M閠odo de conversi髇 para hacer cast din醡ico
+		// M茅todo de conversi贸n para hacer cast din谩mico
 		template<typename U>
-		TSharedPointer<U> dynamic_pointer_cast() const {
+		/** @brief Declara o ejecuta dynamic_pointer_cast. */
+		TSharedPointer<U>
+		dynamic_pointer_cast() const {
 			// Intenta convertir el puntero de tipo T a U
 			U* castedPtr = dynamic_cast<U*>(ptr);
 			if (castedPtr) {
-				// Si la conversi髇 es exitosa, devuelve un nuevo TSharedPointer<U>
+				// Si la conversi贸n es exitosa, devuelve un nuevo TSharedPointer<U>
 				return TSharedPointer<U>(castedPtr, refCount);
 			}
 			else {
-				// Si falla la conversi髇, devuelve un TSharedPointer<U> nulo
+				// Si falla la conversi贸n, devuelve un TSharedPointer<U> nulo
 				return TSharedPointer<U>();
 			}
 		}
@@ -275,7 +306,7 @@ namespace EU {
 
 
 	/**
-	 * @brief Funci髇 de utilidad para crear un TSharedPointer.
+	 * @brief Funci贸n de utilidad para crear un TSharedPointer.
 	 *
 	 * @tparam T Tipo del objeto gestionado.
 	 * @tparam Args Tipos de los argumentos del constructor del objeto gestionado.
@@ -283,9 +314,10 @@ namespace EU {
 	 * @return Un objeto TSharedPointer gestionando un nuevo objeto de tipo T.
 	 */
 	template<typename T, typename... Args>
-	TSharedPointer<T> MakeShared(Args... args)
+	/** @brief Declara o ejecuta MakeShared. */
+	TSharedPointer<T>
+	MakeShared(Args... args)
 	{
 		return TSharedPointer<T>(new T(args...));
 	}
 }
-

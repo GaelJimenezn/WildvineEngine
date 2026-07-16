@@ -26,6 +26,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file Vector2.h
+ * @brief Declara utilidades de Vector2 usadas por WildvineEngine.
+ */
 #pragma once
 #include "EngineUtilities\Utilities\EngineMath.h"
 namespace EU {
@@ -121,7 +126,8 @@ namespace EU {
      *
      * @return Pointer to the first element (x, y, z).
      */
-    const float* data() const {
+    const float*
+    data() const {
       return &x;
     }
   };

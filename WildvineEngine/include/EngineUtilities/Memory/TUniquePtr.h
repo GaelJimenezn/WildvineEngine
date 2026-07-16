@@ -26,6 +26,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
+
+/**
+ * @file TUniquePtr.h
+ * @brief Declara utilidades de TUniquePtr usadas por WildvineEngine.
+ */
 #pragma once
 
 namespace EU {
@@ -37,7 +42,9 @@ namespace EU {
  * cualquier momento.
  */
   template<typename T>
-  class TUniquePtr {
+  /** @brief Declara class TUniquePtr. */
+  class
+  TUniquePtr {
   public:
     /**
      * @brief Constructor por defecto.
@@ -51,7 +58,8 @@ namespace EU {
      *
      * @param rawPtr Puntero crudo al objeto que se va a gestionar.
      */
-    explicit TUniquePtr(T* rawPtr) : ptr(rawPtr) {}
+    explicit
+    TUniquePtr(T* rawPtr) : ptr(rawPtr) {}
 
     /**
      * @brief Constructor de movimiento.
@@ -65,7 +73,7 @@ namespace EU {
     }
 
     /**
-     * @brief Operador de asignaciÛn de movimiento.
+     * @brief Operador de asignaci√≥n de movimiento.
      *
      * Libera el objeto actual y transfiere la propiedad del puntero del otro
      * TUniquePtr al actual.
@@ -97,10 +105,12 @@ namespace EU {
 
     // Prohibir la copia de TUniquePtr
     TUniquePtr(const TUniquePtr<T>&) = delete;
-    TUniquePtr<T>& operator=(const TUniquePtr<T>&) = delete;
+    /** @brief Declara o ejecuta operator=. */
+    TUniquePtr<T>&
+    operator=(const TUniquePtr<T>&) = delete;
 
     /**
-     * @brief Operador de desreferenciaciÛn.
+     * @brief Operador de desreferenciaci√≥n.
      *
      * @return Referencia al objeto gestionado.
      */
@@ -132,7 +142,8 @@ namespace EU {
     /**
      * @brief Liberar la propiedad del puntero crudo.
      *
-     * Libera la propiedad del puntero crudo gestionado y devuelve el puntero sin gestionar.
+     * Libera la propiedad del puntero crudo gestionado y devuelve el puntero sin
+     * gestionar.
      *
      * @return Puntero crudo al objeto gestionado.
      */
@@ -170,7 +181,7 @@ namespace EU {
   };
 
   /**
-   * @brief FunciÛn de utilidad para crear un TUniquePtr.
+   * @brief Funci√≥n de utilidad para crear un TUniquePtr.
    *
    * @tparam T Tipo del objeto gestionado.
    * @tparam Args Tipos de los argumentos del constructor del objeto gestionado.
@@ -178,6 +189,7 @@ namespace EU {
    * @return Un objeto TUniquePtr gestionando un nuevo objeto de tipo T.
    */
   template<typename T, typename... Args>
+  /** @brief Declara o ejecuta MakeUnique. */
   TUniquePtr<T>
     MakeUnique(Args... args) {
     return TUniquePtr<T>(new T(args...));
@@ -225,7 +237,8 @@ namespace EU {
       MyClass* rawPtr = up2.release();
       rawPtr->display();
       delete rawPtr; // Manualmente liberar la memoria ya que fue liberada del TUniquePtr
-    } // AquÌ, up1 y up2 se destruyen y la memoria de MyClass se libera autom·ticamente si no fue liberada antes
+    } // Aqu√≠, up1 y up2 se destruyen y la memoria de MyClass se libera
+      // autom√°ticamente si no fue liberada antes
 
     return 0;
   }

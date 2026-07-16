@@ -1,14 +1,19 @@
+/**
+ * @file Window.h
+ * @brief Declara la API p√∫blica de Window dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
+/** @brief Declara class BaseApp. */
 class
 BaseApp;
 
 /**
  * @class Window
- * @brief Representa una ventana de aplicaciÛn en Windows.
+ * @brief Representa una ventana de aplicaci√≥n en Windows.
  *
- * Esta clase encapsula la creaciÛn, gestiÛn, actualizaciÛn y destrucciÛn
+ * Esta clase encapsula la creaci√≥n, gesti√≥n, actualizaci√≥n y destrucci√≥n
  * de una ventana Win32, utilizada como superficie de renderizado para DirectX.
  */
 class
@@ -26,12 +31,12 @@ public:
 
 
   /**
-   * @brief Inicializa y crea la ventana de la aplicaciÛn.
+   * @brief Inicializa y crea la ventana de la aplicaci√≥n.
    *
-   * @param hInstance Manejador de la instancia de la aplicaciÛn.
-   * @param nCmdShow Par·metro que indica cÛmo se mostrar· la ventana.
-   * @param wndproc FunciÛn de procedimiento de ventana (callback de mensajes).
-   * @return HRESULT CÛdigo de resultado (S_OK si se creÛ correctamente).
+   * @param hInstance Manejador de la instancia de la aplicaci√≥n.
+   * @param nCmdShow Par√°metro que indica c√≥mo se mostrar√° la ventana.
+   * @param wndproc Funci√≥n de procedimiento de ventana (callback de mensajes).
+   * @return HRESULT C√≥digo de resultado (S_OK si se cre√≥ correctamente).
    */
   HRESULT
   init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc, BaseApp* app);
@@ -39,7 +44,7 @@ public:
   /**
    * @brief Actualiza el estado de la ventana.
    *
-   * Normalmente procesa eventos o lÛgica asociada al ciclo de vida de la ventana.
+   * Normalmente procesa eventos o l√≥gica asociada al ciclo de vida de la ventana.
    */
   void
   update();
@@ -47,7 +52,7 @@ public:
   /**
    * @brief Renderiza el contenido de la ventana.
    *
-   * Generalmente se usa junto con el contexto gr·fico (DirectX/OpenGL).
+   * Generalmente se usa junto con el contexto gr√°fico (DirectX/OpenGL).
    */
   void
   render();
@@ -76,12 +81,12 @@ public:
 
 private:
   /**
-   * @brief Handle de la instancia de la aplicaciÛn.
+   * @brief Handle de la instancia de la aplicaci√≥n.
    */
   HINSTANCE m_hInst = nullptr;
 
   /**
-   * @brief Rect·ngulo que define las dimensiones de la ventana.
+   * @brief Rect√°ngulo que define las dimensiones de la ventana.
    */
   RECT m_rect;
 

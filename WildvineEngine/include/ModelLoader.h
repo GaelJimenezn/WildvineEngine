@@ -1,11 +1,15 @@
+/**
+ * @file ModelLoader.h
+ * @brief Declara la API p√∫blica de ModelLoader dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "fbxsdk.h"
 
 /**
  * @class ModelLoader
- * @brief Clase encargada de gestionar la carga, actualizaciÛn, renderizado
- *        y destrucciÛn de modelos 3D, permitiendo importar datos desde archivos externos.
+ * @brief Clase encargada de gestionar la carga, actualizaci√≥n, renderizado
+ *        y destrucci√≥n de modelos 3D, permitiendo importar datos desde archivos externos.
  */
 class
 ModelLoader{
@@ -46,7 +50,8 @@ public:
   destroy();
 
   /**
-   * @brief Carga un archivo de modelo 3D (por ejemplo, formato OBJ) y devuelve su informaciÛn.
+   * @brief Carga un archivo de modelo 3D (por ejemplo, formato OBJ) y devuelve su
+   * informaci√≥n.
    * @param objFileName Nombre o ruta del archivo OBJ a cargar.
    * @return Estructura LoadData que contiene los datos del modelo cargado.
    */
@@ -61,4 +66,3 @@ public:
   std::string modelName;
  
 };
-

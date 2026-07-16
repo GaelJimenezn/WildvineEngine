@@ -1,21 +1,25 @@
+/**
+ * @file Viewport.h
+ * @brief Declara la API p煤blica de Viewport dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 
 /**
- * @brief Declaraci髇 adelantada de la clase Window.
+ * @brief Declaraci贸n adelantada de la clase Window.
  */
 class
 Window;
 
 /**
- * @brief Declaraci髇 adelantada de la clase DeviceContext.
+ * @brief Declaraci贸n adelantada de la clase DeviceContext.
  */
 class
 DeviceContext;
 
 /**
  * @class Viewport
- * @brief Clase encargada de administrar el 醨ea visible de renderizado (viewport)
+ * @brief Clase encargada de administrar el 谩rea visible de renderizado (viewport)
  *        dentro de una ventana o superficie de dibujo en DirectX.
  */
 class
@@ -35,22 +39,22 @@ public:
   /**
    * @brief Inicializa el viewport utilizando las dimensiones de una ventana.
    * @param window Referencia a la ventana desde la cual se obtienen las dimensiones.
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   init(const Window& window);
 
   /**
    * @brief Inicializa el viewport con dimensiones personalizadas.
-   * @param width Ancho del 醨ea de renderizado.
-   * @param height Alto del 醨ea de renderizado.
-   * @return HRESULT que indica el resultado de la operaci髇.
+   * @param width Ancho del 谩rea de renderizado.
+   * @param height Alto del 谩rea de renderizado.
+   * @return HRESULT que indica el resultado de la operaci贸n.
    */
   HRESULT
   init(unsigned int width, unsigned int height);
 
   /**
-   * @brief Actualiza los par醡etros del viewport si es necesario.
+   * @brief Actualiza los par谩metros del viewport si es necesario.
    */
   void
   update();
@@ -69,6 +73,6 @@ public:
   destroy() {}
 
 public:
-  /** @brief Estructura que almacena la configuraci髇 del viewport de Direct3D. */
+  /** @brief Estructura que almacena la configuraci贸n del viewport de Direct3D. */
   D3D11_VIEWPORT m_viewport;
 };

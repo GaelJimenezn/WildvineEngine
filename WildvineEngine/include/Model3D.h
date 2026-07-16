@@ -1,3 +1,7 @@
+/**
+ * @file Model3D.h
+ * @brief Declara la API pública de Model3D dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "fbxsdk.h"
@@ -15,6 +19,7 @@ enum
   GLTF  ///< Modelo en formato GLTF / GLB.
 };
 
+/** @brief Declara struct EmbeddedTexture. */
 struct
 EmbeddedTexture {
     std::string name;
@@ -23,6 +28,7 @@ EmbeddedTexture {
     int textureSlot = 0;
 };
 
+/** @brief Declara struct ImportedMaterialInfo. */
 struct
 ImportedMaterialInfo {
     XMFLOAT4 baseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -32,6 +38,7 @@ ImportedMaterialInfo {
     std::string texturePaths[6];
 };
 
+/** @brief Declara class Model3D. */
 class
 Model3D : public IResource {
 
@@ -117,9 +124,11 @@ public:
   std::vector<MeshComponent>
     LoadFBXModel(const std::string& filePath);
 
+  /** @brief Declara o ejecuta LoadOBJModel. */
   std::vector<MeshComponent>
   LoadOBJModel(const std::string& filePath);
 
+  /** @brief Declara o ejecuta LoadGLTFModel. */
   std::vector<MeshComponent>
   LoadGLTFModel(const std::string& filePath);
 
@@ -151,23 +160,29 @@ public:
   std::vector<std::string>
   GetTextureFileNames() const { return textureFileNames; }
 
+  /** @brief Declara o ejecuta GetEmbeddedTextures. */
   const std::vector<EmbeddedTexture>&
   GetEmbeddedTextures() const { return m_embeddedTextures; }
 
+  /** @brief Declara o ejecuta GetMaterialInfos. */
   const std::vector<ImportedMaterialInfo>&
   GetMaterialInfos() const { return m_materialInfos; }
 
 private:
+  /** @brief Declara o ejecuta GetBinaryCachePath. */
   std::string
   GetBinaryCachePath() const;
 
+  /** @brief Declara o ejecuta IsBinaryCacheUpToDate. */
   bool
   IsBinaryCacheUpToDate(const std::string& sourcePath,
     const std::string& cachePath) const;
 
+  /** @brief Declara o ejecuta LoadBinaryCache. */
   bool
   LoadBinaryCache(const std::string& cachePath);
 
+  /** @brief Declara o ejecuta SaveBinaryCache. */
   bool
   SaveBinaryCache(const std::string& cachePath) const;
 

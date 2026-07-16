@@ -8,7 +8,9 @@
 #include "ECS/Component.h"
 #include "Rendering/RenderTypes.h"
 
-class DeviceContext;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 /**
  * @class LightComponent
@@ -50,13 +52,15 @@ public:
 	 *
 	 * @return Referencia mutable a LightData.
 	 */
-	LightData& getLightData() { return m_light; }
+	LightData&
+	getLightData() { return m_light; }
 
 	/**
 	 * @brief Accede de forma constante a los datos de la luz.
 	 * @return Referencia constante a LightData.
 	 */
-	const LightData& getLightData() const { return m_light; }
+	const LightData&
+	getLightData() const { return m_light; }
 
 	/**
 	 * @brief Habilita o deshabilita la proyección de sombras de esta luz.
@@ -76,6 +80,7 @@ public:
 	canCastShadow() const { return m_castShadow; }
 
 private:
-	LightData m_light;          /**< @brief Parámetros completos de la luz (tipo, color, rango, ángulo, etc.). */
+	/** @brief Parámetros completos de la luz (tipo, color, rango, ángulo, etc.).. */
+	LightData m_light;
 	bool      m_castShadow = false; /**< @brief true si esta luz genera un shadow map. */
 };

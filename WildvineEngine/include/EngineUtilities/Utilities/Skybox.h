@@ -1,3 +1,7 @@
+/**
+ * @file Skybox.h
+ * @brief Declara utilidades de Skybox usadas por WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "ShaderProgram.h"
@@ -11,15 +15,19 @@
 #include "ECS\Actor.h"
 
 
-class Device;
-class DeviceContext;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 /**
  * @class Skybox
- * @brief Clase encargada de la inicializaci髇, actualizaci髇 y renderizado de un skybox.
+ * @brief Clase encargada de la inicializaci贸n, actualizaci贸n y renderizado de un skybox.
  *
- * Maneja los recursos necesarios como shaders, buffers, estados de rasterizaci髇,
- * profundidad y textura c鷅ica para representar el entorno.
+ * Maneja los recursos necesarios como shaders, buffers, estados de rasterizaci贸n,
+ * profundidad y textura c煤bica para representar el entorno.
  */
 class
 Skybox {
@@ -37,19 +45,19 @@ public:
 	/**
 	 * @brief Inicializa los recursos del skybox.
 	 *
-	 * @param device Referencia al dispositivo gr醘ico.
+	 * @param device Referencia al dispositivo gr谩fico.
 	 * @param deviceContext Contexto del dispositivo.
-	 * @param cubemap Textura c鷅ica utilizada como skybox.
-	 * @return HRESULT Resultado de la operaci髇.
+	 * @param cubemap Textura c煤bica utilizada como skybox.
+	 * @return HRESULT Resultado de la operaci贸n.
 	 */
 	HRESULT
   init(Device& device, DeviceContext* deviceContext, Texture& cubemap);
 
 	/**
-	 * @brief Actualiza el estado del skybox seg鷑 la c醡ara.
+	 * @brief Actualiza el estado del skybox seg煤n la c谩mara.
 	 *
 	 * @param deviceContext Contexto del dispositivo.
-	 * @param camera C醡ara utilizada para la vista.
+	 * @param camera C谩mara utilizada para la vista.
 	 */
 	void
 	update(DeviceContext& deviceContext, Camera& camera);
@@ -78,13 +86,13 @@ private:
 	/** @brief Estado de muestreo de texturas. */
 	SamplerState m_samplerState;
 
-	/** @brief Estado de rasterizaci髇. */
+	/** @brief Estado de rasterizaci贸n. */
 	RasterizerState m_rasterizerState;
 
 	/** @brief Estado de profundidad y stencil. */
 	DepthStencilState m_depthStencilState;
 
-	/** @brief Textura c鷅ica del skybox. */
+	/** @brief Textura c煤bica del skybox. */
 	Texture m_skyboxTexture;
 
 	/** @brief Modelo 3D del cubo utilizado para el skybox. */

@@ -7,9 +7,15 @@
 #include "Prerequisites.h"
 #include "ECS/Component.h"
 
-class Mesh;
-class MaterialInstance;
-class DeviceContext;
+/** @brief Declara class Mesh. */
+class
+Mesh;
+/** @brief Declara class MaterialInstance. */
+class
+MaterialInstance;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
 
 /**
  * @class MeshRendererComponent
@@ -45,7 +51,8 @@ public:
 
 	/**
 	 * @brief Asigna la malla que este componente presentará al renderer.
-	 * @param mesh Puntero a la malla (no propietario; la malla debe vivir más que el componente).
+	 * @param mesh Puntero a la malla (no propietario; la malla debe vivir más que el
+	 * componente).
 	 */
 	void 
 	setMesh(Mesh* mesh) { m_mesh = mesh; }
@@ -54,7 +61,8 @@ public:
 	 * @brief Devuelve la malla asignada.
 	 * @return Puntero a la malla, o nullptr si no se asignó ninguna.
 	 */
-	Mesh* getMesh() const { return m_mesh; }
+	Mesh*
+	getMesh() const { return m_mesh; }
 
 	/**
 	 * @brief Asigna una única instancia de material al componente.
@@ -76,7 +84,8 @@ public:
 	 * @brief Devuelve la primera instancia de material asignada.
 	 * @return Puntero a la instancia principal, o nullptr si no se asignó ninguna.
 	 */
-	MaterialInstance* getMaterialInstance() const { return m_materialInstance; }
+	MaterialInstance*
+	getMaterialInstance() const { return m_materialInstance; }
 
 	/**
 	 * @brief Asigna múltiples instancias de material (una por submesh).
@@ -88,7 +97,8 @@ public:
 	void
 	setMaterialInstances(const std::vector<MaterialInstance*>& materialInstances) {
 		m_materialInstances = materialInstances;
-		m_materialInstance = m_materialInstances.empty() ? nullptr : m_materialInstances.front();
+		m_materialInstance =
+			m_materialInstances.empty() ? nullptr : m_materialInstances.front();
 	}
 
 	/**
@@ -113,7 +123,8 @@ public:
 	 * @brief Devuelve la lista completa de instancias de material.
 	 * @return Referencia constante al vector de instancias.
 	 */
-	const std::vector<MaterialInstance*>& getMaterialInstances() const { return m_materialInstances; }
+	const std::vector<MaterialInstance*>&
+	getMaterialInstances() const { return m_materialInstances; }
 
 	/**
 	 * @brief Indica si la malla es visible para el renderer.
@@ -144,11 +155,12 @@ public:
 	setCastShadow(bool value) { m_castShadow = value; }
 
 private:
-	Mesh* m_mesh = nullptr;                          /**< @brief Malla asociada al componente (no propietario). */
-	MaterialInstance* m_materialInstance = nullptr;  /**< @brief Instancia de material principal. */
-	std::vector<MaterialInstance*> m_materialInstances; /**< @brief Instancias de material por submesh. */
+	/** @brief Malla asociada al componente (no propietario).. */
+	Mesh* m_mesh = nullptr;
+	/** @brief Instancia de material principal.. */
+	MaterialInstance* m_materialInstance = nullptr;
+	/** @brief Instancias de material por submesh.. */
+	std::vector<MaterialInstance*> m_materialInstances;
 	bool m_visible    = true;  /**< @brief Flag de visibilidad. */
 	bool m_castShadow = true;  /**< @brief Flag de proyección de sombras. */
 };
-
-

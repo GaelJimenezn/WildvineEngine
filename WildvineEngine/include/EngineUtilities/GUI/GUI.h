@@ -14,14 +14,28 @@
 #include "Rendering/RenderTypes.h"
 #include "Logger.h"
 
-class Viewport;
-class Window;
-class Device;
-class DeviceContext;
-class Actor;
-class Camera;
+/** @brief Declara class Viewport. */
+class
+Viewport;
+/** @brief Declara class Window. */
+class
+Window;
+/** @brief Declara class Device. */
+class
+Device;
+/** @brief Declara class DeviceContext. */
+class
+DeviceContext;
+/** @brief Declara class Actor. */
+class
+Actor;
+/** @brief Declara class Camera. */
+class
+Camera;
 
-struct AssetThumb {
+/** @brief Declara struct AssetThumb. */
+struct
+AssetThumb {
   std::string name;
   ID3D11ShaderResourceView* srv = nullptr;
 };
@@ -63,22 +77,28 @@ public:
   void 
   render();
   
+  /** @brief Declara o ejecuta destroy. */
   void 
   destroy();
 
+  /** @brief Declara o ejecuta ToolBar. */
   void 
   ToolBar();
 
   
+  /** @brief Declara o ejecuta closeApp. */
   void 
   closeApp();
 
+  /** @brief Declara o ejecuta toolTipData. */
   void
   toolTipData();
 
+  /** @brief Declara o ejecuta appleLiquidStyle. */
   void
   appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
 
+  /** @brief Declara o ejecuta vec3Control. */
   void
   vec3Control(const std::string& label,
               float* values,
@@ -86,64 +106,113 @@ public:
               float columnWidth = 100.0f,
               bool displayAsDegrees = false);
 
+  /** @brief Declara o ejecuta inspectorGeneral. */
   void
   inspectorGeneral(EU::TSharedPointer<Actor> actor);
 
+  /** @brief Declara o ejecuta inspectorContainer. */
   void
   inspectorContainer(EU::TSharedPointer<Actor> actor);
 
+  /** @brief Declara o ejecuta outliner. */
   void
   outliner(const std::vector<EU::TSharedPointer<Actor>>& actors);
 
+  /** @brief Declara o ejecuta editTransform. */
   void 
   editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor);
 
+  /** @brief Declara o ejecuta drawGizmoToolbar. */
   void 
   drawGizmoToolbar();
 
-  void ToFloatArray(const XMMATRIX& mat, float* dest) {
+  /** @brief Declara o ejecuta ToFloatArray. */
+  void
+  ToFloatArray(const XMMATRIX& mat, float* dest) {
     XMFLOAT4X4 temp;
     XMStoreFloat4x4(&temp, mat);
     memcpy(dest, &temp, sizeof(float) * 16);
   }
 
+  /** @brief Declara o ejecuta drawStudioTopRibbon. */
   void
   drawStudioTopRibbon();
 
-  void drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
+  /** @brief Declara o ejecuta drawViewportPanel. */
+  void
+  drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
 
-  void drawRenderDebugPanel(ID3D11ShaderResourceView* preShadowSRV,
+  /** @brief Declara o ejecuta drawRenderDebugPanel. */
+  void
+  drawRenderDebugPanel(ID3D11ShaderResourceView* preShadowSRV,
                             ID3D11ShaderResourceView* finalViewportSRV,
                             ID3D11ShaderResourceView* shadowMapSRV);
 
-  void drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
+  /** @brief Declara o ejecuta drawGBufferDebugPanel. */
+  void
+  drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
                              ID3D11ShaderResourceView* normalRoughnessSRV,
                              ID3D11ShaderResourceView* worldAoSRV,
                              ID3D11ShaderResourceView* emissiveAlphaSRV);
 
-  void drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
+  /** @brief Declara o ejecuta drawMaterialSRVDebugPanel. */
+  void
+  drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
                                  ID3D11ShaderResourceView* normalSRV,
                                  ID3D11ShaderResourceView* metallicSRV,
                                  ID3D11ShaderResourceView* roughnessSRV,
                                  ID3D11ShaderResourceView* aoSRV);
 
-  void drawLightingPanel(float* lightDir, float* lightColor);
-  void drawStatsPanel(float deltaTime, unsigned int drawCalls);
-  void drawConsolePanel();
-  void drawTexturePreview();
-  void drawContentBrowser(const std::vector<AssetThumb>& textureThumbs);
-  void drawSelectionOutline(Camera& cam, const EU::Vector3& localMin, const EU::Vector3& localMax, const XMMATRIX& world);
-  void drawViewportGrid(Camera& cam);
+  /** @brief Declara o ejecuta drawLightingPanel. */
+  void
+  drawLightingPanel(float* lightDir, float* lightColor);
+  /** @brief Declara o ejecuta drawStatsPanel. */
+  void
+  drawStatsPanel(float deltaTime, unsigned int drawCalls);
+  /** @brief Declara o ejecuta drawConsolePanel. */
+  void
+  drawConsolePanel();
+  /** @brief Declara o ejecuta drawTexturePreview. */
+  void
+  drawTexturePreview();
+  /** @brief Declara o ejecuta drawContentBrowser. */
+  void
+  drawContentBrowser(const std::vector<AssetThumb>& textureThumbs);
+  /** @brief Declara o ejecuta drawSelectionOutline. */
+  void
+  drawSelectionOutline(
+    Camera& cam,
+    const EU::Vector3& localMin,
+    const EU::Vector3& localMax,
+    const XMMATRIX& world
+  );
+  /** @brief Declara o ejecuta drawViewportGrid. */
+  void
+  drawViewportGrid(Camera& cam);
 
-  void drawToolboxPanel();
+  /** @brief Declara o ejecuta drawToolboxPanel. */
+  void
+  drawToolboxPanel();
 
-  void drawEditorDockspace();
+  /** @brief Declara o ejecuta drawEditorDockspace. */
+  void
+  drawEditorDockspace();
 
-  bool shouldShowOutliner() const { return m_showOutliner; }
-  bool shouldShowInspector() const { return m_showInspector; }
-  bool shouldShowToolbox() const { return m_showToolbox; }
-  bool shouldShowRenderDebug() const { return m_showRenderDebug; }
-  bool shouldShowGBufferDebug() const { return m_showGBufferDebug; }
+  /** @brief Declara o ejecuta shouldShowOutliner. */
+  bool
+  shouldShowOutliner() const { return m_showOutliner; }
+  /** @brief Declara o ejecuta shouldShowInspector. */
+  bool
+  shouldShowInspector() const { return m_showInspector; }
+  /** @brief Declara o ejecuta shouldShowToolbox. */
+  bool
+  shouldShowToolbox() const { return m_showToolbox; }
+  /** @brief Declara o ejecuta shouldShowRenderDebug. */
+  bool
+  shouldShowRenderDebug() const { return m_showRenderDebug; }
+  /** @brief Declara o ejecuta shouldShowGBufferDebug. */
+  bool
+  shouldShowGBufferDebug() const { return m_showGBufferDebug; }
 
   /**
    * @brief Consume de forma atomica la solicitud de guardado emitida desde la UI.
@@ -156,6 +225,7 @@ public:
     return requested;
   }
 
+  /** @brief Declara o ejecuta consumeCreateLightRequest. */
   bool
   consumeCreateLightRequest(LightType& outType) {
     if (!m_requestCreateLight) {
@@ -166,11 +236,21 @@ public:
     return true;
   }
 
-  bool consumeResetRequest() { bool r = m_resetRequested; m_resetRequested = false; return r; }
-  bool consumeFocusRequest() { bool r = m_focusRequested; m_focusRequested = false; return r; }
-  bool consumeFitRequest()   { bool r = m_fitRequested;   m_fitRequested = false; return r; }
-  bool consumeUndoRequest()  { bool r = m_undoRequested;  m_undoRequested = false; return r; }
-  bool consumeRedoRequest()  { bool r = m_redoRequested;  m_redoRequested = false; return r; }
+  /** @brief Declara o ejecuta consumeResetRequest. */
+  bool
+  consumeResetRequest() { bool r = m_resetRequested; m_resetRequested = false; return r; }
+  /** @brief Declara o ejecuta consumeFocusRequest. */
+  bool
+  consumeFocusRequest() { bool r = m_focusRequested; m_focusRequested = false; return r; }
+  /** @brief Declara o ejecuta consumeFitRequest. */
+  bool
+  consumeFitRequest()   { bool r = m_fitRequested;   m_fitRequested = false; return r; }
+  /** @brief Declara o ejecuta consumeUndoRequest. */
+  bool
+  consumeUndoRequest()  { bool r = m_undoRequested;  m_undoRequested = false; return r; }
+  /** @brief Declara o ejecuta consumeRedoRequest. */
+  bool
+  consumeRedoRequest()  { bool r = m_redoRequested;  m_redoRequested = false; return r; }
 
 private:
 
@@ -193,14 +273,21 @@ private:
   bool m_viewportActive = false;
 
 public:
-  bool m_isUsingGizmo = false;               ///< Indica si el gizmo esta capturando entrada del usuario.
-  bool m_visualizeDeferredShadowFactor = false; ///< Muestra el factor de sombra diferido en escala de grises.
-  int  m_deferredDebugViewMode = 0;          ///< Modo de debug deferred (0=Final, 1=Shadow, etc.)
-  int selectedActorIndex = -1;               ///< Indice del actor seleccionado en el outliner.
-  ImVec2 m_viewportPos = ImVec2(0.0f, 0.0f); ///< Posicion del panel de viewport en pantalla.
+  /** @brief Indica si el gizmo esta capturando entrada del usuario.. */
+  bool m_isUsingGizmo = false;
+  /** @brief Muestra el factor de sombra diferido en escala de grises.. */
+  bool m_visualizeDeferredShadowFactor = false;
+  /** @brief Modo de debug deferred (0=Final, 1=Shadow, etc.). */
+  int  m_deferredDebugViewMode = 0;
+  /** @brief Indice del actor seleccionado en el outliner.. */
+  int selectedActorIndex = -1;
+  /** @brief Posicion del panel de viewport en pantalla.. */
+  ImVec2 m_viewportPos = ImVec2(0.0f, 0.0f);
   ImVec2 m_viewportSize = ImVec2(0.0f, 0.0f);///< Tamano actual del viewport del editor.
-  bool m_viewportHovered = false;            ///< Indica si el cursor esta sobre el viewport.
-  bool m_viewportFocused = false;            ///< Indica si el viewport tiene foco de entrada.
+  /** @brief Indica si el cursor esta sobre el viewport.. */
+  bool m_viewportHovered = false;
+  /** @brief Indica si el viewport tiene foco de entrada.. */
+  bool m_viewportFocused = false;
 
   // Logger / Console
   bool m_logShowInfo = true;

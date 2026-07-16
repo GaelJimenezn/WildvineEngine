@@ -51,7 +51,8 @@
 #define SAFE_RELEASE(x) if(x != nullptr) x->Release(); x = nullptr;
 
  /**
-  * @brief Macro para mostrar mensajes de creación de recursos en la ventana de depuración.
+  * @brief Macro para mostrar mensajes de creación de recursos en la ventana de
+  * depuración.
   *
   * Formatea un mensaje con la clase, el método y el estado actual de la creación.
   *
@@ -62,7 +63,8 @@
 #define MESSAGE( classObj, method, state )   \
 {                                            \
    std::wostringstream os_;                  \
-   os_ << classObj << "::" << method << " : " << "[CREATION OF RESOURCE " << ": " << state << "] \n"; \
+   os_ << classObj << "::" << method << " : " \
+       << "[CREATION OF RESOURCE " << ": " << state << "] \n"; \
    OutputDebugStringW( os_.str().c_str() );  \
    Logger::get().addW(LogLevel::Info, os_.str()); \
 }
@@ -121,7 +123,8 @@ SkyboxVertex {
  * Contiene la matriz view-projection pre-multiplicada para el renderizado
  * del Skybox. Se envía al shader de Skybox en cada frame.
  */
-struct CBSkybox
+struct
+CBSkybox
 {
   XMMATRIX mviewProj; /**< @brief Matriz View*Projection para el shader de Skybox. */
 };
@@ -166,7 +169,8 @@ CBChangeOnResize{
  * Contiene las matrices de vista y proyección, la posición de la cámara
  * y los parámetros de la luz principal directional para el forward renderer.
  */
-struct CBMain
+struct
+CBMain
 {
   XMFLOAT4X4 View;        /**< @brief Matriz de vista de la cámara. */
   XMFLOAT4X4 Projection;  /**< @brief Matriz de proyección de la cámara. */
@@ -220,4 +224,3 @@ enum
   MATERIAL  = 3, /**< @brief Componente de material. */
   HIERARCHY = 4  /**< @brief Componente de jerarquía de escena. */
 };
-
