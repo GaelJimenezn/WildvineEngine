@@ -36,6 +36,12 @@
     <Filter Include="source\ECS">
       <UniqueIdentifier>{1b1555f7-210e-4cdd-9ec0-bdb785b4d710}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\ECS\Legacy">
+      <UniqueIdentifier>{a49e9e3d-90f9-4bb1-ae0f-73f5b82cce0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Utilities">
+      <UniqueIdentifier>{56aef06f-9d96-41d7-997b-a8bb00a8b905}</UniqueIdentifier>
+    </Filter>
     <Filter Include="imgui">
       <UniqueIdentifier>{31617e8d-26f5-44ec-9445-10c4297bae00}</UniqueIdentifier>
     </Filter>
@@ -64,6 +70,15 @@
     </ClCompile>
     <ClCompile Include="source\Window.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ECS\AudioSystem.cpp">
+      <Filter>source\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Utilities\ModelLoader.cpp">
+      <Filter>source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Utilities\ParserOBJ.cpp">
+      <Filter>source\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="source\Device.cpp">
       <Filter>source</Filter>
@@ -237,6 +252,9 @@
     <ClInclude Include="include\ECS\MeshRendererComponent.h">
       <Filter>include\ECS</Filter>
     </ClInclude>
+    <ClInclude Include="include\ECS\RuntimeBehaviorComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
     <ClInclude Include="include\ECS\Entity.h">
       <Filter>include\ECS</Filter>
     </ClInclude>
@@ -278,6 +296,27 @@
     </ClInclude>
     <ClInclude Include="include\ECS\Actor.h">
       <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\AudioSourceComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\AudioSystem.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Legacy\Actor.h">
+      <Filter>include\ECS\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\GUI.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\ModelLoader.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\OBJ_Loader.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\ParserOBJ.h">
+      <Filter>include\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="include\ECS\Transform.h">
       <Filter>include\ECS</Filter>

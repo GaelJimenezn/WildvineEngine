@@ -1,4 +1,6 @@
 #include "BaseApp.h"
+#include "ECS/AudioSourceComponent.h"
+#include "ECS/RuntimeBehaviorComponent.h"
 #include "ResourceManager.h"
 #include <algorithm>
 #include <cmath>
@@ -798,6 +800,15 @@ BaseApp::init() {
 				EU::Vector3(0.0f, 0.0f, 0.0f),
 				EU::Vector3(1.0f, 1.0f, 1.0f));
 			transform->rebuildMatrixFromVectors();
+
+			EU::TSharedPointer<RuntimeBehaviorComponent> runtimeBehavior =
+				EU::MakeShared<RuntimeBehaviorComponent>(transform.get());
+			m_cyberGun->addComponent(runtimeBehavior);
+
+			EU::TSharedPointer<AudioSourceComponent> audioSource =
+				EU::MakeShared<AudioSourceComponent>(transform.get());
+			m_cyberGun->addComponent(audioSource);
+			m_audioSystem.registerSource(audioSource.get());
 		}
 
 		// Mesh de render
@@ -989,6 +1000,8 @@ BaseApp::init() {
 
 	buildTextureThumbnails();
 
+	m_audioSystem.init();
+
 	return S_OK;
 }
 
@@ -1004,6 +1017,31 @@ BaseApp::update(float deltaTime) {
 	// GUI
 	m_gui.update(m_viewport, m_window);
 	m_gui.drawViewportPanel(m_editorViewportPass.getSRV());
+
+	if (m_gui.consumePlayRequest()) {
+		startPlayMode();
+	}
+
+	if (m_gui.consumeStopRequest()) {
+		stopPlayMode();
+	}
+
+	float audioMasterVolume = 1.0f;
+	if (m_gui.consumeAudioMasterVolumeChange(audioMasterVolume)) {
+		m_audioSystem.setMasterVolume(audioMasterVolume);
+	}
+
+	if (m_gui.consumeAudioPauseRequest()) {
+		m_audioSystem.pause();
+		m_gui.setAudioPaused(m_audioSystem.isPaused());
+	}
+
+	if (m_gui.consumeAudioResumeRequest()) {
+		m_audioSystem.resume();
+		m_gui.setAudioPaused(m_audioSystem.isPaused());
+	}
+
+	m_audioSystem.update(m_camera);
 
 	if (!m_actors.empty() && m_gui.selectedActorIndex >= 0 &&
 		m_gui.selectedActorIndex < (int)m_actors.size()) {
@@ -1032,6 +1070,10 @@ BaseApp::update(float deltaTime) {
 
 	if (m_gui.shouldShowToolbox()) {
 		m_gui.drawToolboxPanel();
+	}
+
+	if (m_gui.shouldShowAudioPanel()) {
+		m_gui.drawAudioPanel();
 	}
 
 	m_gui.drawLightingPanel(&m_constantBufferStruct.LightDir.x,
@@ -1088,6 +1130,48 @@ BaseApp::update(float deltaTime) {
 		}
 		else {
 			ERROR("BaseApp", "AsyncModelImport", "No se pudo importar el modelo");
+		}
+	}
+
+	if (m_gui.m_audioSpawnRequested) {
+		const std::string audioPath = m_gui.m_audioSpawnPath;
+		m_gui.m_audioSpawnRequested = false;
+		m_gui.m_audioSpawnPath.clear();
+
+		if (!audioPath.empty()) {
+			EU::Vector3 spawnPosition(0.0f, 2.92f, 5.60f);
+			if (!getViewportMouseGroundPosition(spawnPosition)) {
+				const EU::Vector3 cameraPosition = m_camera.getPosition();
+				const EU::Vector3 cameraForward = m_camera.GetForward();
+				spawnPosition = EU::Vector3(
+					cameraPosition.x + cameraForward.x * 8.0f,
+					cameraPosition.y + cameraForward.y * 8.0f,
+					0.0f);
+			}
+
+			EU::TSharedPointer<Actor> actor = EU::MakeShared<Actor>(m_device);
+			if (!actor.isNull()) {
+				actor->setName(fileBaseName(audioPath));
+				EU::TSharedPointer<Transform> transform =
+					actor->getComponent<Transform>();
+				if (transform) {
+					transform->setTransform(
+						spawnPosition,
+						EU::Vector3(0.0f, 0.0f, 0.0f),
+						EU::Vector3(1.0f, 1.0f, 1.0f));
+				}
+				EU::TSharedPointer<AudioSourceComponent> audioSource =
+					EU::MakeShared<AudioSourceComponent>(transform.get());
+				audioSource->setAudioPath(audioPath);
+				actor->addComponent(audioSource);
+				m_audioSystem.registerSource(audioSource.get());
+				addActorToScene(actor);
+				m_commands.push(std::unique_ptr<ICommand>(
+					new SpawnActorCommand(this, actor)));
+				m_gui.selectedActorIndex =
+					static_cast<int>(m_actors.size()) - 1;
+				MESSAGE("BaseApp", "Audio", "Fuente de audio creada en la escena");
+			}
 		}
 	}
 
@@ -1317,7 +1401,9 @@ BaseApp::update(float deltaTime) {
 	if (!m_gui.m_isUsingGizmo) {
 		ImGuiIO& io = ImGui::GetIO();
 		if (m_gui.m_viewportHovered) {
-			if (io.MouseWheel != 0.0f) m_camera.walk(io.MouseWheel * 0.7f);
+			if (io.MouseWheel != 0.0f && !m_isPlaying) {
+				m_camera.walk(io.MouseWheel * 0.7f);
+			}
 
 			const bool rightHeld = ImGui::IsMouseDown(ImGuiMouseButton_Right);
 
@@ -1326,17 +1412,26 @@ BaseApp::update(float deltaTime) {
 				m_camera.yaw(io.MouseDelta.x * 0.004f);
 				m_camera.pitch(io.MouseDelta.y * 0.004f);
 
-				// WASD + QE como Unreal Engine (solo activo con click derecho)
-				const float speed = (GetAsyncKeyState(VK_SHIFT) & 0x8000) ? 0.15f : 0.05f;
-				if (GetAsyncKeyState('W') & 0x8000) m_camera.walk( speed);
+			}
+
+			if (m_isPlaying || rightHeld) {
+				const float speed = m_isPlaying ?
+					((GetAsyncKeyState(VK_SHIFT) & 0x8000) ? deltaTime * 20.0f :
+						deltaTime * 7.0f) :
+					((GetAsyncKeyState(VK_SHIFT) & 0x8000) ? 0.15f : 0.05f);
+				if (GetAsyncKeyState('W') & 0x8000) m_camera.walk(speed);
 				if (GetAsyncKeyState('S') & 0x8000) m_camera.walk(-speed);
 				if (GetAsyncKeyState('A') & 0x8000) m_camera.strafe(-speed);
-				if (GetAsyncKeyState('D') & 0x8000) m_camera.strafe( speed);
+				if (GetAsyncKeyState('D') & 0x8000) m_camera.strafe(speed);
 				if (GetAsyncKeyState('E') & 0x8000) {
-					EU::Vector3 p = m_camera.getPosition(); p.z += speed; m_camera.setPosition(p);
+					EU::Vector3 p = m_camera.getPosition();
+					p.z += speed;
+					m_camera.setPosition(p);
 				}
 				if (GetAsyncKeyState('Q') & 0x8000) {
-					EU::Vector3 p = m_camera.getPosition(); p.z -= speed; m_camera.setPosition(p);
+					EU::Vector3 p = m_camera.getPosition();
+					p.z -= speed;
+					m_camera.setPosition(p);
 				}
 			}
 
@@ -1430,8 +1525,10 @@ BaseApp::render() {
 	m_renderScene.clear();
 	m_sceneGraph.gatherRenderScene(m_renderScene, m_camera);
 	m_renderScene.skybox = &m_skybox;
-	addEditorGridToRenderScene();
-	addEditorSelectionToRenderScene();
+	if (!m_isPlaying) {
+		addEditorGridToRenderScene();
+		addEditorSelectionToRenderScene();
+	}
 
 	m_renderPipeline.setShadowFactorDebugEnabled(m_gui.m_visualizeDeferredShadowFactor);
 	m_renderPipeline.render(m_deviceContext, m_camera, m_renderScene, m_editorViewportPass);
@@ -1449,6 +1546,7 @@ void
 BaseApp::destroy() {
 	if (m_deviceContext.m_deviceContext) m_deviceContext.m_deviceContext->ClearState();
 	m_sceneGraph.destroy();
+	m_audioSystem.destroy();
 	m_renderPipeline.destroy();
 	m_editorViewportPass.destroy();
 	m_cyberGunRenderMesh.destroy();
@@ -1633,6 +1731,140 @@ BaseApp::resetSceneToDefaults() {
 		}
 	}
 	MESSAGE("BaseApp", "resetSceneToDefaults", "Escena restaurada");
+}
+
+void
+BaseApp::captureRuntimeState() {
+	m_runtimeCameraPosition = m_camera.getPosition();
+	m_runtimeCameraForward = m_camera.GetForward();
+	m_runtimeCameraUp = m_camera.GetUp();
+	m_runtimeTransforms.clear();
+	m_runtimeTransforms.reserve(m_actors.size());
+
+	for (const EU::TSharedPointer<Actor>& actor : m_actors) {
+		if (actor.isNull()) {
+			continue;
+		}
+
+		EU::TSharedPointer<Transform> transform =
+			actor->getComponent<Transform>();
+		if (transform.isNull()) {
+			continue;
+		}
+
+		InitialTransform savedTransform{};
+		savedTransform.position = transform->getPosition();
+		savedTransform.rotation = transform->getRotation();
+		savedTransform.scale = transform->getScale();
+		m_runtimeTransforms.push_back(savedTransform);
+	}
+}
+
+void
+BaseApp::startPlayMode() {
+	if (m_isPlaying) {
+		return;
+	}
+
+	captureRuntimeState();
+	setRuntimeBehaviorsRunning(true);
+	setRuntimeAudioPlaying(true);
+	m_isPlaying = true;
+	m_gui.setRuntimePlaying(true);
+	MESSAGE("BaseApp", "startPlayMode", "Modo Play iniciado");
+}
+
+void
+BaseApp::stopPlayMode() {
+	if (!m_isPlaying) {
+		return;
+	}
+
+	setRuntimeBehaviorsRunning(false);
+	setRuntimeAudioPlaying(false);
+	m_camera.setPosition(
+		m_runtimeCameraPosition.x,
+		m_runtimeCameraPosition.y,
+		m_runtimeCameraPosition.z);
+	m_camera.lookAt(
+		m_runtimeCameraPosition,
+		EU::Vector3(
+			m_runtimeCameraPosition.x + m_runtimeCameraForward.x,
+			m_runtimeCameraPosition.y + m_runtimeCameraForward.y,
+			m_runtimeCameraPosition.z + m_runtimeCameraForward.z),
+		m_runtimeCameraUp);
+
+	const size_t restoreCount = (std::min)(
+		m_actors.size(),
+		m_runtimeTransforms.size());
+	for (size_t index = 0; index < restoreCount; ++index) {
+		const EU::TSharedPointer<Actor>& actor = m_actors[index];
+		if (actor.isNull()) {
+			continue;
+		}
+
+		EU::TSharedPointer<Transform> transform =
+			actor->getComponent<Transform>();
+		if (transform.isNull()) {
+			continue;
+		}
+
+		const InitialTransform& savedTransform = m_runtimeTransforms[index];
+		transform->setTransform(
+			savedTransform.position,
+			savedTransform.rotation,
+			savedTransform.scale);
+		transform->rebuildMatrixFromVectors();
+	}
+
+	m_runtimeTransforms.clear();
+	m_isPlaying = false;
+	m_gui.setRuntimePlaying(false);
+	MESSAGE("BaseApp", "stopPlayMode", "Modo Play detenido y escena restaurada");
+}
+
+void
+BaseApp::setRuntimeBehaviorsRunning(bool running) {
+	for (const EU::TSharedPointer<Actor>& actor : m_actors) {
+		if (actor.isNull()) {
+			continue;
+		}
+
+		EU::TSharedPointer<RuntimeBehaviorComponent> behavior =
+			actor->getComponent<RuntimeBehaviorComponent>();
+		if (!behavior.isNull()) {
+			behavior->setRunning(running);
+		}
+	}
+}
+
+void
+BaseApp::setRuntimeAudioPlaying(bool playing) {
+	for (const EU::TSharedPointer<Actor>& actor : m_actors) {
+		if (actor.isNull()) {
+			continue;
+		}
+
+		EU::TSharedPointer<AudioSourceComponent> audioSource =
+			actor->getComponent<AudioSourceComponent>();
+		if (audioSource.isNull() || audioSource->getAudioPath().empty()) {
+			continue;
+		}
+
+		if (playing) {
+			if (audioSource->isAutoActivate()) {
+				audioSource->play();
+			}
+		}
+		else {
+			audioSource->stop();
+		}
+	}
+
+	if (!playing) {
+		m_audioSystem.stopAll();
+		m_gui.setAudioPaused(false);
+	}
 }
 
 void
@@ -2321,7 +2553,12 @@ BaseApp::loadModelActor(const std::string& modelPath,
 	}
 
 	std::string modelName = fileBaseName(modelPath);
-	loadModelTextures(*lm, "Assets/Textures/" + modelName);
+	const std::string modelDirectory = directoryOf(modelPath);
+	const std::string localTextureDirectory = modelDirectory + "/Textures";
+	loadModelTextures(*lm, localTextureDirectory);
+	if (listImageFiles(localTextureDirectory).empty()) {
+		loadModelTextures(*lm, "Assets/Textures/" + modelName);
+	}
 
 	EU::Vector3 actorScale(1.0f, 1.0f, 1.0f);
 	if (type == FBX) {
@@ -2473,6 +2710,10 @@ BaseApp::loadModelActor(const std::string& modelPath,
 			EU::Vector3(0.0f, 0.0f, 0.0f),
 			actorScale);
 	}
+	EU::TSharedPointer<AudioSourceComponent> audioSource =
+		EU::MakeShared<AudioSourceComponent>(t.get());
+	a->addComponent(audioSource);
+	m_audioSystem.registerSource(audioSource.get());
 	EU::TSharedPointer<MeshRendererComponent> mr = a->getComponent<MeshRendererComponent>();
 	if (!mr) { mr = EU::MakeShared<MeshRendererComponent>(); a->addComponent(mr); }
 	if (mr) {
@@ -2522,8 +2763,6 @@ BaseApp::getDefaultScenePath() const {
 
 bool
 BaseApp::saveScene(const std::string& path) {
-	enforceDefaultSceneLayout();
-
 	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
 	if (!stream.is_open()) {
 		ERROR("Main", "saveScene", ("Failed to open scene file for writing: " + path).c_str());

@@ -5,7 +5,15 @@
  */
 #include "EngineUtilities\GUI\GUI.h"
 #include <commdlg.h>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <wrl/client.h>
+#include <vector>
 #include "Viewport.h"
 #include "Window.h"
 #include "Device.h"
@@ -13,6 +21,7 @@
 #include "MeshComponent.h"
 #include "ECS\Actor.h"
 #include "ECS\LightComponent.h"
+#include "ECS\AudioSourceComponent.h"
 #include "ECS\MeshRendererComponent.h"
 #include "Rendering\Mesh.h"
 #include "Rendering\Material.h"
@@ -22,9 +31,180 @@
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
 static bool mGizmoEnabled = true;
+static bool mEditingAudioRange = false;
 
 namespace {
 const char* GetLightTypeLabel(LightType type);
+
+namespace fs = std::filesystem;
+
+bool IsModelFile(const fs::path& path) {
+	std::string extension = path.extension().string();
+	for (char& character : extension) {
+		if (character >= 'A' && character <= 'Z') {
+			character = static_cast<char>(character + 32);
+		}
+	}
+	return extension == ".fbx" || extension == ".obj" ||
+		extension == ".glb" || extension == ".gltf";
+}
+
+bool IsImageFile(const fs::path& path) {
+	std::string extension = path.extension().string();
+	for (char& character : extension) {
+		if (character >= 'A' && character <= 'Z') {
+			character = static_cast<char>(character + 32);
+		}
+	}
+	return extension == ".png" || extension == ".jpg" ||
+		extension == ".jpeg" || extension == ".tga" ||
+		extension == ".dds";
+}
+
+bool IsAudioFile(const fs::path& path) {
+	std::string extension = path.extension().string();
+	for (char& character : extension) {
+		if (character >= 'A' && character <= 'Z') {
+			character = static_cast<char>(character + 32);
+		}
+	}
+	return extension == ".wav" || extension == ".mp3" || extension == ".flac";
+}
+
+bool IsPlayableAudioFile(const fs::path& path) {
+	std::string extension = path.extension().string();
+	for (char& character : extension) {
+		if (character >= 'A' && character <= 'Z') {
+			character = static_cast<char>(character + 32);
+		}
+	}
+	return extension == ".wav";
+}
+
+#pragma pack(push, 1)
+struct WaveHeader {
+	char riff[4] = { 'R', 'I', 'F', 'F' };
+	uint32_t fileSize = 0;
+	char wave[4] = { 'W', 'A', 'V', 'E' };
+	char format[4] = { 'f', 'm', 't', ' ' };
+	uint32_t formatSize = 16;
+	uint16_t audioFormat = 1;
+	uint16_t channels = 0;
+	uint32_t sampleRate = 0;
+	uint32_t byteRate = 0;
+	uint16_t blockAlign = 0;
+	uint16_t bitsPerSample = 0;
+	char data[4] = { 'd', 'a', 't', 'a' };
+	uint32_t dataSize = 0;
+};
+#pragma pack(pop)
+
+bool ConvertAudioToWave(const fs::path& sourcePath, const fs::path& outputPath) {
+	using Microsoft::WRL::ComPtr;
+	static bool mediaFoundationReady = SUCCEEDED(MFStartup(MF_VERSION));
+	if (!mediaFoundationReady) return false;
+
+	ComPtr<IMFSourceReader> reader;
+	if (FAILED(MFCreateSourceReaderFromURL(sourcePath.c_str(), nullptr,
+		reader.GetAddressOf()))) return false;
+
+	ComPtr<IMFMediaType> outputType;
+	if (FAILED(MFCreateMediaType(outputType.GetAddressOf())) ||
+		FAILED(outputType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio)) ||
+		FAILED(outputType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM)) ||
+		FAILED(reader->SetCurrentMediaType(
+			static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM), nullptr,
+			outputType.Get()))) {
+		return false;
+	}
+
+	ComPtr<IMFMediaType> currentType;
+	if (FAILED(reader->GetCurrentMediaType(
+		static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM),
+		currentType.GetAddressOf()))) {
+		return false;
+	}
+
+	WaveHeader header;
+	const UINT32 channels = MFGetAttributeUINT32(
+		currentType.Get(), MF_MT_AUDIO_NUM_CHANNELS, 0);
+	const UINT32 sampleRate = MFGetAttributeUINT32(
+		currentType.Get(), MF_MT_AUDIO_SAMPLES_PER_SECOND, 0);
+	const UINT32 bitsPerSample = MFGetAttributeUINT32(
+		currentType.Get(), MF_MT_AUDIO_BITS_PER_SAMPLE, 0);
+	if (channels == 0 || sampleRate == 0 || bitsPerSample == 0) {
+		return false;
+	}
+	header.channels = static_cast<uint16_t>(channels);
+	header.sampleRate = sampleRate;
+	header.bitsPerSample = static_cast<uint16_t>(bitsPerSample);
+	header.blockAlign = static_cast<uint16_t>(
+		header.channels * (header.bitsPerSample / 8));
+	header.byteRate = header.sampleRate * header.blockAlign;
+
+	std::vector<uint8_t> samples;
+	for (;;) {
+		DWORD flags = 0;
+		ComPtr<IMFSample> sample;
+		if (FAILED(reader->ReadSample(
+			static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM), 0,
+			nullptr, &flags, nullptr, sample.GetAddressOf()))) return false;
+		if (sample) {
+			ComPtr<IMFMediaBuffer> buffer;
+			if (FAILED(sample->ConvertToContiguousBuffer(buffer.GetAddressOf()))) {
+				return false;
+			}
+			BYTE* bytes = nullptr;
+			DWORD length = 0;
+			if (FAILED(buffer->Lock(&bytes, nullptr, &length))) return false;
+			samples.insert(samples.end(), bytes, bytes + length);
+			buffer->Unlock();
+		}
+		if (flags & MF_SOURCE_READERF_ENDOFSTREAM) break;
+	}
+
+	header.dataSize = static_cast<uint32_t>(samples.size());
+	header.fileSize = header.dataSize + sizeof(WaveHeader) - 8;
+	std::ofstream output(outputPath, std::ios::binary);
+	if (!output.is_open()) return false;
+	output.write(reinterpret_cast<const char*>(&header), sizeof(header));
+	output.write(reinterpret_cast<const char*>(samples.data()), samples.size());
+	return output.good();
+}
+
+std::string ToContentPath(const fs::path& path) {
+	return path.generic_string();
+}
+
+bool ImportModelWithTextures(const fs::path& sourcePath) {
+	const fs::path modelDirectory =
+		fs::path("Assets") / "Models" / sourcePath.stem();
+	const fs::path destinationModel = modelDirectory / sourcePath.filename();
+	const fs::path sourceDirectory = sourcePath.parent_path();
+	std::error_code error;
+	fs::create_directories(modelDirectory / "Textures", error);
+	if (error) return false;
+
+	fs::copy_file(sourcePath, destinationModel,
+		fs::copy_options::overwrite_existing, error);
+	if (error) return false;
+
+	for (const fs::directory_entry& entry :
+		fs::recursive_directory_iterator(sourceDirectory, error)) {
+		if (error) return false;
+		if (!entry.is_regular_file() || !IsImageFile(entry.path())) continue;
+
+		const fs::path destinationTexture =
+			modelDirectory / "Textures" / entry.path().filename();
+		fs::create_directories(destinationTexture.parent_path(), error);
+		if (error) return false;
+		fs::copy_file(entry.path(), destinationTexture,
+			fs::copy_options::overwrite_existing, error);
+		if (error) return false;
+	}
+
+	return true;
+}
 
 struct DebugTextureItem {
 	const char* label;
@@ -598,6 +778,7 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
 
 	auto meshRenderer = actor->getComponent<MeshRendererComponent>();
 	auto lightComponent = actor->getComponent<LightComponent>();
+	auto audioSource = actor->getComponent<AudioSourceComponent>();
 	auto transform = actor->getComponent<Transform>();
 	const bool hasMeshRenderer = !meshRenderer.isNull();
 	const bool hasLightComponent = !lightComponent.isNull();
@@ -766,6 +947,79 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
 			ImGui::EndTable();
 		}
 	}
+
+	if (!audioSource.isNull() && BeginInspectorSection("Audio Source")) {
+		char audioPath[260] = {};
+		strncpy_s(
+			audioPath,
+			audioSource->getAudioPath().c_str(),
+			_TRUNCATE);
+		if (ImGui::InputText("WAV Path", audioPath, IM_ARRAYSIZE(audioPath))) {
+			audioSource->setAudioPath(audioPath);
+		}
+
+		if (ImGui::BeginDragDropTarget()) {
+			const ImGuiPayload* payload =
+				ImGui::AcceptDragDropPayload("DND_AUDIO_PATH");
+			if (payload) {
+				const char* path = static_cast<const char*>(payload->Data);
+				audioSource->setAudioPath(path);
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		float volumePercent = audioSource->getVolume() * 100.0f;
+		if (ImGui::SliderFloat("Volume", &volumePercent, 0.0f, 100.0f,
+			"%.0f%%")) {
+			audioSource->setVolume(volumePercent / 100.0f);
+		}
+
+		float pitch = audioSource->getPitch();
+		if (ImGui::SliderFloat("Pitch", &pitch, -1.0f, 1.0f, "%.2f")) {
+			audioSource->setPitch(pitch);
+		}
+
+		bool autoActivate = audioSource->isAutoActivate();
+		if (ImGui::Checkbox("Auto Activate", &autoActivate)) {
+			audioSource->setAutoActivate(autoActivate);
+		}
+		ImGui::SameLine();
+		bool loop = audioSource->isLooping();
+		if (ImGui::Checkbox("Loop", &loop)) {
+			audioSource->setLoop(loop);
+		}
+		ImGui::SameLine();
+		bool muted = audioSource->isMuted();
+		if (ImGui::Checkbox("Mute", &muted)) {
+			audioSource->setMuted(muted);
+		}
+
+		bool spatial = audioSource->isSpatial();
+		if (ImGui::Checkbox("Spatial 3D", &spatial)) {
+			audioSource->setSpatial(spatial);
+		}
+		if (spatial) {
+			ImGui::Checkbox("Edit Max Range Gizmo", &mEditingAudioRange);
+			float minDistance = audioSource->getMinDistance();
+			float maxDistance = audioSource->getMaxDistance();
+			if (ImGui::DragFloat("Min Distance", &minDistance, 0.1f,
+				0.0f, 1000.0f, "%.1f")) {
+				audioSource->setAttenuation(minDistance, maxDistance);
+			}
+			if (ImGui::DragFloat("Max Distance", &maxDistance, 0.1f,
+				0.1f, 1000.0f, "%.1f")) {
+				audioSource->setAttenuation(minDistance, maxDistance);
+			}
+		}
+
+		if (ImGui::Button("Play Audio")) {
+			audioSource->play();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Stop Audio")) {
+			audioSource->stop();
+		}
+	}
 	ImGui::End();
 }
 
@@ -900,6 +1154,36 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 	ImGuizmo::SetGizmoSizeClipSpace(0.12f);
 	ImGuizmo::AllowAxisFlip(true);
 	ImGuizmo::SetRect(rectX, rectY, rectW, rectH);
+
+	auto audioSource = actor->getComponent<AudioSourceComponent>();
+	if (mEditingAudioRange && !audioSource.isNull() &&
+		audioSource->isSpatial()) {
+		const float maxDistance = audioSource->getMaxDistance();
+		float rangePosition[3] = { pos[0], pos[1], pos[2] };
+		float rangeRotation[3] = { 0.0f, 0.0f, 0.0f };
+		float rangeScale[3] = { maxDistance, maxDistance, maxDistance };
+		float rangeMatrix[16];
+		ImGuizmo::RecomposeMatrixFromComponents(
+			rangePosition, rangeRotation, rangeScale, rangeMatrix);
+		ImGuizmo::SetID(1);
+		ImGuizmo::Manipulate(
+			vArr,
+			pArr,
+			ImGuizmo::SCALE,
+			ImGuizmo::LOCAL,
+			rangeMatrix);
+		m_isUsingGizmo = ImGuizmo::IsUsing();
+		if (m_isUsingGizmo) {
+			float newPosition[3], newRotation[3], newScale[3];
+			ImGuizmo::DecomposeMatrixToComponents(
+				rangeMatrix, newPosition, newRotation, newScale);
+			const float newMaxDistance = fmaxf(fabsf(newScale[0]),
+				fmaxf(fabsf(newScale[1]), fabsf(newScale[2])));
+			audioSource->setAttenuation(
+				audioSource->getMinDistance(), newMaxDistance);
+		}
+		return;
+	}
 
 	float snapValue = 25.0f;
 	if (mCurrentGizmoOperation == ImGuizmo::ROTATE)    snapValue = 1.0f;
@@ -1054,6 +1338,7 @@ void GUI::drawStudioTopRibbon()
 				ImGui::MenuItem("Render Diagnostics", nullptr, &m_showRenderDebug);
 				ImGui::MenuItem("GBuffer Viewer", nullptr, &m_showGBufferDebug);
 				ImGui::MenuItem("Material SRV Inspector", nullptr, &m_showMaterialSRVDebug);
+				ImGui::MenuItem("Audio", nullptr, &m_showAudioPanel);
 				if (ImGui::MenuItem("Reset Editor Layout")) {
 					m_showOutliner = true;
 					m_showInspector = true;
@@ -1122,6 +1407,25 @@ void GUI::drawStudioTopRibbon()
 
 		if (ImGui::Button("Save", ImVec2(54.0f, 28.0f))) {
 			m_requestSaveScene = true;
+		}
+		ImGui::SameLine();
+		if (!m_isRuntimePlaying) {
+			ImGui::PushStyleColor(
+				ImGuiCol_Button,
+				ImVec4(0.10f, 0.38f, 0.13f, 1.0f));
+			if (ImGui::Button("Play", ImVec2(54.0f, 28.0f))) {
+				m_requestPlay = true;
+			}
+			ImGui::PopStyleColor();
+		}
+		else {
+			ImGui::PushStyleColor(
+				ImGuiCol_Button,
+				ImVec4(0.60f, 0.12f, 0.14f, 1.0f));
+			if (ImGui::Button("Stop", ImVec2(54.0f, 28.0f))) {
+				m_requestStop = true;
+			}
+			ImGui::PopStyleColor();
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Content", ImVec2(76.0f, 28.0f))) {
@@ -1247,16 +1551,17 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 		ImGuiWindowFlags_NoScrollWithMouse | 
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_MenuBar;
+		(m_isRuntimePlaying ? 0 : ImGuiWindowFlags_MenuBar);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-	if (ImGui::Begin("DefaultScene", nullptr, flags))
+	if (ImGui::Begin(m_isRuntimePlaying ? "Gameplay" : "DefaultScene",
+		nullptr, flags))
 	{
 		m_viewportDrawList = ImGui::GetWindowDrawList();
 
 		PushEditorPopupStyle();
-		if (ImGui::BeginMenuBar()) {
+		if (!m_isRuntimePlaying && ImGui::BeginMenuBar()) {
 			ImGui::SetNextWindowSize(ImVec2(285.0f, 0.0f), ImGuiCond_Appearing);
 			if (ImGui::BeginMenu("Menu")) {
 				ImGui::TextDisabled("TRANSFORM TOOLS");
@@ -1298,6 +1603,10 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 			ImGui::EndMenuBar();
 		}
 		PopEditorPopupStyle();
+		if (m_isRuntimePlaying) {
+			ImGui::SetCursorPos(ImVec2(14.0f, 12.0f));
+			ImGui::TextDisabled("PLAY MODE  |  WASD move  |  RMB look  |  Shift sprint");
+		}
 
 		ImVec2 panelMin = ImGui::GetCursorScreenPos();
 		ImVec2 panelSize = ImGui::GetContentRegionAvail();
@@ -1342,6 +1651,11 @@ void GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 				const char* path = (const char*)payload->Data;
 				m_textureDropPath = path;
 				m_textureDropRequested = true;
+			}
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_AUDIO_PATH")) {
+				const char* path = static_cast<const char*>(payload->Data);
+				m_audioSpawnPath = path;
+				m_audioSpawnRequested = true;
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -1796,6 +2110,7 @@ void GUI::drawViewportGrid(Camera& cam) {
 			ImVec2(m_viewportPos.x + m_viewportSize.x, m_viewportPos.y + m_viewportSize.y),
 			true);
 	}
+
 	ImGuizmo::DrawGrid(view, proj, identity, m_gridSize);
 	if (m_viewportDrawList) {
 		m_viewportDrawList->PopClipRect();
@@ -1825,6 +2140,47 @@ void GUI::drawLightingPanel(float* lightDir, float* lightColor) {
 		ImGui::Text("Color");
 		ImGui::ColorEdit3("##LightingColor", lightColor);
 	}
+	ImGui::End();
+}
+
+void
+GUI::drawAudioPanel() {
+	if (!ImGui::Begin("Audio", &m_showAudioPanel)) {
+		ImGui::End();
+		return;
+	}
+
+	ImGui::TextDisabled("GLOBAL AUDIO MIXER");
+	float masterVolumePercent = m_audioMasterVolume * 100.0f;
+	if (ImGui::SliderFloat(
+		"Master Volume",
+		&masterVolumePercent,
+		0.0f,
+		100.0f,
+		"%.0f%%")) {
+		m_audioMasterVolume = masterVolumePercent / 100.0f;
+		m_audioMasterVolumeChanged = true;
+	}
+
+	ImGui::Separator();
+	ImGui::TextDisabled("TRANSPORT");
+	if (!m_audioPaused) {
+		if (ImGui::Button("Pause All", ImVec2(110.0f, 0.0f))) {
+			m_audioPauseRequested = true;
+		}
+	}
+	else {
+		if (ImGui::Button("Resume All", ImVec2(110.0f, 0.0f))) {
+			m_audioResumeRequested = true;
+		}
+	}
+
+	ImGui::SameLine();
+	ImGui::TextDisabled(
+		m_audioPaused ? "All sources paused" : "All sources active");
+	ImGui::Spacing();
+	ImGui::TextWrapped(
+		"Configure each WAV path, source volume, and playback in Details.");
 	ImGui::End();
 }
 
@@ -1907,7 +2263,12 @@ void GUI::drawTexturePreview() {
 
 void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 	ImGui::Begin("Content");
-	
+	ImGui::TextDisabled("Root: %s", fs::absolute("Assets").string().c_str());
+
+	if (ImGui::Button("Create Folder...")) {
+		ImGui::OpenPopup("Create Content Folder");
+	}
+	ImGui::SameLine();
 	if (ImGui::Button("Import Content...")) {
 		OPENFILENAMEA ofn;
 		char szFile[260] = {0};
@@ -1916,50 +2277,81 @@ void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 		ofn.hwndOwner = NULL;
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = "All Supported\0*.fbx;*.obj;*.glb;*.gltf;*.png;*.jpg;*.tga\0Models (*.fbx;*.obj;*.glb;*.gltf)\0*.fbx;*.obj;*.glb;*.gltf\0Textures (*.png;*.jpg;*.tga)\0*.png;*.jpg;*.tga\0All\0*.*\0";
+		ofn.lpstrFilter = "All Supported\0*.fbx;*.obj;*.glb;*.gltf;*.png;*.jpg;*.tga;*.dds;*.wav;*.mp3;*.flac\0Models (*.fbx;*.obj;*.glb;*.gltf)\0*.fbx;*.obj;*.glb;*.gltf\0Textures (*.png;*.jpg;*.tga;*.dds)\0*.png;*.jpg;*.tga;*.dds\0Audio (*.wav;*.mp3;*.flac)\0*.wav;*.mp3;*.flac\0All\0*.*\0";
 		ofn.nFilterIndex = 1;
 		ofn.lpstrFileTitle = NULL;
 		ofn.nMaxFileTitle = 0;
 		ofn.lpstrInitialDir = NULL;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 		if (GetOpenFileNameA(&ofn) == TRUE) {
-			std::string srcPath = ofn.lpstrFile;
-			std::string lo = srcPath;
-			for (char& c : lo) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
-			std::string destDir = "Assets/";
-			if (lo.size() >= 4 && (lo.compare(lo.size() - 4, 4, ".fbx") == 0 || lo.compare(lo.size() - 4, 4, ".obj") == 0 || lo.compare(lo.size() - 4, 4, ".glb") == 0 || (lo.size() >= 5 && lo.compare(lo.size() - 5, 5, ".gltf") == 0))) {
-				destDir += "Models/";
-			} else {
-				destDir += "Textures/";
+			const fs::path sourcePath(ofn.lpstrFile);
+			std::error_code error;
+			bool imported = false;
+			if (IsModelFile(sourcePath)) {
+				imported = ImportModelWithTextures(sourcePath);
 			}
-			std::string fileName = srcPath.substr(srcPath.find_last_of("/\\") + 1);
-			std::string destPath = destDir + fileName;
-			CreateDirectoryA("Assets", NULL);
-			CreateDirectoryA(destDir.c_str(), NULL);
-			CopyFileA(srcPath.c_str(), destPath.c_str(), FALSE);
-			m_importContentRequested = true;
+			else if (IsAudioFile(sourcePath)) {
+				const fs::path audioDirectory = fs::path("Assets") / "Audio";
+				fs::create_directories(audioDirectory, error);
+				if (!error && IsPlayableAudioFile(sourcePath)) {
+					fs::copy_file(sourcePath, audioDirectory / sourcePath.filename(),
+						fs::copy_options::overwrite_existing, error);
+					imported = !error;
+				}
+				else if (!error) {
+					const fs::path wavePath =
+						audioDirectory / (sourcePath.stem().string() + ".wav");
+					imported = ConvertAudioToWave(sourcePath, wavePath);
+				}
+			}
+			else if (IsImageFile(sourcePath)) {
+				const fs::path destination =
+					fs::path("Assets") / "Textures" / sourcePath.filename();
+				fs::create_directories(destination.parent_path(), error);
+				if (!error) {
+					fs::copy_file(sourcePath, destination,
+						fs::copy_options::overwrite_existing, error);
+					imported = !error;
+				}
+			}
+			if (imported) m_importContentRequested = true;
 		}
+	}
+
+	if (ImGui::BeginPopupModal("Create Content Folder", nullptr,
+		ImGuiWindowFlags_AlwaysAutoResize)) {
+		static char folderPath[260] = "";
+		ImGui::TextUnformatted("Relative to Assets/ (e.g. Audio/Music)");
+		ImGui::InputText("Folder", folderPath, IM_ARRAYSIZE(folderPath));
+		if (ImGui::Button("Create")) {
+			const std::string relativePath(folderPath);
+			if (!relativePath.empty() &&
+				relativePath.find("..") == std::string::npos) {
+				std::error_code error;
+				fs::create_directories(fs::path("Assets") / relativePath, error);
+				if (!error) {
+					folderPath[0] = '\0';
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel")) ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
 	}
 	ImGui::Separator();
 	
 	if (ImGui::BeginTabBar("##ContentTabs")) {
 		if (ImGui::BeginTabItem("Models")) {
 			std::vector<std::string> models;
-			WIN32_FIND_DATAA fd;
-			HANDLE h = FindFirstFileA("Assets\\Models\\*", &fd);
-			if (h != INVALID_HANDLE_VALUE) {
-				do {
-					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
-					std::string n = fd.cFileName;
-					std::string lo = n;
-					for (char& c : lo) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
-					if (lo.size() >= 4 && (lo.compare(lo.size() - 4, 4, ".fbx") == 0 ||
-						lo.compare(lo.size() - 4, 4, ".obj") == 0 ||
-						lo.compare(lo.size() - 4, 4, ".glb") == 0 ||
-						(lo.size() >= 5 && lo.compare(lo.size() - 5, 5, ".gltf") == 0)))
-						models.push_back(n);
-				} while (FindNextFileA(h, &fd));
-				FindClose(h);
+			std::error_code error;
+			const fs::path modelsRoot("Assets/Models");
+			for (const fs::directory_entry& entry :
+				fs::recursive_directory_iterator(modelsRoot, error)) {
+				if (!error && entry.is_regular_file() && IsModelFile(entry.path())) {
+					models.push_back(ToContentPath(
+						entry.path().lexically_relative(modelsRoot)));
+				}
 			}
 			if (models.empty()) ImGui::TextDisabled("No hay modelos en Assets/Models");
 			const float cell = 90.0f;
@@ -2024,6 +2416,38 @@ void GUI::drawContentBrowser(const std::vector<AssetThumb>& textureThumbs) {
 				ImGui::EndGroup();
 				ImGui::PopID();
 				if (++col < perRow) ImGui::SameLine(); else col = 0;
+			}
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Audio")) {
+			std::vector<std::string> sounds;
+			std::error_code error;
+			const fs::path audioRoot("Assets/Audio");
+			for (const fs::directory_entry& entry :
+				fs::recursive_directory_iterator(audioRoot, error)) {
+				if (!error && entry.is_regular_file() &&
+					IsPlayableAudioFile(entry.path())) {
+					sounds.push_back(ToContentPath(
+						entry.path().lexically_relative(audioRoot)));
+				}
+			}
+			if (sounds.empty()) {
+				ImGui::TextDisabled("No hay audio WAV en Assets/Audio");
+			}
+			for (const std::string& sound : sounds) {
+				ImGui::PushID(sound.c_str());
+				ImGui::Button("WAV", ImVec2(72.0f, 36.0f));
+				if (ImGui::BeginDragDropSource(
+					ImGuiDragDropFlags_SourceAllowNullID)) {
+					const std::string fullPath = "Assets/Audio/" + sound;
+					ImGui::SetDragDropPayload("DND_AUDIO_PATH", fullPath.c_str(),
+						fullPath.size() + 1);
+					ImGui::Text("Assign %s", sound.c_str());
+					ImGui::EndDragDropSource();
+				}
+				ImGui::SameLine();
+				ImGui::TextUnformatted(sound.c_str());
+				ImGui::PopID();
 			}
 			ImGui::EndTabItem();
 		}

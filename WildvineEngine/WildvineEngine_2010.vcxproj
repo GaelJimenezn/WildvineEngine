@@ -436,6 +436,7 @@
     <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_widgets.cpp" />
     <ClCompile Include="Imgui\ImGuizmo\ImGuizmo.cpp" />
     <ClCompile Include="source\BaseApp.cpp" />
+    <ClCompile Include="source\ECS\AudioSystem.cpp" />
     <ClCompile Include="source\Buffer.cpp" />
     <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\DepthStencilState.cpp" />
@@ -452,8 +453,8 @@
     <ClCompile Include="source\Rendering\RenderScene.cpp" />
     <ClCompile Include="source\InputLayout.cpp" />
     <ClCompile Include="source\Model3D.cpp" />
-    <ClCompile Include="source\ModelLoader.cpp" />
-    <ClCompile Include="source\ParserOBJ.cpp" />
+    <ClCompile Include="source\Utilities\ModelLoader.cpp" />
+    <ClCompile Include="source\Utilities\ParserOBJ.cpp" />
     <ClCompile Include="source\RasterizerState.cpp" />
     <ClCompile Include="source\RenderTargetView.cpp" />
     <ClCompile Include="source\SamplerState.cpp" />
@@ -480,16 +481,19 @@
     <ClInclude Include="Imgui\imgui-docking-znly-docking\imstb_truetype.h" />
     <ClInclude Include="Imgui\ImGuizmo\ImGuizmo.h" />
     <ClInclude Include="include\BaseApp.h" />
-    <ClInclude Include="include\Actor.h" />
+    <ClInclude Include="include\Utilities\AudioSystem.h" />
+    <ClInclude Include="include\ECS\Legacy\Actor.h" />
     <ClInclude Include="include\Buffer.h" />
     <ClInclude Include="include\DepthStencilState.h" />
     <ClInclude Include="include\DepthStencilView.h" />
     <ClInclude Include="include\Device.h" />
     <ClInclude Include="include\DeviceContext.h" />
     <ClInclude Include="include\ECS\Actor.h" />
+    <ClInclude Include="include\ECS\AudioSourceComponent.h" />
     <ClInclude Include="include\ECS\Component.h" />
     <ClInclude Include="include\ECS\LightComponent.h" />
     <ClInclude Include="include\ECS\MeshRendererComponent.h" />
+    <ClInclude Include="include\ECS\RuntimeBehaviorComponent.h" />
     <ClInclude Include="include\ECS\Entity.h" />
     <ClInclude Include="include\ECS\Transform.h" />
     <ClInclude Include="include\EngineUtilities\GUI\GUI.h" />
@@ -519,9 +523,9 @@
     <ClInclude Include="include\IResource.h" />
     <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\Model3D.h" />
-    <ClInclude Include="include\ModelLoader.h" />
-    <ClInclude Include="include\OBJ_Loader.h" />
-    <ClInclude Include="include\ParserOBJ.h" />
+    <ClInclude Include="include\Utilities\ModelLoader.h" />
+    <ClInclude Include="include\Utilities\OBJ_Loader.h" />
+    <ClInclude Include="include\Utilities\ParserOBJ.h" />
     <ClInclude Include="include\Prerequisites.h" />
     <ClInclude Include="include\RasterizerState.h" />
     <ClInclude Include="include\RenderTargetView.h" />
@@ -533,7 +537,7 @@
     <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="include\SwapChain.h" />
     <ClInclude Include="include\Texture.h" />
-    <ClInclude Include="include\GUI.h" />
+    <ClInclude Include="include\Utilities\GUI.h" />
     <ClInclude Include="include\Viewport.h" />
     <ClInclude Include="include\Window.h" />
     <CLInclude Include="resource.h" />
@@ -543,6 +547,14 @@
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="third_party\DirectXTK\DirectXTK_Desktop_2022.vcxproj">
+      <Project>{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="DirectXTK.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

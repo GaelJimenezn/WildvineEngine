@@ -222,5 +222,7 @@ enum
   TRANSFORM = 1, /**< @brief Componente de transformación (posición, rotación, escala). */
   MESH      = 2, /**< @brief Componente de malla (MeshRendererComponent). */
   MATERIAL  = 3, /**< @brief Componente de material. */
-  HIERARCHY = 4  /**< @brief Componente de jerarquía de escena. */
+  HIERARCHY = 4, /**< @brief Componente de jerarquía de escena. */
+  BEHAVIOR  = 5, /**< @brief Componente de comportamiento en runtime. */
+  AUDIO     = 6  /**< @brief Componente de fuente de audio espacial. */
 };

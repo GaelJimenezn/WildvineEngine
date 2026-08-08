@@ -23,7 +23,7 @@
 #include "SamplerState.h"
 
 #include "Model3D.h"
-#include "GUI.h"
+#include "Utilities/GUI.h"
 #include "ECS/Actor.h"
 
 #include "SceneGraph/SceneGraph.h"
@@ -40,6 +40,7 @@
 #include "Rendering/MaterialInstance.h"
 #include "Rendering/Mesh.h"
 #include "Rendering/RenderPipeline.h"
+#include "Utilities/AudioSystem.h"
 #include "Rendering/RenderScene.h"
 
 #include "CommandManager.h"
@@ -395,6 +396,17 @@ private:
   /** @brief Transformaciones originales de todos los actores. */
   std::vector<InitialTransform> m_initialTransforms;
 
+  /** @brief Estado de edición conservado durante la ejecución Play. */
+  std::vector<InitialTransform> m_runtimeTransforms;
+  /** @brief Posición de cámara guardada al iniciar Play. */
+  EU::Vector3 m_runtimeCameraPosition;
+  /** @brief Dirección de cámara guardada al iniciar Play. */
+  EU::Vector3 m_runtimeCameraForward;
+  /** @brief Vector arriba de cámara guardado al iniciar Play. */
+  EU::Vector3 m_runtimeCameraUp;
+  /** @brief true mientras los comportamientos de runtime están activos. */
+  bool m_isPlaying = false;
+
   /** @brief Captura el estado TRS de todos los actores para el botón Reset. */
   void
   captureInitialState();
@@ -402,6 +414,32 @@ private:
   /** @brief Restaura la escena al estado guardado por captureInitialState(). */
   void
   resetSceneToDefaults();
+
+  /** @brief Captura los transforms de edición antes de iniciar Play. */
+  void
+  captureRuntimeState();
+
+  /** @brief Inicia los componentes de comportamiento y entra al modo Play. */
+  void
+  startPlayMode();
+
+  /** @brief Detiene los comportamientos y restaura el estado de edición. */
+  void
+  stopPlayMode();
+
+  /**
+   * @brief Activa o desactiva todos los comportamientos de runtime.
+   * @param running true para ejecutar comportamientos; false para detenerlos.
+   */
+  void
+  setRuntimeBehaviorsRunning(bool running);
+
+  /**
+   * @brief Inicia o detiene las fuentes de audio registradas en la escena.
+   * @param playing true para reproducir; false para detener cada fuente.
+   */
+  void
+  setRuntimeAudioPlaying(bool playing);
 
   /**
    * @brief Mueve la cámara para encuadrar el actor indicado (tecla F).
@@ -637,6 +675,8 @@ private:
   EditorViewportPass m_editorViewportPass;
   /** @brief Orquestador Forward/Deferred renderer. */
   RenderPipeline     m_renderPipeline;
+  /** @brief Administrador de audio 3D basado en DirectXTK. */
+  AudioSystem        m_audioSystem;
   /** @brief Contenedor de datos de escena para un frame de render. */
   RenderScene        m_renderScene;
 

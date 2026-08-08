@@ -166,6 +166,9 @@ public:
   /** @brief Declara o ejecuta drawLightingPanel. */
   void
   drawLightingPanel(float* lightDir, float* lightColor);
+  /** @brief Dibuja los controles globales del sistema de audio. */
+  void
+  drawAudioPanel();
   /** @brief Declara o ejecuta drawStatsPanel. */
   void
   drawStatsPanel(float deltaTime, unsigned int drawCalls);
@@ -213,6 +216,9 @@ public:
   /** @brief Declara o ejecuta shouldShowGBufferDebug. */
   bool
   shouldShowGBufferDebug() const { return m_showGBufferDebug; }
+  /** @brief Indica si el panel de controles de audio está visible. */
+  bool
+  shouldShowAudioPanel() const { return m_showAudioPanel; }
 
   /**
    * @brief Consume de forma atomica la solicitud de guardado emitida desde la UI.
@@ -223,6 +229,78 @@ public:
     const bool requested = m_requestSaveScene;
     m_requestSaveScene = false;
     return requested;
+  }
+
+  /**
+   * @brief Consume la solicitud de entrada al modo Play.
+   * @return true una sola vez después de pulsar el botón Play.
+   */
+  bool
+  consumePlayRequest() {
+    const bool requested = m_requestPlay;
+    m_requestPlay = false;
+    return requested;
+  }
+
+  /**
+   * @brief Consume la solicitud de detener el modo Play.
+   * @return true una sola vez después de pulsar el botón Stop.
+   */
+  bool
+  consumeStopRequest() {
+    const bool requested = m_requestStop;
+    m_requestStop = false;
+    return requested;
+  }
+
+  /**
+   * @brief Actualiza el estado visual de los controles Play y Stop.
+   * @param isPlaying true mientras el motor ejecuta comportamientos runtime.
+   */
+  void
+  setRuntimePlaying(bool isPlaying) {
+    m_isRuntimePlaying = isPlaying;
+  }
+
+  /**
+   * @brief Consume el último cambio de volumen maestro solicitado.
+   * @param outVolume Recibe el nuevo volumen lineal entre 0.0 y 1.0.
+   * @return true si el usuario cambió el control desde el último frame.
+   */
+  bool
+  consumeAudioMasterVolumeChange(float& outVolume) {
+    if (!m_audioMasterVolumeChanged) {
+      return false;
+    }
+
+    outVolume = m_audioMasterVolume;
+    m_audioMasterVolumeChanged = false;
+    return true;
+  }
+
+  /** @brief Consume la solicitud de pausar todas las fuentes de audio. */
+  bool
+  consumeAudioPauseRequest() {
+    const bool requested = m_audioPauseRequested;
+    m_audioPauseRequested = false;
+    return requested;
+  }
+
+  /** @brief Consume la solicitud de reanudar todas las fuentes de audio. */
+  bool
+  consumeAudioResumeRequest() {
+    const bool requested = m_audioResumeRequested;
+    m_audioResumeRequested = false;
+    return requested;
+  }
+
+  /**
+   * @brief Actualiza el estado visual de pausa del panel de audio.
+   * @param paused true cuando AudioSystem está suspendido.
+   */
+  void
+  setAudioPaused(bool paused) {
+    m_audioPaused = paused;
   }
 
   /** @brief Declara o ejecuta consumeCreateLightRequest. */
@@ -261,6 +339,9 @@ private:
 
   bool show_exit_popup = false; // Variable de estado para el popup
   bool m_requestSaveScene = false;
+  bool m_requestPlay = false;
+  bool m_requestStop = false;
+  bool m_isRuntimePlaying = false;
   bool m_requestCreateLight = false;
   LightType m_requestedLightType = LightType::Directional;
   bool m_showOutliner = true;
@@ -269,6 +350,12 @@ private:
   bool m_showRenderDebug = false;
   bool m_showGBufferDebug = false;
   bool m_showMaterialSRVDebug = false;
+  bool m_showAudioPanel = true;
+  float m_audioMasterVolume = 1.0f;
+  bool m_audioMasterVolumeChanged = false;
+  bool m_audioPaused = false;
+  bool m_audioPauseRequested = false;
+  bool m_audioResumeRequested = false;
   ImDrawList* m_viewportDrawList = nullptr;
   bool m_viewportActive = false;
 
@@ -318,6 +405,8 @@ public:
   bool m_assetSpawnRequested = false;
   std::string m_assetDeletePath;
   bool m_assetDeleteRequested = false;
+  std::string m_audioSpawnPath;
+  bool m_audioSpawnRequested = false;
   
   // Texture drop
   std::string m_textureDropPath;
