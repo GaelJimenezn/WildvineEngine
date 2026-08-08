@@ -67,6 +67,26 @@ Submesh {
 class
 Mesh {
 public:
+  /** @brief Configura los límites locales usados por el culling espacial. */
+  void
+  setLocalBounds(const EU::Vector3& minimum, const EU::Vector3& maximum) {
+    m_localBoundsMin = minimum;
+    m_localBoundsMax = maximum;
+    m_hasLocalBounds = true;
+  }
+
+  /** @brief Indica si la malla tiene límites locales válidos. */
+  bool
+  hasLocalBounds() const { return m_hasLocalBounds; }
+
+  /** @brief Devuelve la esquina mínima de los límites locales. */
+  const EU::Vector3&
+  getLocalBoundsMin() const { return m_localBoundsMin; }
+
+  /** @brief Devuelve la esquina máxima de los límites locales. */
+  const EU::Vector3&
+  getLocalBoundsMax() const { return m_localBoundsMax; }
+
   /**
    * @brief Obtiene la lista de submeshes (mutable).
    * @return Referencia al vector de Submesh.
@@ -100,4 +120,7 @@ public:
 private:
   /** @brief Lista de submeshes que componen la malla. */
   std::vector<Submesh> m_submeshes;
+  EU::Vector3 m_localBoundsMin = EU::Vector3(0.0f, 0.0f, 0.0f);
+  EU::Vector3 m_localBoundsMax = EU::Vector3(0.0f, 0.0f, 0.0f);
+  bool m_hasLocalBounds = false;
 };

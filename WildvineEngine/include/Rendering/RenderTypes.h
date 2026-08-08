@@ -402,4 +402,8 @@ RenderObject {
    * Utilizada principalmente para ordenamiento de transparencias.
    */
   float distanceToCamera = 0.0f;
+
+  /** @brief AABB mundial utilizado por el octree y el frustum culling. */
+  EU::Vector3 boundsMin = EU::Vector3(0.0f, 0.0f, 0.0f);
+  EU::Vector3 boundsMax = EU::Vector3(0.0f, 0.0f, 0.0f);
 };

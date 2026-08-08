@@ -23,10 +23,11 @@
 #include "SamplerState.h"
 
 #include "Model3D.h"
-#include "Utilities/GUI.h"
+#include "EngineUtilities/GUI/GUI.h"
 #include "ECS/Actor.h"
 
 #include "SceneGraph/SceneGraph.h"
+#include "SceneGraph/Octree.h"
 
 #include "EngineUtilities/Utilities/Camera.h"
 #include "EngineUtilities/Utilities/Skybox.h"
@@ -454,6 +455,8 @@ private:
 
   /** @brief Número de draw calls ejecutados en el último frame. */
   unsigned int m_lastDrawCalls = 0;
+  CullingStats m_cullingStats;
+  Octree m_sceneOctree;
 
   // -------------------------------------------------------------------------
   // Picking

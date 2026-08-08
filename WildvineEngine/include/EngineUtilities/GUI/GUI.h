@@ -171,7 +171,9 @@ public:
   drawAudioPanel();
   /** @brief Declara o ejecuta drawStatsPanel. */
   void
-  drawStatsPanel(float deltaTime, unsigned int drawCalls);
+  drawStatsPanel(float deltaTime, unsigned int drawCalls,
+    unsigned int submittedObjects, unsigned int visibleObjects,
+    unsigned int culledObjects, unsigned int octreeNodes);
   /** @brief Declara o ejecuta drawConsolePanel. */
   void
   drawConsolePanel();
@@ -229,6 +231,24 @@ public:
     const bool requested = m_requestSaveScene;
     m_requestSaveScene = false;
     return requested;
+  }
+
+  /** @brief Consume la solicitud de crear un nivel vacío. */
+  bool
+  consumeNewSceneRequest() {
+    const bool requested = m_requestNewScene;
+    m_requestNewScene = false;
+    return requested;
+  }
+
+  /** @brief Consume la ruta de nivel elegida mediante Open Level. */
+  bool
+  consumeOpenSceneRequest(std::string& outPath) {
+    if (!m_requestOpenScene) return false;
+    outPath = m_openScenePath;
+    m_openScenePath.clear();
+    m_requestOpenScene = false;
+    return true;
   }
 
   /**
@@ -339,6 +359,9 @@ private:
 
   bool show_exit_popup = false; // Variable de estado para el popup
   bool m_requestSaveScene = false;
+  bool m_requestNewScene = false;
+  bool m_requestOpenScene = false;
+  std::string m_openScenePath;
   bool m_requestPlay = false;
   bool m_requestStop = false;
   bool m_isRuntimePlaying = false;

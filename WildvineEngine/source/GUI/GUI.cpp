@@ -1308,8 +1308,22 @@ void GUI::drawStudioTopRibbon()
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				ImGui::MenuItem("New Level");
-				ImGui::MenuItem("Open Level");
+				if (ImGui::MenuItem("New Level")) {
+					m_requestNewScene = true;
+				}
+				if (ImGui::MenuItem("Open Level")) {
+					OPENFILENAMEA dialog{};
+					char filePath[MAX_PATH] = {};
+					dialog.lStructSize = sizeof(dialog);
+					dialog.lpstrFile = filePath;
+					dialog.nMaxFile = MAX_PATH;
+					dialog.lpstrFilter = "Wildvine Level\0*.wvscene\0All Files\0*.*\0";
+					dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+					if (GetOpenFileNameA(&dialog) == TRUE) {
+						m_openScenePath = filePath;
+						m_requestOpenScene = true;
+					}
+				}
 				if (ImGui::MenuItem("Save Current", "Ctrl+S")) {
 					m_requestSaveScene = true;
 				}
@@ -2184,7 +2198,9 @@ GUI::drawAudioPanel() {
 	ImGui::End();
 }
 
-void GUI::drawStatsPanel(float deltaTime, unsigned int drawCalls) {
+void GUI::drawStatsPanel(float deltaTime, unsigned int drawCalls,
+  unsigned int submittedObjects, unsigned int visibleObjects,
+  unsigned int culledObjects, unsigned int octreeNodes) {
 	ImGui::Begin("Performance");
 	static float history[120] = {};
 	static int idx = 0;
@@ -2208,6 +2224,10 @@ void GUI::drawStatsPanel(float deltaTime, unsigned int drawCalls) {
 
 	ImGui::Spacing(); ImGui::Separator();
 	ImGui::Text("Draw calls:"); ImGui::SameLine(); ImGui::Text("%u", drawCalls);
+	ImGui::Text("Objects: %u visible / %u total", visibleObjects,
+		submittedObjects);
+	ImGui::Text("Frustum culled: %u  |  Octree nodes: %u", culledObjects,
+		octreeNodes);
 	ImGui::TextDisabled("Viewport: %.0f x %.0f", m_viewportSize.x, m_viewportSize.y);
 	ImGui::End();
 }

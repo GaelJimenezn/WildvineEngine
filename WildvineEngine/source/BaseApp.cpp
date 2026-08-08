@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <limits>
 #include <chrono>
+#include <cfloat>
 
 extern LRESULT
 ImGui_ImplWin32_WndProcHandler(HWND hWnd,
@@ -57,8 +58,31 @@ fileExists(const std::string& path) {
 		!(attributes & FILE_ATTRIBUTE_DIRECTORY);
 }
 
+static void
+updateWorldBounds(RenderObject& object) {
+	if (!object.mesh || !object.mesh->hasLocalBounds()) return;
+	const EU::Vector3& localMin = object.mesh->getLocalBoundsMin();
+	const EU::Vector3& localMax = object.mesh->getLocalBoundsMax();
+	object.boundsMin = EU::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
+	object.boundsMax = EU::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	for (int corner = 0; corner < 8; ++corner) {
+		XMVECTOR point = XMVector3TransformCoord(XMVectorSet(
+			(corner & 1) ? localMax.x : localMin.x,
+			(corner & 2) ? localMax.y : localMin.y,
+			(corner & 4) ? localMax.z : localMin.z, 1.0f), object.world);
+		XMFLOAT3 value;
+		XMStoreFloat3(&value, point);
+		object.boundsMin.x = fminf(object.boundsMin.x, value.x);
+		object.boundsMin.y = fminf(object.boundsMin.y, value.y);
+		object.boundsMin.z = fminf(object.boundsMin.z, value.z);
+		object.boundsMax.x = fmaxf(object.boundsMax.x, value.x);
+		object.boundsMax.y = fmaxf(object.boundsMax.y, value.y);
+		object.boundsMax.z = fmaxf(object.boundsMax.z, value.z);
+	}
+}
+
 constexpr uint32_t kSceneBinaryMagic = 0x4E435357;  // WSCN
-constexpr uint32_t kSceneBinaryVersion = 1;
+constexpr uint32_t kSceneBinaryVersion = 2;
 constexpr uint32_t kPrefabBinaryMagic = 0x46505657; // WVPF
 constexpr uint32_t kPrefabBinaryVersion = 1;
 
@@ -986,7 +1010,6 @@ BaseApp::init() {
 	m_directionalLightActor = createLightActor(LightType::Directional, "DirectionalLight");
 
 	loadScene(getDefaultScenePath());
-	enforceDefaultSceneLayout();
 	frameDefaultSceneCamera();
 
 	// --------------------------------------------------------------------------
@@ -1078,7 +1101,9 @@ BaseApp::update(float deltaTime) {
 
 	m_gui.drawLightingPanel(&m_constantBufferStruct.LightDir.x,
 		&m_constantBufferStruct.LightColor.x);
-	m_gui.drawStatsPanel(deltaTime, m_lastDrawCalls);
+	m_gui.drawStatsPanel(deltaTime, m_lastDrawCalls,
+		m_cullingStats.submitted, m_cullingStats.visible,
+		m_cullingStats.culled, m_cullingStats.visitedNodes);
 	m_gui.drawConsolePanel();
 	m_gui.drawTexturePreview();
 	m_gui.drawContentBrowser(m_thumbnails);
@@ -1109,6 +1134,7 @@ BaseApp::update(float deltaTime) {
 				ERROR("BaseApp", "ContentBrowser", ("No se pudo eliminar: " + deletePath).c_str());
 			}
 		}
+		m_cyberGunRenderMesh.setLocalBounds(m_modelLocalMin, m_modelLocalMax);
 	}
 
 	if (m_pendingModelImport.active &&
@@ -1292,6 +1318,17 @@ BaseApp::update(float deltaTime) {
 
 	if (m_gui.consumeSaveSceneRequest()) {
 		saveScene(getDefaultScenePath());
+	}
+
+	if (m_gui.consumeNewSceneRequest()) {
+		resetSceneToDefaults();
+	}
+
+	std::string openScenePath;
+	if (m_gui.consumeOpenSceneRequest(openScenePath)) {
+		if (!loadScene(openScenePath)) {
+			ERROR("BaseApp", "OpenLevel", "No se pudo abrir el nivel seleccionado");
+		}
 	}
 
 	LightType requestedLightType = LightType::Directional;
@@ -1524,6 +1561,20 @@ BaseApp::render() {
 
 	m_renderScene.clear();
 	m_sceneGraph.gatherRenderScene(m_renderScene, m_camera);
+	std::vector<RenderObject> candidates = m_renderScene.opaqueObjects;
+	candidates.insert(candidates.end(), m_renderScene.transparentObjects.begin(),
+		m_renderScene.transparentObjects.end());
+	for (RenderObject& object : candidates) updateWorldBounds(object);
+	std::vector<RenderObject> visibleObjects;
+	visibleObjects.reserve(candidates.size());
+	m_sceneOctree.build(candidates);
+	m_sceneOctree.queryVisible(m_camera, visibleObjects, m_cullingStats);
+	m_renderScene.opaqueObjects.clear();
+	m_renderScene.transparentObjects.clear();
+	for (const RenderObject& object : visibleObjects) {
+		(object.transparent ? m_renderScene.transparentObjects :
+			m_renderScene.opaqueObjects).push_back(object);
+	}
 	m_renderScene.skybox = &m_skybox;
 	if (!m_isPlaying) {
 		addEditorGridToRenderScene();
@@ -2551,6 +2602,7 @@ BaseApp::loadModelActor(const std::string& modelPath,
 			material->setBlendMode(BlendMode::Alpha);
 		}
 	}
+	lm->mesh.setLocalBounds(lm->localMin, lm->localMax);
 
 	std::string modelName = fileBaseName(modelPath);
 	const std::string modelDirectory = directoryOf(modelPath);
@@ -2831,6 +2883,26 @@ BaseApp::saveScene(const std::string& path) {
 				writeBinaryValue(stream, light.width) &&
 				writeBinaryValue(stream, light.height);
 		}
+
+		EU::TSharedPointer<AudioSourceComponent> audioSource =
+			actor->getComponent<AudioSourceComponent>();
+		const uint8_t hasAudioSource = audioSource ? 1 : 0;
+		ok = ok && writeBinaryValue(stream, hasAudioSource);
+		if (audioSource) {
+			const uint8_t spatial = audioSource->isSpatial() ? 1 : 0;
+			const uint8_t loop = audioSource->isLooping() ? 1 : 0;
+			const uint8_t autoActivate = audioSource->isAutoActivate() ? 1 : 0;
+			const uint8_t muted = audioSource->isMuted() ? 1 : 0;
+			ok = ok && writeBinaryString(stream, audioSource->getAudioPath()) &&
+				writeBinaryValue(stream, audioSource->getVolume()) &&
+				writeBinaryValue(stream, audioSource->getPitch()) &&
+				writeBinaryValue(stream, spatial) &&
+				writeBinaryValue(stream, loop) &&
+				writeBinaryValue(stream, autoActivate) &&
+				writeBinaryValue(stream, muted) &&
+				writeBinaryValue(stream, audioSource->getMinDistance()) &&
+				writeBinaryValue(stream, audioSource->getMaxDistance());
+		}
 	}
 
 	if (!ok) {
@@ -2852,7 +2924,7 @@ BaseApp::loadScene(const std::string& path) {
 	if (readBinaryValue(stream, magic) &&
 		readBinaryValue(stream, binaryVersion) &&
 		magic == kSceneBinaryMagic &&
-		binaryVersion == kSceneBinaryVersion) {
+		(binaryVersion == 1 || binaryVersion == kSceneBinaryVersion)) {
 		uint32_t actorCount = 0;
 		if (!readBinaryValue(stream, actorCount)) return false;
 
@@ -2867,6 +2939,10 @@ BaseApp::loadScene(const std::string& path) {
 			EU::TSharedPointer<Actor> actor;
 			if (actorIndex < m_actors.size()) {
 				actor = m_actors[actorIndex];
+			}
+			if (actor.isNull()) {
+				actor = EU::MakeShared<Actor>(m_device);
+				addActorToScene(actor);
 			}
 			if (!actor.isNull()) {
 				actor->setName(name);
@@ -2929,6 +3005,46 @@ BaseApp::loadScene(const std::string& path) {
 					EU::TSharedPointer<LightComponent> lc =
 						actor->getComponent<LightComponent>();
 					if (lc) lc->getLightData() = light;
+				}
+			}
+
+			if (binaryVersion >= 2) {
+				uint8_t hasAudioSource = 0;
+				if (!readBinaryValue(stream, hasAudioSource)) return false;
+				if (hasAudioSource) {
+					std::string audioPath;
+					float volume = 1.0f;
+					float pitch = 0.0f;
+					uint8_t spatial = 0, loop = 0, autoActivate = 0, muted = 0;
+					float minDistance = 1.0f, maxDistance = 25.0f;
+					if (!readBinaryString(stream, audioPath) ||
+						!readBinaryValue(stream, volume) ||
+						!readBinaryValue(stream, pitch) ||
+						!readBinaryValue(stream, spatial) ||
+						!readBinaryValue(stream, loop) ||
+						!readBinaryValue(stream, autoActivate) ||
+						!readBinaryValue(stream, muted) ||
+						!readBinaryValue(stream, minDistance) ||
+						!readBinaryValue(stream, maxDistance)) return false;
+
+					EU::TSharedPointer<Transform> transform =
+						actor->getComponent<Transform>();
+					EU::TSharedPointer<AudioSourceComponent> audioSource =
+						actor->getComponent<AudioSourceComponent>();
+					if (!audioSource) {
+						audioSource = EU::MakeShared<AudioSourceComponent>(
+							transform.get());
+						actor->addComponent(audioSource);
+						m_audioSystem.registerSource(audioSource.get());
+					}
+					audioSource->setAudioPath(audioPath);
+					audioSource->setVolume(volume);
+					audioSource->setPitch(pitch);
+					audioSource->setSpatial(spatial != 0);
+					audioSource->setLoop(loop != 0);
+					audioSource->setAutoActivate(autoActivate != 0);
+					audioSource->setMuted(muted != 0);
+					audioSource->setAttenuation(minDistance, maxDistance);
 				}
 			}
 		}

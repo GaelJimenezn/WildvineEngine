@@ -167,6 +167,9 @@
     <ClCompile Include="source\SceneGraph\SceneGraph.cpp">
       <Filter>source\SceneGraph</Filter>
     </ClCompile>
+    <ClCompile Include="source\SceneGraph\Octree.cpp">
+      <Filter>source\SceneGraph</Filter>
+    </ClCompile>
     <ClCompile Include="source\Camera.cpp">
       <Filter>source</Filter>
     </ClCompile>
@@ -355,6 +358,9 @@
       <Filter>include\SceneGraph</Filter>
     </ClInclude>
     <ClInclude Include="include\SceneGraph\SceneGraph.h">
+      <Filter>include\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneGraph\Octree.h">
       <Filter>include\SceneGraph</Filter>
     </ClInclude>
     <ClInclude Include="include\EngineUtilities\Utilities\Camera.h">
