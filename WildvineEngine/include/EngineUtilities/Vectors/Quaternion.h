@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -42,7 +42,8 @@ namespace EU {
  * This class represents a quaternion, providing operations such as addition,
  * subtraction, scalar multiplication, normalization, and quaternion multiplication.
  */
-class Quaternion {
+class
+Quaternion {
 public:
   float w; /**< The real part of the quaternion. */
   float x; /**< The i component of the quaternion. */

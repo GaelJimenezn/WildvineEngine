@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Viewport.h
  * @brief Declara la API pÃºblica de Viewport dentro de WildvineEngine.
  */
@@ -20,7 +20,8 @@ class DeviceContext;
  * @brief Clase encargada de administrar el Ã¡rea visible de renderizado (viewport)
  *        dentro de una ventana o superficie de dibujo en DirectX.
  */
-class Viewport {
+class
+Viewport {
 public:
   /**
    * @brief Constructor por defecto de Viewport.

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Buffer.h
  * @brief Declara la API pÃºblica de Buffer dentro de WildvineEngine.
  */
@@ -21,7 +21,8 @@ class DeviceContext;
  * @brief Clase encargada de manejar la creaciÃ³n, actualizaciÃ³n, renderizado
  *        y destrucciÃ³n de buffers utilizados en DirectX.
  */
-class Buffer {
+class
+Buffer {
 public:
   /**
    * @brief Constructor por defecto de la clase Buffer.

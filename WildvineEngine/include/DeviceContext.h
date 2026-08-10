@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file DeviceContext.h
  * @brief Declara la API pÃºblica de DeviceContext dentro de WildvineEngine.
  */
@@ -11,7 +11,8 @@
  * La clase DeviceContext se encarga de administrar los estados,
  * buffers, shaders y recursos asociados al pipeline de renderizado.
  */
-class DeviceContext {
+class
+DeviceContext {
 public:
   /**
    * @brief Constructor por defecto.

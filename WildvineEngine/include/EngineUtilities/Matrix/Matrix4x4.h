@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -39,7 +39,8 @@ namespace EU {
  * This class represents a 4x4 matrix and provides basic matrix operations such as
  * addition, subtraction, multiplication, determinant calculation, and inversion.
  */
-class Matrix4x4 {
+class
+Matrix4x4 {
 public:
   float m[4][4]; /**< The elements of the matrix. */
 

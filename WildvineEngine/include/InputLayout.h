@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file InputLayout.h
  * @brief Declara la API pÃºblica de InputLayout dentro de WildvineEngine.
  */
@@ -21,7 +21,8 @@ class DeviceContext;
  *        y destrucciÃ³n del Input Layout en DirectX. Define cÃ³mo los datos de
  *        los vÃ©rtices se envÃ­an al pipeline grÃ¡fico.
  */
-class InputLayout {
+class
+InputLayout {
 public:
   /**
    * @brief Constructor por defecto de InputLayout.

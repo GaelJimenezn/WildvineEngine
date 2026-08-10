@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file IResource.h
  * @brief Declara la API pÃºblica de IResource dentro de WildvineEngine.
  */
@@ -8,9 +8,8 @@
 /**
  * @brief Define los tipos de recursos soportados por el sistema.
  */
-enum
-    /** @brief Declara class ResourceType. */
-    class ResourceType {
+enum class
+ResourceType {
       Unknow,
       Model3D,
       Texture,
@@ -22,9 +21,8 @@ enum
 /**
  * @brief Define el estado actual de un recurso.
  */
-enum
-    /** @brief Declara class ResourceState. */
-    class ResourceState {
+enum class
+ResourceState {
       Unloaded,
       Loading,
       Loaded,

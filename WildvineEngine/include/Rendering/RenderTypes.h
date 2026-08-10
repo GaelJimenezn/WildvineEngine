@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file RenderTypes.h
  * @brief Declara la API de RenderTypes dentro del subsistema de renderizado.
  */
@@ -13,9 +13,8 @@ class MaterialInstance;
 /**
  * @brief Define el comportamiento de renderizado de un material.
  */
-enum
-    /** @brief Declara class MaterialDomain. */
-    class MaterialDomain {
+enum class
+MaterialDomain {
       /**
        * @brief Material completamente opaco.
        */
@@ -35,9 +34,8 @@ enum
 /**
  * @brief Modos de mezcla utilizados durante el renderizado.
  */
-enum
-    /** @brief Declara class BlendMode. */
-    class BlendMode {
+enum class
+BlendMode {
 
       /**
        * @brief Sin mezcla. El pÃ­xel sobrescribe el contenido existente.
@@ -63,9 +61,8 @@ enum
 /**
  * @brief Tipos de pases de renderizado soportados por el pipeline.
  */
-enum
-    /** @brief Declara class RenderPassType. */
-    class RenderPassType {
+enum class
+RenderPassType {
 
       /**
        * @brief Pase de generaciÃ³n de sombras.
@@ -96,9 +93,8 @@ enum
 /**
  * @brief Tipos de luces soportadas por el motor.
  */
-enum
-    /** @brief Declara class LightType. */
-    class LightType {
+enum class
+LightType {
 
       /**
        * @brief Luz direccional infinita.

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ResourceManager.h
  * @brief Declara el gestor centralizado de recursos del motor (Singleton + Flyweight).
  * @ingroup core
@@ -18,7 +18,8 @@
  * Implementa el patrÃ³n Singleton y actÃºa como cachÃ© de recursos utilizando
  * el patrÃ³n Flyweight para evitar duplicaciÃ³n de instancias.
  */
-class ResourceManager {
+class
+ResourceManager {
 public:
   /**
    * @brief Constructor por defecto.

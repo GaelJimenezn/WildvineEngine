@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file DepthStencilState.h
  * @brief Declara la API pÃºblica de DepthStencilState dentro de WildvineEngine.
  */
@@ -17,7 +17,8 @@ class DeviceContext;
  * Permite configurar cÃ³mo se manejan las pruebas de profundidad y las operaciones
  * de stencil durante el renderizado.
  */
-class DepthStencilState {
+class
+DepthStencilState {
 public:
   /**
    * @brief Constructor por defecto.

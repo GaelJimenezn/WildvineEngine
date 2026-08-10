@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file RenderScene.h
  * @brief Declara la estructura RenderScene usada por el pipeline de renderizado.
  * @ingroup rendering
@@ -25,7 +25,8 @@ class Skybox;
  *
  * Esta estructura suele ser generada antes del render y consumida por el renderer.
  */
-class RenderScene {
+class
+RenderScene {
 public:
   /**
    * @brief Limpia todos los elementos de la escena.

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2025 Roberto Charreton
@@ -42,7 +42,8 @@ namespace EU {
  */
 template <typename T>
 /** @brief Declara class TStaticPtr. */
-class TStaticPtr {
+class
+TStaticPtr {
 public:
   /**
    * @brief Inicializa el puntero estÃ¡tico al objeto.

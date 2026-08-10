@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Logger.h
  * @brief Declara el sistema de logging centralizado del editor (singleton).
  * @ingroup core
@@ -15,9 +15,8 @@
 /**
  * @brief Nivel de severidad de una entrada de log.
  */
-enum
-    /** @brief Declara class LogLevel. */
-    class LogLevel {
+enum class
+LogLevel {
       Info = 0,    /**< @brief Mensaje informativo (cyan en la consola). */
       Warning = 1, /**< @brief Advertencia (amarillo en la consola). */
       Error = 2    /**< @brief Error crÃ­tico (rojo en la consola). */

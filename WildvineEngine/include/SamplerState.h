@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Prerequisites.h"
 
 /**
@@ -23,7 +23,8 @@ class DeviceContext;
  * muestreador
  * a la etapa correspondiente del pipeline grÃ¡fico.
  */
-class SamplerState {
+class
+SamplerState {
 public:
   /**
    * @brief Constructor por defecto.

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MeshComponent.h
  * @brief Declara la API pÃºblica de MeshComponent dentro de WildvineEngine.
  */
@@ -17,7 +17,8 @@ class DeviceContext;
  *        incluyendo sus vÃ©rtices e Ã­ndices, asÃ­ como su inicializaciÃ³n,
  *        actualizaciÃ³n y renderizado.
  */
-class MeshComponent : public Component {
+class
+MeshComponent : public Component {
 public:
   /**
    * @brief Constructor por defecto de MeshComponent.

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -47,7 +47,8 @@ namespace EU {
  */
 template <typename T>
 /** @brief Declara class TSet. */
-class TSet {
+class
+TSet {
 private:
   T *Data; ///< Puntero a la memoria donde se almacenan los elementos.
   /** @brief Capacidad actual del conjunto (nÃºmero de elementos que puede almacenar). */

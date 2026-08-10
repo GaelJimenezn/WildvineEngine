@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -48,10 +48,12 @@ namespace EU {
  */
 template <typename K, typename V>
 /** @brief Declara class TMap. */
-class TMap {
+class
+TMap {
 private:
   /** @brief Declara struct Pair. */
-  struct Pair {
+  struct
+  Pair {
     K Key;
     V Value;
 

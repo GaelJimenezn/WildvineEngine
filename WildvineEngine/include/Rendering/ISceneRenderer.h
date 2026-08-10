@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ISceneRenderer.h
  * @brief Declara una interfaz comÃºn para los renderers de escena.
  * @ingroup rendering
@@ -21,9 +21,8 @@ class EditorViewportPass;
 /**
  * @brief Tipos de renderizado soportados por el motor.
  */
-enum
-    /** @brief Declara class RenderType. */
-    class RenderType {
+enum class
+RenderType {
       /**
        * @brief Renderizado Forward tradicional.
        */

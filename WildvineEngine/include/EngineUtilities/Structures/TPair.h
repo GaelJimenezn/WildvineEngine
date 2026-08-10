@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -51,7 +51,8 @@ namespace EU {
  */
 template <typename KeyType, typename ValueType>
 /** @brief Declara class TPair. */
-class TPair {
+class
+TPair {
 public:
   /**
    * @brief Constructor por defecto que inicializa el par con valores predeterminados.

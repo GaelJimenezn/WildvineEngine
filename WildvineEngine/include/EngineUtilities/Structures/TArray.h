@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -46,7 +46,8 @@ namespace EU {
  */
 template <typename T>
 /** @brief Declara class TArray. */
-class TArray {
+class
+TArray {
 private:
   T *Data; ///< Puntero a la memoria donde se almacenan los elementos del array.
   /** @brief Capacidad actual del array (nÃºmero de elementos que puede almacenar). */

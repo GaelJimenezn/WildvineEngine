@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Device.h
  * @brief Declara la API pÃºblica de Device dentro de WildvineEngine.
  */
@@ -12,7 +12,8 @@
  * y destruir el dispositivo, asÃ­ como de crear recursos grÃ¡ficos
  * fundamentales como shaders, buffers, texturas y estados.
  */
-class Device {
+class
+Device {
 public:
   /**
    * @brief Constructor por defecto.

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ModelLoader.h
  * @brief Declara la API pÃºblica de ModelLoader dentro de WildvineEngine.
  */
@@ -13,7 +13,8 @@
  *
  * Permite importar datos desde archivos externos.
  */
-class ModelLoader {
+class
+ModelLoader {
 public:
   /**
    * @brief Constructor por defecto de ModelLoader.

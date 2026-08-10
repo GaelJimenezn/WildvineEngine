@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MaterialInstance.h
  * @brief Declara la API de MaterialInstance dentro del subsistema de renderizado.
  */
@@ -25,7 +25,8 @@ class Texture;
  * Es Ãºtil para renderizar mÃºltiples objetos con el mismo shader pero diferentes
  * propiedades visuales.
  */
-class MaterialInstance {
+class
+MaterialInstance {
 public:
   /**
    * @brief Asigna el material base.

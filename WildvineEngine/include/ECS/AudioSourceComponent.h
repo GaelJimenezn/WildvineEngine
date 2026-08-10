@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file AudioSourceComponent.h
  * @brief Declara la fuente de sonido espacial del sistema ECS.
  * @ingroup audio
@@ -19,7 +19,8 @@ class Transform;
  * AudioSystem resuelve el archivo, crea la voz de DirectXTK y aplica el audio
  * 3D usando el Transform asociado como emisor.
  */
-class AudioSourceComponent : public Component {
+class
+AudioSourceComponent : public Component {
 public:
   /**
    * @brief Construye una fuente enlazada a un Transform.

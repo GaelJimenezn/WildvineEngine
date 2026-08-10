@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Actor.h
  * @brief Declara la clase Actor â€” alias de la capa de compatibilidad con el ECS legado.
  * @ingroup core
@@ -35,7 +35,8 @@ class MeshComponent;
  * Extiende Entity aÃ±adiendo soporte para inicializaciÃ³n con un Device
  * de DirectX y lÃ³gica de actualizaciÃ³n por frame vÃ­a DeviceContext.
  */
-class Actor : public Actor {
+class
+Actor : public Actor {
 public:
   /** @brief Constructor por defecto. */
   Actor() = default;

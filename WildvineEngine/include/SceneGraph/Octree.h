@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Octree.h
  * @brief Declara el Ã­ndice espacial usado para frustum culling.
  */
@@ -10,7 +10,8 @@
 class Camera;
 
 /** @brief Contadores producidos por una consulta de culling. */
-struct CullingStats {
+struct
+CullingStats {
   unsigned int submitted = 0;
   unsigned int visible = 0;
   unsigned int culled = 0;
@@ -21,7 +22,8 @@ struct CullingStats {
  * @class Octree
  * @brief Particiona objetos renderizables para consultar sÃ³lo zonas visibles.
  */
-class Octree {
+class
+Octree {
 public:
   /** @brief Reconstruye el Ã¡rbol con los objetos del frame actual. */
   void build(const std::vector<RenderObject> &objects);
@@ -32,7 +34,8 @@ public:
                     CullingStats &stats) const;
 
 private:
-  struct Node {
+  struct
+  Node {
     EU::Vector3 minimum;
     EU::Vector3 maximum;
     std::vector<RenderObject> objects;

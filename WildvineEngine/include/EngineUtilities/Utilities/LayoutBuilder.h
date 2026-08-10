@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file LayoutBuilder.h
  * @brief Declara utilidades de LayoutBuilder usadas por WildvineEngine.
  */
@@ -12,7 +12,8 @@
  * Permite agregar elementos de entrada (input elements) de manera encadenada,
  * soportando tanto datos por vÃ©rtice como por instancia.
  */
-class LayoutBuilder {
+class
+LayoutBuilder {
 public:
   // **Add() base** (per-vertex por defecto)
   /**

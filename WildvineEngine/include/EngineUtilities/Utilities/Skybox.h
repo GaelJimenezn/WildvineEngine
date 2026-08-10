@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Skybox.h
  * @brief Declara utilidades de Skybox usadas por WildvineEngine.
  */
@@ -26,7 +26,8 @@ class DeviceContext;
  * Maneja los recursos necesarios como shaders, buffers, estados de rasterizaciÃ³n,
  * profundidad y textura cÃºbica para representar el entorno.
  */
-class Skybox {
+class
+Skybox {
 public:
   /**
    * @brief Constructor por defecto.

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -39,7 +39,8 @@ namespace EU {
  * This class represents a 3x3 matrix and provides basic matrix operations such as
  * addition, subtraction, multiplication, determinant calculation, and inversion.
  */
-class Matrix3x3 {
+class
+Matrix3x3 {
 public:
   float m[3][3]; /**< The elements of the matrix. */
 

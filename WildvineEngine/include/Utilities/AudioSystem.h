@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file AudioSystem.h
  * @brief Declara el administrador de audio DirectXTK del motor.
  * @ingroup audio
@@ -18,7 +18,8 @@ class Camera;
  * La implementaciÃ³n vive en AudioSystem.cpp para no propagar Audio.h al resto
  * del motor. Cada fuente mantiene su configuraciÃ³n en AudioSourceComponent.
  */
-class AudioSystem {
+class
+AudioSystem {
 public:
   /** @brief Construye un sistema de audio vacÃ­o. */
   AudioSystem();

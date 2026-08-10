@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MeshRendererComponent.h
  * @brief Declara la API de MeshRendererComponent dentro del subsistema ECS.
  * @ingroup ecs
@@ -22,7 +22,8 @@ class DeviceContext;
  * el DeferredRenderer consulta este componente para obtener la malla
  * y la(s) instancia(s) de material que se deben dibujar.
  */
-class MeshRendererComponent : public Component {
+class
+MeshRendererComponent : public Component {
 public:
   /** @brief Constructor. Registra el componente como tipo MESH. */
   MeshRendererComponent()

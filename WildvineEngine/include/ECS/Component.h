@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Component.h
  * @brief Declara la API de Component dentro del sistema de entidades.
  */
@@ -20,7 +20,8 @@ class DeviceContext;
  * inicializaciÃ³n, actualizaciÃ³n, renderizado y destrucciÃ³n.
  * Cada componente posee un tipo definido por ComponentType.
  */
-class Component {
+class
+Component {
 public:
   /**
    * @brief Constructor por defecto.

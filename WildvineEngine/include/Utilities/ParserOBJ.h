@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Prerequisites.h"
 #include <string>
 #include <vector>
@@ -22,7 +22,8 @@ namespace objl {
  * @brief Estructura de 3 componentes (X, Y, Z) compatible con lo que
  * ModelLoader.cpp espera leer de objl::Vertex::Position.
  */
-struct Vector3 {
+struct
+Vector3 {
   float X; /**< Componente X */
   float Y; /**< Componente Y */
   float Z; /**< Componente Z */
@@ -33,7 +34,8 @@ struct Vector3 {
  * @brief Estructura de 2 componentes (X, Y) compatible con lo que
  * ModelLoader.cpp espera leer de objl::Vertex::TextureCoordinate.
  */
-struct Vector2 {
+struct
+Vector2 {
   float X; /**< Componente X (o U) */
   float Y; /**< Componente Y (o V) */
 };
@@ -43,7 +45,8 @@ struct Vector2 {
  * @brief Estructura de vÃ©rtice compatible con lo que ModelLoader.cpp
  * espera leer de objl::Vertex. Contiene PosiciÃ³n, Normal y Textura.
  */
-struct Vertex {
+struct
+Vertex {
   Vector3 Position;          /**< PosiciÃ³n del vÃ©rtice (X, Y, Z) */
   Vector3 Normal;            /**< Normal del vÃ©rtice (X, Y, Z) */
   Vector2 TextureCoordinate; /**< Coordenada de textura del vÃ©rtice (U, V) */
@@ -56,7 +59,8 @@ struct Vertex {
  * utiliza nuestro propio cÃ³digo de parsing (en ParserOBJ.cpp)
  * para llenar los datos que ModelLoader.cpp espera.
  */
-class Loader {
+class
+Loader {
 public:
   // --- Miembros PÃºblicos (LeÃ­dos por ModelLoader.cpp) ---
 

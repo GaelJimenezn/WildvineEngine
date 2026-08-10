@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file LightComponent.h
  * @brief Declara la API de LightComponent dentro del subsistema ECS.
  * @ingroup ecs
@@ -20,7 +20,8 @@ class DeviceContext;
  * proyecciÃ³n de sombras. El SceneGraph lee este componente para poblar
  * el RenderScene con las listas de luces por tipo.
  */
-class LightComponent : public Component {
+class
+LightComponent : public Component {
 public:
   /** @brief Constructor. Inicializa el componente sin tipo especÃ­fico (NONE). */
   LightComponent()

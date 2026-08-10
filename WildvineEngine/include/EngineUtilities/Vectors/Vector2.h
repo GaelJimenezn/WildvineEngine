@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -41,7 +41,8 @@ namespace EU {
  * basic vector operations such as addition, subtraction, scalar multiplication,
  * and normalization.
  */
-class Vector2 {
+class
+Vector2 {
 public:
   float x; /**< The x-coordinate of the vector. */
   float y; /**< The y-coordinate of the vector. */

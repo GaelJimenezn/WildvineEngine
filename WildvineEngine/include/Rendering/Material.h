@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Material.h
  * @brief Declara la API de Material dentro del subsistema de renderizado.
  */
@@ -25,7 +25,8 @@ class SamplerState;
  * - Dominio del material (opaque, transparent, etc.)
  * - Modo de blending
  */
-class Material {
+class
+Material {
 public:
   /**
    * @brief Asigna el shader del material.

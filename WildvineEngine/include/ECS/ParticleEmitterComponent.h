@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ParticleEmitterComponent.h
  * @brief Emisor CPU de partÃ­culas billboard configurable.
  * @ingroup ecs
@@ -51,7 +51,8 @@ enum class ParticlePreset : uint8_t {
  * Las direcciones y fuerzas usan coordenadas de mundo con Z como eje vertical.
  * `spread` representa una desviaciÃ³n normalizada entre cero y uno.
  */
-struct ParticleEmitterSettings {
+struct
+ParticleEmitterSettings {
   ParticleEmitterShape shape = ParticleEmitterShape::Point; ///< Forma del emisor.
   ParticleEmissionMode emissionMode =
       ParticleEmissionMode::Continuous;                      ///< Estrategia temporal.
@@ -78,7 +79,8 @@ struct ParticleEmitterSettings {
 };
 
 /** @brief Emite, simula y renderiza partÃ­culas billboard configurables. */
-class ParticleEmitterComponent : public Component {
+class
+ParticleEmitterComponent : public Component {
 public:
   /** @brief Asocia el emisor con el transform que define su origen. */
   explicit ParticleEmitterComponent(Transform *transform);
@@ -184,7 +186,8 @@ public:
 
 private:
   /** @brief Estado de simulaciÃ³n de una partÃ­cula. */
-  struct Particle {
+  struct
+  Particle {
     EU::Vector3 position;
     EU::Vector3 velocity;
     float age = 0.0f;
@@ -192,13 +195,15 @@ private:
   };
 
   /** @brief VÃ©rtice expandido enviado al shader. */
-  struct Vertex {
+  struct
+  Vertex {
     float position[3];
     float color[4];
   };
 
   /** @brief Constant buffer con la matriz ViewProjection. */
-  struct Constants {
+  struct
+  Constants {
     XMMATRIX viewProjection;
   };
 

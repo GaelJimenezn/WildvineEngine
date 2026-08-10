@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file AudioSystem.cpp
  * @brief Implementa el audio espacial mediante DirectXTK.
  */
@@ -34,7 +34,8 @@ toAudioFloat3(const EU::Vector3 &value) {
 struct
 
     AudioSystem::State {
-  struct SourceState {
+  struct
+  SourceState {
     std::unique_ptr<DirectX::SoundEffect> effect;
     std::unique_ptr<DirectX::SoundEffectInstance> instance;
     std::string loadedPath;

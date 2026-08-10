@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file RuntimeBehaviorComponent.h
  * @brief Declara un comportamiento demostrativo ejecutable solo en Play.
  * @ingroup ecs
@@ -17,7 +17,8 @@
  * Este componente no depende de scripting externo. BaseApp activa o desactiva
  * su ejecuciÃ³n al cambiar entre los modos Edit y Play.
  */
-class RuntimeBehaviorComponent : public Component {
+class
+RuntimeBehaviorComponent : public Component {
 public:
   /**
    * @brief Construye un comportamiento asociado a un Transform.

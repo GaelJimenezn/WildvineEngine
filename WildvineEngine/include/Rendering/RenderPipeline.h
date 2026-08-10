@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file RenderPipeline.h
  * @brief Declara el orquestador de renderers de escena del motor.
  * @ingroup rendering
@@ -10,9 +10,8 @@
 /**
  * @brief Tipos de renderer soportados por el pipeline.
  */
-enum
-    /** @brief Declara class RendererType. */
-    class RendererType {
+enum class
+RendererType {
       Forward = 0,
       Deferred = 1
     };

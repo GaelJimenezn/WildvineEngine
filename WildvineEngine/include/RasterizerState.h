@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file RasterizerState.h
  * @brief Declara la API pÃºblica de RasterizerState dentro de WildvineEngine.
  */
@@ -17,7 +17,8 @@ class DeviceContext;
  * Esta clase gestiona la configuraciÃ³n de cÃ³mo se rasterizan los polÃ­gonos,
  * incluyendo modo de relleno, culling y clipping de profundidad.
  */
-class RasterizerState {
+class
+RasterizerState {
 public:
   /**
    * @brief Constructor por defecto.

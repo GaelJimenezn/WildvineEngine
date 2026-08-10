@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MIT License
  *
  * Copyright (c) 2024 Roberto Charreton
@@ -39,7 +39,8 @@ namespace EU {
  * This class represents a 2x2 matrix and provides basic matrix operations such as
  * addition, subtraction, multiplication, determinant calculation, and inversion.
  */
-class Matrix2x2 {
+class
+Matrix2x2 {
 public:
   float m[2][2]; /**< The elements of the matrix. */
 
