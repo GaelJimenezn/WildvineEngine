@@ -1118,12 +1118,66 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
     }
   }
   if (!particleEmitter.isNull() && BeginInspectorSection("Particle Emitter")) {
+    ParticleEmitterSettings &settings = particleEmitter->settings();
     bool enabled = particleEmitter->isEnabled();
     if (ImGui::Checkbox("Enabled##Particles", &enabled))
       particleEmitter->setEnabled(enabled);
     ImGui::Text("Live Particles: %u", particleEmitter->getLiveParticleCount());
-    ImGui::SliderFloat(
-        "Emission Rate", &particleEmitter->emissionRate(), 0.0f, 120.0f, "%.0f / s");
+
+    static const char *presetNames[] = {"Fire", "Smoke", "Sparks", "Rain"};
+    static int selectedPreset = 0;
+    ImGui::Combo("Preset", &selectedPreset, presetNames, IM_ARRAYSIZE(presetNames));
+    if (ImGui::Button("Apply Preset")) {
+      particleEmitter->applyPreset(static_cast<ParticlePreset>(selectedPreset));
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Clear"))
+      particleEmitter->clearParticles();
+
+    static const char *shapeNames[] = {"Point", "Box", "Sphere", "Cone"};
+    int shape = static_cast<int>(settings.shape);
+    if (ImGui::Combo("Shape", &shape, shapeNames, IM_ARRAYSIZE(shapeNames)))
+      settings.shape = static_cast<ParticleEmitterShape>(shape);
+
+    static const char *emissionNames[] = {"Continuous", "Burst"};
+    int emissionMode = static_cast<int>(settings.emissionMode);
+    if (ImGui::Combo(
+            "Emission Mode", &emissionMode, emissionNames, IM_ARRAYSIZE(emissionNames))) {
+      settings.emissionMode = static_cast<ParticleEmissionMode>(emissionMode);
+    }
+    if (settings.emissionMode == ParticleEmissionMode::Continuous) {
+      ImGui::SliderFloat(
+          "Emission Rate", &settings.emissionRate, 0.0f, 500.0f, "%.0f / s");
+    } else {
+      int burstCount = static_cast<int>(settings.burstCount);
+      if (ImGui::SliderInt("Burst Count", &burstCount, 1, 1024))
+        settings.burstCount = static_cast<uint32_t>(burstCount);
+      if (ImGui::Button("Trigger Burst"))
+        particleEmitter->triggerBurst();
+    }
+
+    static const char *blendNames[] = {"Additive", "Alpha"};
+    int blendMode = static_cast<int>(settings.blendMode);
+    if (ImGui::Combo("Blend Mode", &blendMode, blendNames, IM_ARRAYSIZE(blendNames))) {
+      settings.blendMode = static_cast<ParticleBlendMode>(blendMode);
+    }
+
+    ImGui::DragFloat3("Direction", &settings.direction.x, 0.02f, -1.0f, 1.0f);
+    ImGui::DragFloat3("Gravity", &settings.gravity.x, 0.05f, -20.0f, 20.0f);
+    ImGui::SliderFloat("Min Speed", &settings.minSpeed, 0.0f, 20.0f, "%.2f");
+    ImGui::SliderFloat("Max Speed", &settings.maxSpeed, 0.0f, 20.0f, "%.2f");
+
+    if (settings.shape == ParticleEmitterShape::Box) {
+      ImGui::DragFloat3("Box Extents", &settings.boxExtents.x, 0.05f, 0.0f, 20.0f);
+    } else if (settings.shape == ParticleEmitterShape::Sphere) {
+      ImGui::SliderFloat("Sphere Radius", &settings.sphereRadius, 0.0f, 20.0f, "%.2f");
+    } else if (settings.shape == ParticleEmitterShape::Cone) {
+      ImGui::SliderFloat(
+          "Cone Angle", &settings.coneAngleDegrees, 0.0f, 85.0f, "%.1f deg");
+    } else {
+      ImGui::SliderFloat("Spread", &settings.spread, 0.0f, 1.0f, "%.2f");
+    }
+
     ImGui::SliderFloat("Lifetime", &particleEmitter->lifetime(), 0.1f, 8.0f, "%.2f s");
     ImGui::SliderFloat("Start Size", &particleEmitter->startSize(), 0.01f, 1.0f, "%.2f");
     ImGui::SliderFloat("End Size", &particleEmitter->endSize(), 0.0f, 1.0f, "%.2f");

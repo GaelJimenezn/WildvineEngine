@@ -82,7 +82,7 @@ updateWorldBounds(RenderObject &object) {
 }
 
 constexpr uint32_t kSceneBinaryMagic = 0x4E435357; // WSCN
-constexpr uint32_t kSceneBinaryVersion = 2;
+constexpr uint32_t kSceneBinaryVersion = 3;
 constexpr uint32_t kPrefabBinaryMagic = 0x46505657; // WVPF
 constexpr uint32_t kPrefabBinaryVersion = 1;
 
@@ -133,6 +133,70 @@ static bool
 readBinaryVector3(std::ifstream &stream, EU::Vector3 &value) {
   return readBinaryValue(stream, value.x) && readBinaryValue(stream, value.y) &&
          readBinaryValue(stream, value.z);
+}
+
+static bool
+writeParticleSettings(std::ofstream &stream, const ParticleEmitterSettings &settings) {
+  const uint8_t shape = static_cast<uint8_t>(settings.shape);
+  const uint8_t emissionMode = static_cast<uint8_t>(settings.emissionMode);
+  const uint8_t blendMode = static_cast<uint8_t>(settings.blendMode);
+  const uint8_t enabled = settings.enabled ? 1 : 0;
+  return writeBinaryValue(stream, shape) && writeBinaryValue(stream, emissionMode) &&
+         writeBinaryValue(stream, blendMode) &&
+         writeBinaryVector3(stream, settings.direction) &&
+         writeBinaryVector3(stream, settings.gravity) &&
+         writeBinaryVector3(stream, settings.boxExtents) &&
+         writeBinaryValue(stream, settings.sphereRadius) &&
+         writeBinaryValue(stream, settings.coneAngleDegrees) &&
+         writeBinaryValue(stream, settings.spread) &&
+         writeBinaryValue(stream, settings.minSpeed) &&
+         writeBinaryValue(stream, settings.maxSpeed) &&
+         writeBinaryValue(stream, settings.emissionRate) &&
+         writeBinaryValue(stream, settings.lifetime) &&
+         writeBinaryValue(stream, settings.startSize) &&
+         writeBinaryValue(stream, settings.endSize) &&
+         writeBinaryVector3(stream, settings.startColor) &&
+         writeBinaryVector3(stream, settings.endColor) &&
+         writeBinaryValue(stream, settings.burstCount) &&
+         writeBinaryValue(stream, enabled);
+}
+
+static bool
+readParticleSettings(std::ifstream &stream, ParticleEmitterSettings &settings) {
+  uint8_t shape = 0;
+  uint8_t emissionMode = 0;
+  uint8_t blendMode = 0;
+  uint8_t enabled = 1;
+  const bool ok =
+      readBinaryValue(stream, shape) && readBinaryValue(stream, emissionMode) &&
+      readBinaryValue(stream, blendMode) &&
+      readBinaryVector3(stream, settings.direction) &&
+      readBinaryVector3(stream, settings.gravity) &&
+      readBinaryVector3(stream, settings.boxExtents) &&
+      readBinaryValue(stream, settings.sphereRadius) &&
+      readBinaryValue(stream, settings.coneAngleDegrees) &&
+      readBinaryValue(stream, settings.spread) &&
+      readBinaryValue(stream, settings.minSpeed) &&
+      readBinaryValue(stream, settings.maxSpeed) &&
+      readBinaryValue(stream, settings.emissionRate) &&
+      readBinaryValue(stream, settings.lifetime) &&
+      readBinaryValue(stream, settings.startSize) &&
+      readBinaryValue(stream, settings.endSize) &&
+      readBinaryVector3(stream, settings.startColor) &&
+      readBinaryVector3(stream, settings.endColor) &&
+      readBinaryValue(stream, settings.burstCount) && readBinaryValue(stream, enabled);
+  if (!ok)
+    return false;
+  if (shape > static_cast<uint8_t>(ParticleEmitterShape::Cone) ||
+      emissionMode > static_cast<uint8_t>(ParticleEmissionMode::Burst) ||
+      blendMode > static_cast<uint8_t>(ParticleBlendMode::Alpha)) {
+    return false;
+  }
+  settings.shape = static_cast<ParticleEmitterShape>(shape);
+  settings.emissionMode = static_cast<ParticleEmissionMode>(emissionMode);
+  settings.blendMode = static_cast<ParticleBlendMode>(blendMode);
+  settings.enabled = enabled != 0;
+  return true;
 }
 
 static bool
@@ -3110,6 +3174,14 @@ BaseApp::saveScene(const std::string &path) {
            writeBinaryValue(stream, audioSource->getMinDistance()) &&
            writeBinaryValue(stream, audioSource->getMaxDistance());
     }
+
+    EU::TSharedPointer<ParticleEmitterComponent> particleEmitter =
+        actor->getComponent<ParticleEmitterComponent>();
+    const uint8_t hasParticleEmitter = particleEmitter ? 1 : 0;
+    ok = ok && writeBinaryValue(stream, hasParticleEmitter);
+    if (particleEmitter) {
+      ok = ok && writeParticleSettings(stream, particleEmitter->settings());
+    }
   }
 
   if (!ok) {
@@ -3130,8 +3202,8 @@ BaseApp::loadScene(const std::string &path) {
   uint32_t magic = 0;
   uint32_t binaryVersion = 0;
   if (readBinaryValue(stream, magic) && readBinaryValue(stream, binaryVersion) &&
-      magic == kSceneBinaryMagic &&
-      (binaryVersion == 1 || binaryVersion == kSceneBinaryVersion)) {
+      magic == kSceneBinaryMagic && binaryVersion >= 1 &&
+      binaryVersion <= kSceneBinaryVersion) {
     uint32_t actorCount = 0;
     if (!readBinaryValue(stream, actorCount))
       return false;
@@ -3249,6 +3321,29 @@ BaseApp::loadScene(const std::string &path) {
           audioSource->setAutoActivate(autoActivate != 0);
           audioSource->setMuted(muted != 0);
           audioSource->setAttenuation(minDistance, maxDistance);
+        }
+      }
+
+      if (binaryVersion >= 3) {
+        uint8_t hasParticleEmitter = 0;
+        if (!readBinaryValue(stream, hasParticleEmitter))
+          return false;
+        if (hasParticleEmitter) {
+          ParticleEmitterSettings settings;
+          if (!readParticleSettings(stream, settings))
+            return false;
+          EU::TSharedPointer<Transform> transform = actor->getComponent<Transform>();
+          EU::TSharedPointer<ParticleEmitterComponent> particleEmitter =
+              actor->getComponent<ParticleEmitterComponent>();
+          if (!particleEmitter) {
+            particleEmitter = EU::MakeShared<ParticleEmitterComponent>(transform.get());
+            if (FAILED(particleEmitter->init(m_device)))
+              return false;
+            actor->addComponent(particleEmitter);
+          }
+          particleEmitter->settings() = settings;
+          if (settings.emissionMode == ParticleEmissionMode::Burst)
+            particleEmitter->triggerBurst();
         }
       }
     }

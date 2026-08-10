@@ -6,6 +6,29 @@
 #include <algorithm>
 #include <cmath>
 
+namespace {
+
+constexpr float kPi = 3.14159265358979323846f;
+
+EU::Vector3
+normalizeOr(const EU::Vector3 &value, const EU::Vector3 &fallback) {
+  const float lengthSquared = value.x * value.x + value.y * value.y + value.z * value.z;
+  if (lengthSquared <= 0.000001f)
+    return fallback;
+  const float inverseLength = 1.0f / std::sqrt(lengthSquared);
+  return EU::Vector3(
+      value.x * inverseLength, value.y * inverseLength, value.z * inverseLength);
+}
+
+EU::Vector3
+cross(const EU::Vector3 &left, const EU::Vector3 &right) {
+  return EU::Vector3(left.y * right.z - left.z * right.y,
+                     left.z * right.x - left.x * right.z,
+                     left.x * right.y - left.y * right.x);
+}
+
+} // namespace
+
 ParticleEmitterComponent::ParticleEmitterComponent(Transform *transform)
     : Component(ComponentType::NONE)
     , m_transform(transform) {
@@ -114,6 +137,11 @@ ParticleEmitterComponent::init(Device &device) {
   hr = device.m_device->CreateBlendState(&blend, &m_additiveBlend);
   if (FAILED(hr))
     return hr;
+  blend.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+  blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+  hr = device.m_device->CreateBlendState(&blend, &m_alphaBlend);
+  if (FAILED(hr))
+    return hr;
   D3D11_DEPTH_STENCIL_DESC depth{};
   // Editor particles are overlays: the grid must not hide a newly created emitter.
   depth.DepthEnable = FALSE;
@@ -138,37 +166,100 @@ ParticleEmitterComponent::random01() {
 }
 
 void
+ParticleEmitterComponent::sampleEmitter(EU::Vector3 &position, EU::Vector3 &direction) {
+  const EU::Vector3 up = normalizeOr(m_settings.direction, EU::Vector3(0.0f, 0.0f, 1.0f));
+  position = EU::Vector3(0.0f, 0.0f, 0.0f);
+  direction = up;
+
+  if (m_settings.shape == ParticleEmitterShape::Box) {
+    position = EU::Vector3((random01() * 2.0f - 1.0f) * m_settings.boxExtents.x,
+                           (random01() * 2.0f - 1.0f) * m_settings.boxExtents.y,
+                           (random01() * 2.0f - 1.0f) * m_settings.boxExtents.z);
+  } else if (m_settings.shape == ParticleEmitterShape::Sphere) {
+    EU::Vector3 radial;
+    do {
+      radial = EU::Vector3(
+          random01() * 2.0f - 1.0f, random01() * 2.0f - 1.0f, random01() * 2.0f - 1.0f);
+    } while (radial.x * radial.x + radial.y * radial.y + radial.z * radial.z > 1.0f);
+    direction = normalizeOr(radial, up);
+    const float radius = (std::max)(0.0f, m_settings.sphereRadius);
+    const float distance = radius * std::cbrt(random01());
+    position = EU::Vector3(
+        direction.x * distance, direction.y * distance, direction.z * distance);
+  }
+
+  if (m_settings.shape == ParticleEmitterShape::Cone) {
+    const EU::Vector3 reference = std::fabs(up.z) < 0.99f ? EU::Vector3(0.0f, 0.0f, 1.0f)
+                                                          : EU::Vector3(0.0f, 1.0f, 0.0f);
+    const EU::Vector3 tangent =
+        normalizeOr(cross(reference, up), EU::Vector3(1.0f, 0.0f, 0.0f));
+    const EU::Vector3 bitangent = cross(up, tangent);
+    const float angle = random01() * 2.0f * kPi;
+    const float coneRadius =
+        std::tan((std::max)(0.0f, m_settings.coneAngleDegrees) * kPi / 180.0f);
+    const float offset = std::sqrt(random01()) * coneRadius;
+    direction = normalizeOr(
+        EU::Vector3(
+            up.x + offset * (std::cos(angle) * tangent.x + std::sin(angle) * bitangent.x),
+            up.y + offset * (std::cos(angle) * tangent.y + std::sin(angle) * bitangent.y),
+            up.z +
+                offset * (std::cos(angle) * tangent.z + std::sin(angle) * bitangent.z)),
+        up);
+  } else if (m_settings.shape != ParticleEmitterShape::Sphere) {
+    const float spread = (std::max)(0.0f, m_settings.spread);
+    direction = normalizeOr(EU::Vector3(up.x + (random01() * 2.0f - 1.0f) * spread,
+                                        up.y + (random01() * 2.0f - 1.0f) * spread,
+                                        up.z + (random01() * 2.0f - 1.0f) * spread),
+                            up);
+  }
+}
+
+void
 ParticleEmitterComponent::spawnParticle() {
   if (m_particles.size() >= MaxParticles)
     return;
-  Particle p{};
-  p.lifetime = (std::max)(0.1f, m_lifetime);
-  p.position = EU::Vector3((random01() - 0.5f) * 0.2f, (random01() - 0.5f) * 0.2f, 0.0f);
-  p.velocity = EU::Vector3((random01() - 0.5f) * 0.35f,
-                           (random01() - 0.5f) * 0.35f,
-                           0.65f + random01() * 0.65f);
-  m_particles.push_back(p);
+  Particle particle{};
+  particle.lifetime = (std::max)(0.1f, m_settings.lifetime);
+  EU::Vector3 direction;
+  sampleEmitter(particle.position, direction);
+  const float minimumSpeed = (std::max)(0.0f, m_settings.minSpeed);
+  const float maximumSpeed = (std::max)(minimumSpeed, m_settings.maxSpeed);
+  const float speed = minimumSpeed + random01() * (maximumSpeed - minimumSpeed);
+  particle.velocity =
+      EU::Vector3(direction.x * speed, direction.y * speed, direction.z * speed);
+  m_particles.push_back(particle);
 }
 
 void
 ParticleEmitterComponent::update(float dt) {
-  if (!m_enabled)
+  if (!m_settings.enabled)
     return;
-  m_spawnAccumulator += dt * (std::max)(0.0f, m_emissionRate);
-  while (m_spawnAccumulator >= 1.0f) {
-    spawnParticle();
-    m_spawnAccumulator -= 1.0f;
+  if (m_settings.emissionMode == ParticleEmissionMode::Continuous) {
+    m_spawnAccumulator += dt * (std::max)(0.0f, m_settings.emissionRate);
+    while (m_spawnAccumulator >= 1.0f) {
+      spawnParticle();
+      m_spawnAccumulator -= 1.0f;
+    }
+  } else if (m_burstPending) {
+    const uint32_t count = (std::min)(m_settings.burstCount, MaxParticles);
+    for (uint32_t index = 0; index < count; ++index)
+      spawnParticle();
+    m_burstPending = false;
   }
-  for (Particle &p : m_particles) {
-    p.age += dt;
-    p.velocity.z += 0.15f * dt;
-    p.position.x += p.velocity.x * dt;
-    p.position.y += p.velocity.y * dt;
-    p.position.z += p.velocity.z * dt;
+  for (Particle &particle : m_particles) {
+    particle.age += dt;
+    particle.velocity.x += m_settings.gravity.x * dt;
+    particle.velocity.y += m_settings.gravity.y * dt;
+    particle.velocity.z += m_settings.gravity.z * dt;
+    particle.position.x += particle.velocity.x * dt;
+    particle.position.y += particle.velocity.y * dt;
+    particle.position.z += particle.velocity.z * dt;
   }
   m_particles.erase(std::remove_if(m_particles.begin(),
                                    m_particles.end(),
-                                   [](const Particle &p) { return p.age >= p.lifetime; }),
+                                   [](const Particle &particle) {
+                                     return particle.age >= particle.lifetime;
+                                   }),
                     m_particles.end());
 }
 
@@ -176,7 +267,7 @@ void
 ParticleEmitterComponent::renderParticles(DeviceContext &context,
                                           const Camera &camera,
                                           EditorViewportPass &viewport) {
-  if (!m_ready || !m_enabled || m_particles.empty() || !m_transform)
+  if (!m_ready || !m_settings.enabled || m_particles.empty() || !m_transform)
     return;
   std::vector<Vertex> vertices;
   vertices.reserve(m_particles.size() * 6);
@@ -184,11 +275,16 @@ ParticleEmitterComponent::renderParticles(DeviceContext &context,
               origin = m_transform->getPosition();
   const int corners[6][2] = {{-1, -1}, {-1, 1}, {1, 1}, {-1, -1}, {1, 1}, {1, -1}};
   for (const Particle &p : m_particles) {
-    float t = (std::min)(1.0f, p.age / p.lifetime),
-          size = m_startSize + (m_endSize - m_startSize) * t;
-    float r = m_startColor.x + (m_endColor.x - m_startColor.x) * t,
-          g = m_startColor.y + (m_endColor.y - m_startColor.y) * t;
-    float b = m_startColor.z + (m_endColor.z - m_startColor.z) * t, a = 1.0f - t;
+    const float t = (std::min)(1.0f, p.age / p.lifetime);
+    const float size =
+        m_settings.startSize + (m_settings.endSize - m_settings.startSize) * t;
+    const float r =
+        m_settings.startColor.x + (m_settings.endColor.x - m_settings.startColor.x) * t;
+    const float g =
+        m_settings.startColor.y + (m_settings.endColor.y - m_settings.startColor.y) * t;
+    const float b =
+        m_settings.startColor.z + (m_settings.endColor.z - m_settings.startColor.z) * t;
+    const float a = 1.0f - t;
     for (const auto &c : corners) {
       Vertex v{};
       v.position[0] = origin.x + p.position.x + (right.x * c[0] + up.x * c[1]) * size;
@@ -223,7 +319,10 @@ ParticleEmitterComponent::renderParticles(DeviceContext &context,
   context.m_deviceContext->VSSetShader(m_vertexShader, nullptr, 0);
   context.m_deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
   context.m_deviceContext->PSSetShader(m_pixelShader, nullptr, 0);
-  context.m_deviceContext->OMSetBlendState(m_additiveBlend, blendFactor, 0xffffffff);
+  ID3D11BlendState *blendState = m_settings.blendMode == ParticleBlendMode::Additive
+                                     ? m_additiveBlend
+                                     : m_alphaBlend;
+  context.m_deviceContext->OMSetBlendState(blendState, blendFactor, 0xffffffff);
   context.m_deviceContext->RSSetState(m_rasterizer);
   context.m_deviceContext->OMSetDepthStencilState(m_depthRead, 0);
   context.m_deviceContext->Draw((UINT)vertices.size(), 0);
@@ -233,9 +332,71 @@ ParticleEmitterComponent::renderParticles(DeviceContext &context,
 }
 
 void
+ParticleEmitterComponent::applyPreset(ParticlePreset preset) {
+  ParticleEmitterSettings settings;
+  if (preset == ParticlePreset::Smoke) {
+    settings.shape = ParticleEmitterShape::Sphere;
+    settings.blendMode = ParticleBlendMode::Alpha;
+    settings.emissionRate = 18.0f;
+    settings.lifetime = 4.5f;
+    settings.minSpeed = 0.15f;
+    settings.maxSpeed = 0.35f;
+    settings.gravity = EU::Vector3(0.0f, 0.0f, 0.08f);
+    settings.startSize = 0.15f;
+    settings.endSize = 0.65f;
+    settings.startColor = EU::Vector3(0.35f, 0.35f, 0.35f);
+    settings.endColor = EU::Vector3(0.08f, 0.08f, 0.08f);
+  } else if (preset == ParticlePreset::Sparks) {
+    settings.shape = ParticleEmitterShape::Cone;
+    settings.emissionMode = ParticleEmissionMode::Burst;
+    settings.coneAngleDegrees = 50.0f;
+    settings.burstCount = 96;
+    settings.lifetime = 1.2f;
+    settings.minSpeed = 2.0f;
+    settings.maxSpeed = 4.5f;
+    settings.gravity = EU::Vector3(0.0f, 0.0f, -4.5f);
+    settings.startSize = 0.06f;
+    settings.endSize = 0.01f;
+    settings.startColor = EU::Vector3(1.0f, 0.75f, 0.15f);
+    settings.endColor = EU::Vector3(0.8f, 0.05f, 0.0f);
+  } else if (preset == ParticlePreset::Rain) {
+    settings.shape = ParticleEmitterShape::Box;
+    settings.blendMode = ParticleBlendMode::Alpha;
+    settings.boxExtents = EU::Vector3(4.0f, 4.0f, 0.1f);
+    settings.direction = EU::Vector3(0.0f, 0.0f, -1.0f);
+    settings.gravity = EU::Vector3(0.0f, 0.0f, -1.5f);
+    settings.spread = 0.03f;
+    settings.emissionRate = 120.0f;
+    settings.lifetime = 2.5f;
+    settings.minSpeed = 4.0f;
+    settings.maxSpeed = 6.0f;
+    settings.startSize = 0.035f;
+    settings.endSize = 0.02f;
+    settings.startColor = EU::Vector3(0.55f, 0.72f, 1.0f);
+    settings.endColor = EU::Vector3(0.25f, 0.42f, 0.75f);
+  }
+  m_settings = settings;
+  clearParticles();
+  if (m_settings.emissionMode == ParticleEmissionMode::Burst)
+    triggerBurst();
+}
+
+void
+ParticleEmitterComponent::triggerBurst() {
+  m_burstPending = true;
+}
+
+void
+ParticleEmitterComponent::clearParticles() {
+  m_particles.clear();
+  m_spawnAccumulator = 0.0f;
+}
+
+void
 ParticleEmitterComponent::destroy() {
   SAFE_RELEASE(m_rasterizer);
   SAFE_RELEASE(m_depthRead);
+  SAFE_RELEASE(m_alphaBlend);
   SAFE_RELEASE(m_additiveBlend);
   SAFE_RELEASE(m_inputLayout);
   SAFE_RELEASE(m_pixelShader);

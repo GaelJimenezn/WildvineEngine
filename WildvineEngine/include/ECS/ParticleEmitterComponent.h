@@ -1,6 +1,6 @@
 ﻿/**
  * @file ParticleEmitterComponent.h
- * @brief Emisor CPU de partÃ­culas billboard con render aditivo.
+ * @brief Emisor CPU de partÃ­culas billboard configurable.
  * @ingroup ecs
  *
  * Simula posiciÃ³n, velocidad, edad y vida en CPU. DespuÃ©s genera quads
@@ -15,6 +15,67 @@
 class Device;
 class Camera;
 class EditorViewportPass;
+
+/** @brief Forma espacial usada para generar nuevas partÃ­culas. */
+enum class ParticleEmitterShape : uint8_t {
+  Point,  ///< Emite desde el origen del actor.
+  Box,    ///< Distribuye nacimientos dentro de una caja.
+  Sphere, ///< Distribuye nacimientos dentro de una esfera.
+  Cone    ///< Proyecta partÃ­culas dentro de un cono orientable.
+};
+
+/** @brief Estrategia temporal usada para emitir partÃ­culas. */
+enum class ParticleEmissionMode : uint8_t {
+  Continuous, ///< Mantiene una tasa estable de partÃ­culas por segundo.
+  Burst       ///< Emite un grupo completo cuando se dispara manualmente.
+};
+
+/** @brief OperaciÃ³n usada para combinar partÃ­culas y escena. */
+enum class ParticleBlendMode : uint8_t {
+  Additive, ///< Suma luz y resulta apropiado para fuego o chispas.
+  Alpha     ///< Interpola con la escena y resulta apropiado para humo.
+};
+
+/** @brief Configuraciones preparadas para efectos comunes. */
+enum class ParticlePreset : uint8_t {
+  Fire,   ///< Llama ascendente naranja con mezcla aditiva.
+  Smoke,  ///< Volumen gris expansivo con mezcla alpha.
+  Sparks, ///< RÃ¡faga cÃ³nica afectada por gravedad descendente.
+  Rain    ///< Volumen de gotas que cae desde una caja.
+};
+
+/**
+ * @struct ParticleEmitterSettings
+ * @brief Agrupa todos los parÃ¡metros serializables del emisor.
+ *
+ * Las direcciones y fuerzas usan coordenadas de mundo con Z como eje vertical.
+ * `spread` representa una desviaciÃ³n normalizada entre cero y uno.
+ */
+struct ParticleEmitterSettings {
+  ParticleEmitterShape shape = ParticleEmitterShape::Point; ///< Forma del emisor.
+  ParticleEmissionMode emissionMode =
+      ParticleEmissionMode::Continuous;                      ///< Estrategia temporal.
+  ParticleBlendMode blendMode = ParticleBlendMode::Additive; ///< Mezcla de color.
+  EU::Vector3 direction =
+      EU::Vector3(0.0f, 0.0f, 1.0f); ///< DirecciÃ³n central normalizable.
+  EU::Vector3 gravity =
+      EU::Vector3(0.0f, 0.0f, 0.15f); ///< AceleraciÃ³n mundial por segundo.
+  EU::Vector3 boxExtents =
+      EU::Vector3(0.5f, 0.5f, 0.5f); ///< SemitamaÃ±o de la caja emisora.
+  float sphereRadius = 0.5f;         ///< Radio del volumen esfÃ©rico.
+  float coneAngleDegrees = 20.0f;    ///< Semiapertura angular del cono.
+  float spread = 0.25f;              ///< Ruido direccional normalizado.
+  float minSpeed = 0.65f;            ///< Velocidad inicial mÃ­nima.
+  float maxSpeed = 1.30f;            ///< Velocidad inicial mÃ¡xima.
+  float emissionRate = 24.0f;        ///< PartÃ­culas continuas por segundo.
+  float lifetime = 1.8f;             ///< Vida individual en segundos.
+  float startSize = 0.18f;           ///< TamaÃ±o al nacer.
+  float endSize = 0.03f;             ///< TamaÃ±o al morir.
+  EU::Vector3 startColor = EU::Vector3(1.0f, 0.35f, 0.05f); ///< Color RGB al nacer.
+  EU::Vector3 endColor = EU::Vector3(0.08f, 0.02f, 0.0f);   ///< Color RGB al morir.
+  uint32_t burstCount = 64; ///< Cantidad generada por Burst.
+  bool enabled = true;      ///< Activa simulaciÃ³n y dibujo.
+};
 
 /** @brief Emite, simula y renderiza partÃ­culas billboard configurables. */
 class ParticleEmitterComponent : public Component {
@@ -52,15 +113,38 @@ public:
   /** @brief Libera recursos GPU y partÃ­culas vivas. */
   void destroy() override;
 
+  /** @brief Aplica un preset completo y reinicia la simulaciÃ³n. */
+  void applyPreset(ParticlePreset preset);
+
+  /** @brief Solicita una nueva emisiÃ³n cuando se usa el modo Burst. */
+  void triggerBurst();
+
+  /** @brief Elimina todas las partÃ­culas vivas sin cambiar la configuraciÃ³n. */
+  void clearParticles();
+
+  /** @brief Devuelve la configuraciÃ³n editable y serializable. */
+  ParticleEmitterSettings &
+  settings() {
+    return m_settings;
+  }
+
+  /** @brief Devuelve la configuraciÃ³n serializable de solo lectura. */
+  const ParticleEmitterSettings &
+  settings() const {
+    return m_settings;
+  }
+
   /** @brief Activa o pausa la emisiÃ³n y el dibujo. */
   void
   setEnabled(bool enabled) {
-    m_enabled = enabled;
+    m_settings.enabled = enabled;
+    if (enabled && m_settings.emissionMode == ParticleEmissionMode::Burst)
+      triggerBurst();
   }
   /** @brief Indica si el emisor estÃ¡ activo. */
   bool
   isEnabled() const {
-    return m_enabled;
+    return m_settings.enabled;
   }
   /** @brief Devuelve el número actual de partículas vivas. */
   unsigned int
@@ -70,32 +154,32 @@ public:
   /** @brief Devuelve la tasa editable en partÃ­culas por segundo. */
   float &
   emissionRate() {
-    return m_emissionRate;
+    return m_settings.emissionRate;
   }
   /** @brief Devuelve la vida editable en segundos. */
   float &
   lifetime() {
-    return m_lifetime;
+    return m_settings.lifetime;
   }
   /** @brief Devuelve el tamaÃ±o inicial editable. */
   float &
   startSize() {
-    return m_startSize;
+    return m_settings.startSize;
   }
   /** @brief Devuelve el tamaÃ±o final editable. */
   float &
   endSize() {
-    return m_endSize;
+    return m_settings.endSize;
   }
   /** @brief Devuelve el color RGB inicial editable. */
   EU::Vector3 &
   startColor() {
-    return m_startColor;
+    return m_settings.startColor;
   }
   /** @brief Devuelve el color RGB final editable. */
   EU::Vector3 &
   endColor() {
-    return m_endColor;
+    return m_settings.endColor;
   }
 
 private:
@@ -120,6 +204,8 @@ private:
 
   /** @brief Inserta una partÃ­cula si existe capacidad. */
   void spawnParticle();
+  /** @brief Calcula posiciÃ³n y direcciÃ³n segÃºn la forma configurada. */
+  void sampleEmitter(EU::Vector3 &position, EU::Vector3 &direction);
   /** @brief Produce un valor pseudoaleatorio determinista en [0, 1). */
   float random01();
   /** @brief Compila y crea los shaders del pass. */
@@ -133,17 +219,13 @@ private:
   ID3D11PixelShader *m_pixelShader = nullptr;
   ID3D11InputLayout *m_inputLayout = nullptr;
   ID3D11BlendState *m_additiveBlend = nullptr;
+  ID3D11BlendState *m_alphaBlend = nullptr;
   ID3D11DepthStencilState *m_depthRead = nullptr;
   ID3D11RasterizerState *m_rasterizer = nullptr;
+  ParticleEmitterSettings m_settings;
   float m_spawnAccumulator = 0.0f;
-  float m_emissionRate = 24.0f;
-  float m_lifetime = 1.8f;
-  float m_startSize = 0.18f;
-  float m_endSize = 0.03f;
-  EU::Vector3 m_startColor = EU::Vector3(1.0f, 0.35f, 0.05f);
-  EU::Vector3 m_endColor = EU::Vector3(0.08f, 0.02f, 0.0f);
   unsigned int m_randomState = 0x13579BDFu;
-  bool m_enabled = true;
+  bool m_burstPending = false;
   bool m_ready = false;
-  static constexpr unsigned int MaxParticles = 256;
+  static constexpr unsigned int MaxParticles = 1024;
 };
