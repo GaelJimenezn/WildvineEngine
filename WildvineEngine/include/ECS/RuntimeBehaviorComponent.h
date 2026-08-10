@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file RuntimeBehaviorComponent.h
  * @brief Declara un comportamiento demostrativo ejecutable solo en Play.
  * @ingroup ecs
@@ -12,31 +12,29 @@
 
 /**
  * @class RuntimeBehaviorComponent
- * @brief Aplica movimiento oscilante y rotación a un Transform en runtime.
+ * @brief Aplica movimiento oscilante y rotaciÃ³n a un Transform en runtime.
  *
  * Este componente no depende de scripting externo. BaseApp activa o desactiva
- * su ejecución al cambiar entre los modos Edit y Play.
+ * su ejecuciÃ³n al cambiar entre los modos Edit y Play.
  */
-class
-RuntimeBehaviorComponent : public Component {
+class RuntimeBehaviorComponent : public Component {
 public:
   /**
    * @brief Construye un comportamiento asociado a un Transform.
-   * @param transform Transform que recibirá el movimiento durante Play.
+   * @param transform Transform que recibirÃ¡ el movimiento durante Play.
    */
-  explicit
-  RuntimeBehaviorComponent(Transform* transform)
-    : Component(ComponentType::BEHAVIOR),
-      m_transform(transform) {
+  explicit RuntimeBehaviorComponent(Transform *transform)
+      : Component(ComponentType::BEHAVIOR)
+      , m_transform(transform) {
   }
 
-  /** @brief No requiere inicialización adicional. */
+  /** @brief No requiere inicializaciÃ³n adicional. */
   void
   init() override {
   }
 
   /**
-   * @brief Actualiza el desplazamiento y la rotación de runtime.
+   * @brief Actualiza el desplazamiento y la rotaciÃ³n de runtime.
    * @param deltaTime Tiempo transcurrido desde el frame anterior en segundos.
    */
   void
@@ -46,8 +44,7 @@ public:
     }
 
     m_elapsedTime += deltaTime;
-    const float offset =
-      std::sin(m_elapsedTime * m_moveFrequency) * m_moveRange;
+    const float offset = std::sin(m_elapsedTime * m_moveFrequency) * m_moveRange;
     EU::Vector3 position = m_startPosition;
     position.x += offset;
 
@@ -59,7 +56,7 @@ public:
 
   /** @brief No genera render directo. */
   void
-  render(DeviceContext& deviceContext) override {
+  render(DeviceContext &deviceContext) override {
     (void)deviceContext;
   }
 
@@ -96,7 +93,7 @@ public:
   }
 
 private:
-  Transform* m_transform = nullptr;
+  Transform *m_transform = nullptr;
   EU::Vector3 m_startPosition;
   EU::Vector3 m_startRotation;
   EU::Vector3 m_startScale;

@@ -1,6 +1,6 @@
-/**
+﻿/**
  * @file Octree.h
- * @brief Declara el índice espacial usado para frustum culling.
+ * @brief Declara el Ã­ndice espacial usado para frustum culling.
  */
 #pragma once
 
@@ -19,17 +19,17 @@ struct CullingStats {
 
 /**
  * @class Octree
- * @brief Particiona objetos renderizables para consultar sólo zonas visibles.
+ * @brief Particiona objetos renderizables para consultar sÃ³lo zonas visibles.
  */
 class Octree {
 public:
-  /** @brief Reconstruye el árbol con los objetos del frame actual. */
-  void build(const std::vector<RenderObject>& objects);
+  /** @brief Reconstruye el Ã¡rbol con los objetos del frame actual. */
+  void build(const std::vector<RenderObject> &objects);
 
-  /** @brief Reúne los objetos que intersectan el frustum de la cámara. */
-  void queryVisible(const Camera& camera,
-    std::vector<RenderObject>& output,
-    CullingStats& stats) const;
+  /** @brief ReÃºne los objetos que intersectan el frustum de la cÃ¡mara. */
+  void queryVisible(const Camera &camera,
+                    std::vector<RenderObject> &output,
+                    CullingStats &stats) const;
 
 private:
   struct Node {
@@ -39,15 +39,17 @@ private:
     std::unique_ptr<Node> children[8];
   };
 
-  static bool isVisible(const EU::Vector3& minimum,
-    const EU::Vector3& maximum,
-    const XMMATRIX& viewProjection);
-  static bool fitsInside(const RenderObject& object, const Node& node);
-  static void insert(Node& node, const RenderObject& object, unsigned int depth);
-  static void queryNode(const Node& node, const XMMATRIX& viewProjection,
-    std::vector<RenderObject>& output, CullingStats& stats);
-  static unsigned int countObjects(const Node& node);
-  static void subdivide(Node& node);
+  static bool isVisible(const EU::Vector3 &minimum,
+                        const EU::Vector3 &maximum,
+                        const XMMATRIX &viewProjection);
+  static bool fitsInside(const RenderObject &object, const Node &node);
+  static void insert(Node &node, const RenderObject &object, unsigned int depth);
+  static void queryNode(const Node &node,
+                        const XMMATRIX &viewProjection,
+                        std::vector<RenderObject> &output,
+                        CullingStats &stats);
+  static unsigned int countObjects(const Node &node);
+  static void subdivide(Node &node);
 
   std::unique_ptr<Node> m_root;
 };

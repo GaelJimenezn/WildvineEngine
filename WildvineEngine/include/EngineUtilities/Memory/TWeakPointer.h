@@ -1,4 +1,4 @@
-/*
+﻿/*
  * MIT License
  *
  * Copyright (c) 2025 Roberto Charreton
@@ -25,7 +25,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
-*/
+ */
 
 /**
  * @file TWeakPointer.h
@@ -34,129 +34,129 @@
 #pragma once
 #include "TSharedPointer.h"
 
-namespace
-	EU {
-	/**
-		 * @brief Clase TWeakPointer para observar objetos gestionados por TSharedPointer sin
-		 * aumentar el recuento de referencias.
-		 *
-		 * La clase TWeakPointer proporciona una manera de observar un objeto gestionado por un
-		 * TSharedPointer
-		 * sin tener influencia sobre el recuento de referencias del objeto. Permite acceder al
-		 * objeto solo si
-		 * aún existe.
-		 */
-	template<typename T>
-	/** @brief Declara class TWeakPointer. */
-	class
-	TWeakPointer {
-	public:
-		/**
-		 * @brief Constructor por defecto.
-		 */
-		TWeakPointer() : ptr(nullptr), refCount(nullptr) {}
+namespace EU {
+/**
+ * @brief Clase TWeakPointer para observar objetos gestionados por TSharedPointer sin
+ * aumentar el recuento de referencias.
+ *
+ * La clase TWeakPointer proporciona una manera de observar un objeto gestionado por un
+ * TSharedPointer
+ * sin tener influencia sobre el recuento de referencias del objeto. Permite acceder al
+ * objeto solo si
+ * aÃºn existe.
+ */
+template <typename T>
+/** @brief Declara class TWeakPointer. */
+class TWeakPointer {
+public:
+  /**
+   * @brief Constructor por defecto.
+   */
+  TWeakPointer()
+      : ptr(nullptr)
+      , refCount(nullptr) {
+  }
 
-		/**
-		 * @brief Constructor que toma un TSharedPointer.
-		 *
-		 * @param sharedPtr TSharedPointer desde el cual se observará el objeto.
-		 */
-		TWeakPointer(const TSharedPointer<T>& sharedPtr)
-			: ptr(sharedPtr.ptr), refCount(sharedPtr.refCount) {
-		}
+  /**
+   * @brief Constructor que toma un TSharedPointer.
+   *
+   * @param sharedPtr TSharedPointer desde el cual se observarÃ¡ el objeto.
+   */
+  TWeakPointer(const TSharedPointer<T> &sharedPtr)
+      : ptr(sharedPtr.ptr)
+      , refCount(sharedPtr.refCount) {
+  }
 
-		/**
-		 * @brief Convertir TWeakPointer a TSharedPointer.
-		 *
-		 * @return Un TSharedPointer al objeto gestionado, o nullptr si el objeto ha sido
-		 * destruido.
-		 */
-		TSharedPointer<T>
-			lock() const {
-			if (refCount && *refCount > 0) {
-				return TSharedPointer<T>(ptr, refCount);
-			}
-			return TSharedPointer<T>();
-		}
+  /**
+   * @brief Convertir TWeakPointer a TSharedPointer.
+   *
+   * @return Un TSharedPointer al objeto gestionado, o nullptr si el objeto ha sido
+   * destruido.
+   */
+  TSharedPointer<T>
+  lock() const {
+    if (refCount && *refCount > 0) {
+      return TSharedPointer<T>(ptr, refCount);
+    }
+    return TSharedPointer<T>();
+  }
 
+  // Reset
+  /** @brief Declara o ejecuta reset. */
+  void
+  reset() {
+    ptr = nullptr;
+    refCount = nullptr;
+  }
 
-		// Reset
-		/** @brief Declara o ejecuta reset. */
-		void
-			reset() {
-			ptr = nullptr;
-			refCount = nullptr;
-		} 
+  // Hacer que TSharedPointer sea un amigo para acceder a los miembros privados.
+  template <typename U>
+  friend class TSharedPointer;
 
-		// Hacer que TSharedPointer sea un amigo para acceder a los miembros privados.
-		template<typename U>
-		friend class TSharedPointer;
+private:
+  T *ptr;        ///< Puntero al objeto observado.
+  int *refCount; ///< Puntero al recuento de referencias del TSharedPointer original.
+};
 
-	private:
-		T* ptr;       ///< Puntero al objeto observado.
-		int* refCount; ///< Puntero al recuento de referencias del TSharedPointer original.
-	};
-
-
-	/*
-	#include "TSharedPointer.h"
+/*
+#include "TSharedPointer.h"
 #include "TWeakPointer.h"
 
 class MyClass
 {
 public:
-		MyClass(int val) : value(val) {}
-		void display() const { std::cout << "Value: " << value << std::endl; }
+  MyClass(int val) : value(val) {}
+  void display() const { std::cout << "Value: " << value << std::endl; }
 
 private:
-		int value;
+  int value;
 };
 
 int main()
 {
-		{
-				// Crear un TSharedPointer que gestiona un objeto MyClass
-				EU::TSharedPointer<MyClass> sp1 = EU::MakeShared<MyClass>(10);
-				sp1->display();
+  {
+      // Crear un TSharedPointer que gestiona un objeto MyClass
+      EU::TSharedPointer<MyClass> sp1 = EU::MakeShared<MyClass>(10);
+      sp1->display();
 
-				// Crear un TWeakPointer a partir del TSharedPointer
-				EU::TWeakPointer<MyClass> wp1(sp1);
+      // Crear un TWeakPointer a partir del TSharedPointer
+      EU::TWeakPointer<MyClass> wp1(sp1);
 
-				// Intentar obtener un TSharedPointer a partir del TWeakPointer
-				EU::TSharedPointer<MyClass> sp2 = wp1.lock();
-				if (!sp2.isNull())
-				{
-						sp2->display(); // Debería mostrar el valor 10
-				}
-				else
-				{
-						std::cout << "wp1 expired." << std::endl;
-				}
+      // Intentar obtener un TSharedPointer a partir del TWeakPointer
+      EU::TSharedPointer<MyClass> sp2 = wp1.lock();
+      if (!sp2.isNull())
+      {
+          sp2->display(); // DeberÃ­a mostrar el valor 10
+      }
+      else
+      {
+          std::cout << "wp1 expired." << std::endl;
+      }
 
-				// Crear un nuevo TSharedPointer y mover el puntero compartido
-				EU::TSharedPointer<MyClass> sp3 = EU::MakeShared<MyClass>(20);
-				sp3 = std::move(sp1); // Mueve la propiedad de sp1 a sp3
+      // Crear un nuevo TSharedPointer y mover el puntero compartido
+      EU::TSharedPointer<MyClass> sp3 = EU::MakeShared<MyClass>(20);
+      sp3 = std::move(sp1); // Mueve la propiedad de sp1 a sp3
 
-				// El puntero compartido original (sp1) ahora está vacío
-				EU::TSharedPointer<MyClass> sp4 = wp1.lock();
-				if (sp4.isNull())
-				{
-						std::cout << "sp1 has been moved and is now null." << std::endl;
-				}
+      // El puntero compartido original (sp1) ahora estÃ¡ vacÃ­o
+      EU::TSharedPointer<MyClass> sp4 = wp1.lock();
+      if (sp4.isNull())
+      {
+          std::cout << "sp1 has been moved and is now null." << std::endl;
+      }
 
-				// Intentar obtener un TSharedPointer después del movimiento
-				if (sp3.isNull())
-				{
-						std::cout << "sp3 is null." << std::endl;
-				}
-				else
-				{
-						sp3->display(); // Debería mostrar el valor 20
-				}
-		} // Aquí, tanto sp2 como sp4 se destruyen y la memoria de
-		  // MyClass se libera automáticamente
+      // Intentar obtener un TSharedPointer despuÃ©s del movimiento
+      if (sp3.isNull())
+      {
+          std::cout << "sp3 is null." << std::endl;
+      }
+      else
+      {
+          sp3->display(); // DeberÃ­a mostrar el valor 20
+      }
+  } // AquÃ­, tanto sp2 como sp4 se destruyen y la memoria de
+    // MyClass se libera automÃ¡ticamente
 
-		return 0;
+  return 0;
 }
-	*/
-}
+*/
+} // namespace EU

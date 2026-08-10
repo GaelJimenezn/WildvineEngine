@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file GUI.h
  * @brief Declara la API de GUI dentro del subsistema GUI.
  * @ingroup gui
@@ -15,29 +15,22 @@
 #include "Logger.h"
 
 /** @brief Declara class Viewport. */
-class
-Viewport;
+class Viewport;
 /** @brief Declara class Window. */
-class
-Window;
+class Window;
 /** @brief Declara class Device. */
-class
-Device;
+class Device;
 /** @brief Declara class DeviceContext. */
-class
-DeviceContext;
+class DeviceContext;
 /** @brief Declara class Actor. */
-class
-Actor;
+class Actor;
 /** @brief Declara class Camera. */
-class
-Camera;
+class Camera;
 
 /** @brief Declara struct AssetThumb. */
-struct
-AssetThumb {
+struct AssetThumb {
   std::string name;
-  ID3D11ShaderResourceView* srv = nullptr;
+  ID3D11ShaderResourceView *srv = nullptr;
 };
 
 /**
@@ -47,180 +40,161 @@ AssetThumb {
  * La clase expone paneles de viewport, depuracion de render, outliner e inspector.
  * Tambien recopila interacciones del usuario que despues consume `BaseApp`.
  */
-class 
-GUI {
+class GUI {
 public:
-	GUI()  = default;
-	~GUI() = default;
+  GUI() = default;
+  ~GUI() = default;
 
   /**
    * @brief Inicializa estado interno previo a la integracion con ImGui.
    */
-  void 
-  awake();
+  void awake();
 
   /**
    * @brief Configura los backends de ImGui para Win32 y Direct3D 11.
    */
-	void 
-  init(Window& window, Device& device, DeviceContext& deviceContext);
+  void init(Window &window, Device &device, DeviceContext &deviceContext);
 
   /**
    * @brief Actualiza el frame de ImGui y el estado de la ventana del editor.
    */
-  void 
-  update(Viewport& viewport, Window& window);
-  
+  void update(Viewport &viewport, Window &window);
+
   /**
    * @brief Renderiza todos los paneles activos del editor.
    */
-  void 
-  render();
-  
+  void render();
+
   /** @brief Declara o ejecuta destroy. */
-  void 
-  destroy();
+  void destroy();
 
   /** @brief Declara o ejecuta ToolBar. */
-  void 
-  ToolBar();
+  void ToolBar();
 
-  
   /** @brief Declara o ejecuta closeApp. */
-  void 
-  closeApp();
+  void closeApp();
 
   /** @brief Declara o ejecuta toolTipData. */
-  void
-  toolTipData();
+  void toolTipData();
 
   /** @brief Declara o ejecuta appleLiquidStyle. */
-  void
-  appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
+  void appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
 
   /** @brief Declara o ejecuta vec3Control. */
-  void
-  vec3Control(const std::string& label,
-              float* values,
-              float resetValues = 0.0f,
-              float columnWidth = 100.0f,
-              bool displayAsDegrees = false);
+  void vec3Control(const std::string &label,
+                   float *values,
+                   float resetValues = 0.0f,
+                   float columnWidth = 100.0f,
+                   bool displayAsDegrees = false);
 
   /** @brief Declara o ejecuta inspectorGeneral. */
-  void
-  inspectorGeneral(EU::TSharedPointer<Actor> actor);
+  void inspectorGeneral(EU::TSharedPointer<Actor> actor);
 
   /** @brief Declara o ejecuta inspectorContainer. */
-  void
-  inspectorContainer(EU::TSharedPointer<Actor> actor);
+  void inspectorContainer(EU::TSharedPointer<Actor> actor);
 
   /** @brief Declara o ejecuta outliner. */
-  void
-  outliner(const std::vector<EU::TSharedPointer<Actor>>& actors);
+  void outliner(const std::vector<EU::TSharedPointer<Actor>> &actors);
 
   /** @brief Declara o ejecuta editTransform. */
-  void 
-  editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor);
+  void editTransform(Camera &cam, Window &window, EU::TSharedPointer<Actor> actor);
 
   /** @brief Declara o ejecuta drawGizmoToolbar. */
-  void 
-  drawGizmoToolbar();
+  void drawGizmoToolbar();
 
   /** @brief Declara o ejecuta ToFloatArray. */
   void
-  ToFloatArray(const XMMATRIX& mat, float* dest) {
+  ToFloatArray(const XMMATRIX &mat, float *dest) {
     XMFLOAT4X4 temp;
     XMStoreFloat4x4(&temp, mat);
     memcpy(dest, &temp, sizeof(float) * 16);
   }
 
   /** @brief Declara o ejecuta drawStudioTopRibbon. */
-  void
-  drawStudioTopRibbon();
+  void drawStudioTopRibbon();
 
   /** @brief Declara o ejecuta drawViewportPanel. */
-  void
-  drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
+  void drawViewportPanel(ID3D11ShaderResourceView *viewportSRV);
 
   /** @brief Declara o ejecuta drawRenderDebugPanel. */
-  void
-  drawRenderDebugPanel(ID3D11ShaderResourceView* preShadowSRV,
-                            ID3D11ShaderResourceView* finalViewportSRV,
-                            ID3D11ShaderResourceView* shadowMapSRV);
+  void drawRenderDebugPanel(ID3D11ShaderResourceView *preShadowSRV,
+                            ID3D11ShaderResourceView *finalViewportSRV,
+                            ID3D11ShaderResourceView *shadowMapSRV);
 
   /** @brief Declara o ejecuta drawGBufferDebugPanel. */
-  void
-  drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
-                             ID3D11ShaderResourceView* normalRoughnessSRV,
-                             ID3D11ShaderResourceView* worldAoSRV,
-                             ID3D11ShaderResourceView* emissiveAlphaSRV);
+  void drawGBufferDebugPanel(ID3D11ShaderResourceView *albedoMetallicSRV,
+                             ID3D11ShaderResourceView *normalRoughnessSRV,
+                             ID3D11ShaderResourceView *worldAoSRV,
+                             ID3D11ShaderResourceView *emissiveAlphaSRV);
 
   /** @brief Declara o ejecuta drawMaterialSRVDebugPanel. */
-  void
-  drawMaterialSRVDebugPanel(ID3D11ShaderResourceView* albedoSRV,
-                                 ID3D11ShaderResourceView* normalSRV,
-                                 ID3D11ShaderResourceView* metallicSRV,
-                                 ID3D11ShaderResourceView* roughnessSRV,
-                                 ID3D11ShaderResourceView* aoSRV);
+  void drawMaterialSRVDebugPanel(ID3D11ShaderResourceView *albedoSRV,
+                                 ID3D11ShaderResourceView *normalSRV,
+                                 ID3D11ShaderResourceView *metallicSRV,
+                                 ID3D11ShaderResourceView *roughnessSRV,
+                                 ID3D11ShaderResourceView *aoSRV);
 
   /** @brief Declara o ejecuta drawLightingPanel. */
-  void
-  drawLightingPanel(float* lightDir, float* lightColor);
+  void drawLightingPanel(float *lightDir, float *lightColor);
   /** @brief Dibuja los controles globales del sistema de audio. */
-  void
-  drawAudioPanel();
+  void drawAudioPanel();
   /** @brief Declara o ejecuta drawStatsPanel. */
-  void
-  drawStatsPanel(float deltaTime, unsigned int drawCalls,
-    unsigned int submittedObjects, unsigned int visibleObjects,
-    unsigned int culledObjects, unsigned int octreeNodes);
+  void drawStatsPanel(float deltaTime,
+                      unsigned int drawCalls,
+                      unsigned int submittedObjects,
+                      unsigned int visibleObjects,
+                      unsigned int culledObjects,
+                      unsigned int octreeNodes);
   /** @brief Declara o ejecuta drawConsolePanel. */
-  void
-  drawConsolePanel();
+  void drawConsolePanel();
   /** @brief Declara o ejecuta drawTexturePreview. */
-  void
-  drawTexturePreview();
+  void drawTexturePreview();
   /** @brief Declara o ejecuta drawContentBrowser. */
-  void
-  drawContentBrowser(const std::vector<AssetThumb>& textureThumbs);
+  void drawContentBrowser(const std::vector<AssetThumb> &textureThumbs);
   /** @brief Declara o ejecuta drawSelectionOutline. */
-  void
-  drawSelectionOutline(
-    Camera& cam,
-    const EU::Vector3& localMin,
-    const EU::Vector3& localMax,
-    const XMMATRIX& world
-  );
+  void drawSelectionOutline(Camera &cam,
+                            const EU::Vector3 &localMin,
+                            const EU::Vector3 &localMax,
+                            const XMMATRIX &world);
   /** @brief Declara o ejecuta drawViewportGrid. */
-  void
-  drawViewportGrid(Camera& cam);
+  void drawViewportGrid(Camera &cam);
 
   /** @brief Declara o ejecuta drawToolboxPanel. */
-  void
-  drawToolboxPanel();
+  void drawToolboxPanel();
 
   /** @brief Declara o ejecuta drawEditorDockspace. */
-  void
-  drawEditorDockspace();
+  void drawEditorDockspace();
 
   /** @brief Declara o ejecuta shouldShowOutliner. */
   bool
-  shouldShowOutliner() const { return m_showOutliner; }
+  shouldShowOutliner() const {
+    return m_showOutliner;
+  }
   /** @brief Declara o ejecuta shouldShowInspector. */
   bool
-  shouldShowInspector() const { return m_showInspector; }
+  shouldShowInspector() const {
+    return m_showInspector;
+  }
   /** @brief Declara o ejecuta shouldShowToolbox. */
   bool
-  shouldShowToolbox() const { return m_showToolbox; }
+  shouldShowToolbox() const {
+    return m_showToolbox;
+  }
   /** @brief Declara o ejecuta shouldShowRenderDebug. */
   bool
-  shouldShowRenderDebug() const { return m_showRenderDebug; }
+  shouldShowRenderDebug() const {
+    return m_showRenderDebug;
+  }
   /** @brief Declara o ejecuta shouldShowGBufferDebug. */
   bool
-  shouldShowGBufferDebug() const { return m_showGBufferDebug; }
-  /** @brief Indica si el panel de controles de audio está visible. */
+  shouldShowGBufferDebug() const {
+    return m_showGBufferDebug;
+  }
+  /** @brief Indica si el panel de controles de audio estÃ¡ visible. */
   bool
-  shouldShowAudioPanel() const { return m_showAudioPanel; }
+  shouldShowAudioPanel() const {
+    return m_showAudioPanel;
+  }
 
   /**
    * @brief Consume de forma atomica la solicitud de guardado emitida desde la UI.
@@ -233,7 +207,7 @@ public:
     return requested;
   }
 
-  /** @brief Consume la solicitud de crear un nivel vacío. */
+  /** @brief Consume la solicitud de crear un nivel vacÃ­o. */
   bool
   consumeNewSceneRequest() {
     const bool requested = m_requestNewScene;
@@ -243,8 +217,9 @@ public:
 
   /** @brief Consume la ruta de nivel elegida mediante Open Level. */
   bool
-  consumeOpenSceneRequest(std::string& outPath) {
-    if (!m_requestOpenScene) return false;
+  consumeOpenSceneRequest(std::string &outPath) {
+    if (!m_requestOpenScene)
+      return false;
     outPath = m_openScenePath;
     m_openScenePath.clear();
     m_requestOpenScene = false;
@@ -253,7 +228,7 @@ public:
 
   /**
    * @brief Consume la solicitud de entrada al modo Play.
-   * @return true una sola vez después de pulsar el botón Play.
+   * @return true una sola vez despuÃ©s de pulsar el botÃ³n Play.
    */
   bool
   consumePlayRequest() {
@@ -264,7 +239,7 @@ public:
 
   /**
    * @brief Consume la solicitud de detener el modo Play.
-   * @return true una sola vez después de pulsar el botón Stop.
+   * @return true una sola vez despuÃ©s de pulsar el botÃ³n Stop.
    */
   bool
   consumeStopRequest() {
@@ -283,12 +258,12 @@ public:
   }
 
   /**
-   * @brief Consume el último cambio de volumen maestro solicitado.
+   * @brief Consume el Ãºltimo cambio de volumen maestro solicitado.
    * @param outVolume Recibe el nuevo volumen lineal entre 0.0 y 1.0.
-   * @return true si el usuario cambió el control desde el último frame.
+   * @return true si el usuario cambiÃ³ el control desde el Ãºltimo frame.
    */
   bool
-  consumeAudioMasterVolumeChange(float& outVolume) {
+  consumeAudioMasterVolumeChange(float &outVolume) {
     if (!m_audioMasterVolumeChanged) {
       return false;
     }
@@ -316,7 +291,7 @@ public:
 
   /**
    * @brief Actualiza el estado visual de pausa del panel de audio.
-   * @param paused true cuando AudioSystem está suspendido.
+   * @param paused true cuando AudioSystem estÃ¡ suspendido.
    */
   void
   setAudioPaused(bool paused) {
@@ -325,7 +300,7 @@ public:
 
   /** @brief Declara o ejecuta consumeCreateLightRequest. */
   bool
-  consumeCreateLightRequest(LightType& outType) {
+  consumeCreateLightRequest(LightType &outType) {
     if (!m_requestCreateLight) {
       return false;
     }
@@ -333,29 +308,54 @@ public:
     m_requestCreateLight = false;
     return true;
   }
+  bool
+  consumeCreateParticleEmitterRequest() {
+    const bool requested = m_requestCreateParticleEmitter;
+    m_requestCreateParticleEmitter = false;
+    return requested;
+  }
 
   /** @brief Declara o ejecuta consumeResetRequest. */
   bool
-  consumeResetRequest() { bool r = m_resetRequested; m_resetRequested = false; return r; }
+  consumeResetRequest() {
+    bool r = m_resetRequested;
+    m_resetRequested = false;
+    return r;
+  }
   /** @brief Declara o ejecuta consumeFocusRequest. */
   bool
-  consumeFocusRequest() { bool r = m_focusRequested; m_focusRequested = false; return r; }
+  consumeFocusRequest() {
+    bool r = m_focusRequested;
+    m_focusRequested = false;
+    return r;
+  }
   /** @brief Declara o ejecuta consumeFitRequest. */
   bool
-  consumeFitRequest()   { bool r = m_fitRequested;   m_fitRequested = false; return r; }
+  consumeFitRequest() {
+    bool r = m_fitRequested;
+    m_fitRequested = false;
+    return r;
+  }
   /** @brief Declara o ejecuta consumeUndoRequest. */
   bool
-  consumeUndoRequest()  { bool r = m_undoRequested;  m_undoRequested = false; return r; }
+  consumeUndoRequest() {
+    bool r = m_undoRequested;
+    m_undoRequested = false;
+    return r;
+  }
   /** @brief Declara o ejecuta consumeRedoRequest. */
   bool
-  consumeRedoRequest()  { bool r = m_redoRequested;  m_redoRequested = false; return r; }
+  consumeRedoRequest() {
+    bool r = m_redoRequested;
+    m_redoRequested = false;
+    return r;
+  }
 
 private:
-
   bool checkboxValue = true;
   bool checkboxValue2 = false;
-  std::vector<const char*> m_objectsNames;
-  std::vector<const char*> m_tooltips;
+  std::vector<const char *> m_objectsNames;
+  std::vector<const char *> m_tooltips;
 
   bool show_exit_popup = false; // Variable de estado para el popup
   bool m_requestSaveScene = false;
@@ -366,6 +366,7 @@ private:
   bool m_requestStop = false;
   bool m_isRuntimePlaying = false;
   bool m_requestCreateLight = false;
+  bool m_requestCreateParticleEmitter = false;
   LightType m_requestedLightType = LightType::Directional;
   bool m_showOutliner = true;
   bool m_showInspector = true;
@@ -379,24 +380,24 @@ private:
   bool m_audioPaused = false;
   bool m_audioPauseRequested = false;
   bool m_audioResumeRequested = false;
-  ImDrawList* m_viewportDrawList = nullptr;
+  ImDrawList *m_viewportDrawList = nullptr;
   bool m_viewportActive = false;
 
 public:
-  /** @brief Indica si el gizmo esta capturando entrada del usuario.. */
+  /** @brief Indica si el gizmo esta capturando entrada del usuario. */
   bool m_isUsingGizmo = false;
-  /** @brief Muestra el factor de sombra diferido en escala de grises.. */
+  /** @brief Muestra el factor de sombra diferido en escala de grises. */
   bool m_visualizeDeferredShadowFactor = false;
   /** @brief Modo de debug deferred (0=Final, 1=Shadow, etc.). */
-  int  m_deferredDebugViewMode = 0;
-  /** @brief Indice del actor seleccionado en el outliner.. */
+  int m_deferredDebugViewMode = 0;
+  /** @brief Indice del actor seleccionado en el outliner. */
   int selectedActorIndex = -1;
-  /** @brief Posicion del panel de viewport en pantalla.. */
+  /** @brief Posicion del panel de viewport en pantalla. */
   ImVec2 m_viewportPos = ImVec2(0.0f, 0.0f);
-  ImVec2 m_viewportSize = ImVec2(0.0f, 0.0f);///< Tamano actual del viewport del editor.
-  /** @brief Indica si el cursor esta sobre el viewport.. */
+  ImVec2 m_viewportSize = ImVec2(0.0f, 0.0f); ///< Tamano actual del viewport del editor.
+  /** @brief Indica si el cursor esta sobre el viewport. */
   bool m_viewportHovered = false;
-  /** @brief Indica si el viewport tiene foco de entrada.. */
+  /** @brief Indica si el viewport tiene foco de entrada. */
   bool m_viewportFocused = false;
 
   // Logger / Console
@@ -430,23 +431,23 @@ public:
   bool m_assetDeleteRequested = false;
   std::string m_audioSpawnPath;
   bool m_audioSpawnRequested = false;
-  
+
   // Texture drop
   std::string m_textureDropPath;
   bool m_textureDropRequested = false;
-  
+
   // Import request
   bool m_importContentRequested = false;
 
   // Texture preview
-  ID3D11ShaderResourceView* m_previewSRV = nullptr;
+  ID3D11ShaderResourceView *m_previewSRV = nullptr;
   std::string m_previewLabel;
   bool m_showPreview = false;
 
   // Grid / Snap
-  bool  m_showGrid = true;
+  bool m_showGrid = true;
   float m_gridSize = 100.0f;
-  bool  m_snapEnabled = false;
+  bool m_snapEnabled = false;
   float m_snapTranslate = 0.5f;
   float m_snapRotate = 15.0f;
   float m_snapScale = 0.1f;

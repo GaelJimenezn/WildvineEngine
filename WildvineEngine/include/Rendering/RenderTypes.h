@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file RenderTypes.h
  * @brief Declara la API de RenderTypes dentro del subsistema de renderizado.
  */
@@ -6,133 +6,123 @@
 #include "Prerequisites.h"
 
 /** @brief Declara class Mesh. */
-class
-Mesh;
+class Mesh;
 /** @brief Declara class MaterialInstance. */
-class
-MaterialInstance;
+class MaterialInstance;
 
 /**
- * @enum MaterialDomain
  * @brief Define el comportamiento de renderizado de un material.
  */
 enum
-/** @brief Declara class MaterialDomain. */
-class
-MaterialDomain {
-  /**
-   * @brief Material completamente opaco.
-   */
-  Opaque = 0,
+    /** @brief Declara class MaterialDomain. */
+    class MaterialDomain {
+      /**
+       * @brief Material completamente opaco.
+       */
+      Opaque = 0,
 
-  /**
-   * @brief Material con descarte de píxeles mediante alpha cutoff.
-   */
-  Masked,
+      /**
+       * @brief Material con descarte de pÃ­xeles mediante alpha cutoff.
+       */
+      Masked,
 
-  /**
-   * @brief Material con transparencia.
-   */
-  Transparent
-};
+      /**
+       * @brief Material con transparencia.
+       */
+      Transparent
+    };
 
 /**
- * @enum BlendMode
  * @brief Modos de mezcla utilizados durante el renderizado.
  */
 enum
-/** @brief Declara class BlendMode. */
-class
-BlendMode {
+    /** @brief Declara class BlendMode. */
+    class BlendMode {
 
-  /**
-   * @brief Sin mezcla. El píxel sobrescribe el contenido existente.
-   */
-  Opaque = 0,
+      /**
+       * @brief Sin mezcla. El pÃ­xel sobrescribe el contenido existente.
+       */
+      Opaque = 0,
 
-  /**
-   * @brief Mezcla alfa tradicional.
-   */
-  Alpha,
+      /**
+       * @brief Mezcla alfa tradicional.
+       */
+      Alpha,
 
-  /**
-   * @brief Mezcla aditiva utilizada en efectos de energía, fuego o partículas.
-   */
-  Additive,
+      /**
+       * @brief Mezcla aditiva utilizada en efectos de energÃ­a, fuego o partÃ­culas.
+       */
+      Additive,
 
-  /**
-   * @brief Mezcla con alpha premultiplicado.
-   */
-  PremultipliedAlpha
-};
+      /**
+       * @brief Mezcla con alpha premultiplicado.
+       */
+      PremultipliedAlpha
+    };
 
 /**
- * @enum RenderPassType
  * @brief Tipos de pases de renderizado soportados por el pipeline.
  */
 enum
-/** @brief Declara class RenderPassType. */
-class
-RenderPassType {
+    /** @brief Declara class RenderPassType. */
+    class RenderPassType {
 
-  /**
-   * @brief Pase de generación de sombras.
-   */
-  Shadow = 0,
+      /**
+       * @brief Pase de generaciÃ³n de sombras.
+       */
+      Shadow = 0,
 
-  /**
-   * @brief Pase principal para geometría opaca.
-   */
-  Opaque,
+      /**
+       * @brief Pase principal para geometrÃ­a opaca.
+       */
+      Opaque,
 
-  /**
-   * @brief Pase de renderizado del skybox.
-   */
-  Skybox,
+      /**
+       * @brief Pase de renderizado del skybox.
+       */
+      Skybox,
 
-  /**
-   * @brief Pase para geometría transparente.
-   */
-  Transparent,
+      /**
+       * @brief Pase para geometrÃ­a transparente.
+       */
+      Transparent,
 
-  /**
-   * @brief Pase utilizado por herramientas del editor.
-   */
-  Editor
-};
+      /**
+       * @brief Pase utilizado por herramientas del editor.
+       */
+      Editor
+    };
 
 /**
- * @enum LightType
  * @brief Tipos de luces soportadas por el motor.
  */
 enum
-/** @brief Declara class LightType. */
-class
-LightType {
+    /** @brief Declara class LightType. */
+    class LightType {
 
-  /**
-   * @brief Luz direccional infinita.
-   */
-  Directional = 0,
+      /**
+       * @brief Luz direccional infinita.
+       */
+      Directional = 0,
 
-  /**
-   * @brief Luz puntual con posición y rango.
-   */
-  Point,
+      /**
+       * @brief Luz puntual con posiciÃ³n y rango.
+       */
+      Point,
 
-  /**
-   * @brief Luz tipo spotlight con cono de influencia.
-   */
-  Spot,
+      /**
+       * @brief Luz tipo spotlight con cono de influencia.
+       */
+      Spot,
 
-  /**
-   * @brief Luz rectangular o de área.
-   */
-  Rect
-};
+      /**
+       * @brief Luz rectangular o de Ã¡rea.
+       */
+      Rect
+    };
 
 /**
- * @brief Número máximo de luces soportadas por escena.
+ * @brief NÃºmero mÃ¡ximo de luces soportadas por escena.
  */
 constexpr int kMaxSceneLights = 8;
 
@@ -140,8 +130,7 @@ constexpr int kMaxSceneLights = 8;
  * @struct LightData
  * @brief Describe una fuente de luz utilizada por el sistema de renderizado.
  */
-struct
-LightData {
+struct LightData {
 
   /**
    * @brief Tipo de luz.
@@ -154,27 +143,27 @@ LightData {
   EU::Vector3 color = EU::Vector3(1.0f, 1.0f, 1.0f);
 
   /**
-   * @brief Intensidad de emisión.
+   * @brief Intensidad de emisiÃ³n.
    */
   float intensity = 1.0f;
 
   /**
-   * @brief Dirección utilizada por luces direccionales y spot.
+   * @brief DirecciÃ³n utilizada por luces direccionales y spot.
    */
   EU::Vector3 direction = EU::Vector3(0.0f, 0.0f, -1.0f);
 
   /**
-   * @brief Distancia máxima de influencia.
+   * @brief Distancia mÃ¡xima de influencia.
    */
   float range = 0.0f;
 
   /**
-   * @brief Posición de la luz.
+   * @brief PosiciÃ³n de la luz.
    */
   EU::Vector3 position = EU::Vector3(0.0f, 0.0f, 0.0f);
 
   /**
-   * @brief Ángulo del cono para luces Spot.
+   * @brief Ãngulo del cono para luces Spot.
    */
   float spotAngle = 0.0f;
 
@@ -191,10 +180,9 @@ LightData {
 
 /**
  * @struct MaterialParams
- * @brief Parámetros físicos utilizados por materiales PBR.
+ * @brief ParÃ¡metros fÃ­sicos utilizados por materiales PBR.
  */
-struct
-MaterialParams {
+struct MaterialParams {
 
   /**
    * @brief Color base del material.
@@ -222,7 +210,7 @@ MaterialParams {
   float normalScale = 1.0f;
 
   /**
-   * @brief Intensidad de emisión.
+   * @brief Intensidad de emisiÃ³n.
    */
   float emissiveStrength = 1.0f;
 
@@ -236,19 +224,18 @@ MaterialParams {
  * @struct CBPerFrame
  * @brief Constant Buffer actualizado una vez por frame.
  *
- * Contiene información global utilizada por shaders de vértices
- * y píxeles durante el renderizado.
+ * Contiene informaciÃ³n global utilizada por shaders de vÃ©rtices
+ * y pÃ­xeles durante el renderizado.
  */
-struct
-CBPerFrame {
+struct CBPerFrame {
 
   /**
-   * @brief Matriz de vista de la cámara.
+   * @brief Matriz de vista de la cÃ¡mara.
    */
   XMFLOAT4X4 View{};
 
   /**
-   * @brief Matriz de proyección.
+   * @brief Matriz de proyecciÃ³n.
    */
   XMFLOAT4X4 Projection{};
 
@@ -258,14 +245,14 @@ CBPerFrame {
   XMFLOAT4X4 LightViewProjection{};
 
   /**
-   * @brief Posición de la cámara en espacio mundial.
+   * @brief PosiciÃ³n de la cÃ¡mara en espacio mundial.
    */
   EU::Vector3 CameraPos{};
 
   float pad0 = 0.0f;
 
   /**
-   * @brief Dirección de la luz principal.
+   * @brief DirecciÃ³n de la luz principal.
    */
   EU::Vector3 LightDir = EU::Vector3(0.0f, 0.0f, -1.0f);
 
@@ -282,7 +269,7 @@ CBPerFrame {
   float LightRange = 10.0f;
 
   /**
-   * @brief Posición de la luz principal.
+   * @brief PosiciÃ³n de la luz principal.
    */
   EU::Vector3 LightPosition = EU::Vector3(0.0f, 0.0f, 3.0f);
 
@@ -318,21 +305,19 @@ CBPerFrame {
  * @struct CBPerObject
  * @brief Constant Buffer actualizado por objeto renderizado.
  */
-struct
-CBPerObject {
+struct CBPerObject {
 
   /**
-   * @brief Transformación World del objeto.
+   * @brief TransformaciÃ³n World del objeto.
    */
   XMFLOAT4X4 World{};
 };
 
 /**
  * @struct CBPerMaterial
- * @brief Constant Buffer con parámetros de material.
+ * @brief Constant Buffer con parÃ¡metros de material.
  */
-struct
-CBPerMaterial {
+struct CBPerMaterial {
 
   XMFLOAT4 BaseColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -344,7 +329,7 @@ CBPerMaterial {
   float AlphaCutoff = 0.0f;
 
   /**
-   * @brief Variables de padding para alineación de memoria GPU.
+   * @brief Variables de padding para alineaciÃ³n de memoria GPU.
    */
   float pad0 = 0.0f;
   float pad1 = 0.0f;
@@ -358,29 +343,28 @@ CBPerMaterial {
  * @struct RenderObject
  * @brief Representa un objeto preparado para ser renderizado.
  *
- * Contiene referencias a la geometría, materiales y datos
+ * Contiene referencias a la geometrÃ­a, materiales y datos
  * auxiliares utilizados por el pipeline de renderizado.
  */
-struct
-RenderObject {
+struct RenderObject {
 
   /**
    * @brief Malla asociada al objeto.
    */
-  Mesh* mesh = nullptr;
+  Mesh *mesh = nullptr;
 
   /**
    * @brief Material principal.
    */
-  MaterialInstance* materialInstance = nullptr;
+  MaterialInstance *materialInstance = nullptr;
 
   /**
    * @brief Lista de materiales utilizados por la malla.
    */
-  std::vector<MaterialInstance*> materialInstances;
+  std::vector<MaterialInstance *> materialInstances;
 
   /**
-   * @brief Transformación mundial del objeto.
+   * @brief TransformaciÃ³n mundial del objeto.
    */
   XMMATRIX world = XMMatrixIdentity();
   /** @brief Topologia usada al enviar la geometria al input assembler. */
@@ -397,7 +381,7 @@ RenderObject {
   bool transparent = false;
 
   /**
-   * @brief Distancia desde la cámara.
+   * @brief Distancia desde la cÃ¡mara.
    *
    * Utilizada principalmente para ordenamiento de transparencias.
    */

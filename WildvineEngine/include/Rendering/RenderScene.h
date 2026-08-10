@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file RenderScene.h
  * @brief Declara la estructura RenderScene usada por el pipeline de renderizado.
  * @ingroup rendering
@@ -12,8 +12,7 @@
 #include "Rendering/RenderTypes.h"
 
 /** @brief Declara class Skybox. */
-class
-Skybox;
+class Skybox;
 
 /**
  * @class RenderScene
@@ -26,16 +25,14 @@ Skybox;
  *
  * Esta estructura suele ser generada antes del render y consumida por el renderer.
  */
-class
-RenderScene {
+class RenderScene {
 public:
   /**
    * @brief Limpia todos los elementos de la escena.
    *
-   * Vacía las listas de objetos y luces, y reinicia referencias.
+   * VacÃ­a las listas de objetos y luces, y reinicia referencias.
    */
-  void 
-  clear();
+  void clear();
 
 public:
   /** @brief Lista de objetos opacos. */
@@ -57,5 +54,5 @@ public:
   std::vector<LightData> rectLights;
 
   /** @brief Skybox de la escena. */
-  Skybox* skybox = nullptr;
+  Skybox *skybox = nullptr;
 };

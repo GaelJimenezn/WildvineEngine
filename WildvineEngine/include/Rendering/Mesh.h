@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Mesh.h
  * @brief Declara la API de Mesh dentro del subsistema de renderizado.
  */
@@ -8,109 +8,112 @@
 
 /**
  * @struct Submesh
- * @brief Representa una porción de una malla con su propio conjunto de buffers y
+ * @brief Representa una porciÃ³n de una malla con su propio conjunto de buffers y
  * material.
  *
  * Un Submesh permite dividir una malla en partes que pueden:
  * - Usar diferentes materiales
  * - Ser renderizadas de manera independiente
- * - Compartir la misma geometría base
+ * - Compartir la misma geometrÃ­a base
  */
-struct
-Submesh {
-  /** @brief Buffer de vértices. */
+struct Submesh {
+  /** @brief Buffer de vÃ©rtices. */
   Buffer vertexBuffer;
 
-  /** @brief Buffer de índices. */
+  /** @brief Buffer de Ã­ndices. */
   Buffer indexBuffer;
 
-  /** @brief Número total de índices. */
-  unsigned 
-  int indexCount = 0;
+  /** @brief NÃºmero total de Ã­ndices. */
+  unsigned int indexCount = 0;
 
-  /** @brief Índice inicial dentro del index buffer. */
-  unsigned 
-  int startIndex = 0;
+  /** @brief Ãndice inicial dentro del index buffer. */
+  unsigned int startIndex = 0;
 
   /** @brief Slot de material asociado. */
-  unsigned
-  int materialSlot = 0;
+  unsigned int materialSlot = 0;
 
   /** @brief Transform local del submesh relativo al actor. */
-  XMFLOAT4X4 localTransform = XMFLOAT4X4(
-    1.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    1.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    1.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    1.0f
-  );
+  XMFLOAT4X4 localTransform = XMFLOAT4X4(1.0f,
+                                         0.0f,
+                                         0.0f,
+                                         0.0f,
+                                         0.0f,
+                                         1.0f,
+                                         0.0f,
+                                         0.0f,
+                                         0.0f,
+                                         0.0f,
+                                         1.0f,
+                                         0.0f,
+                                         0.0f,
+                                         0.0f,
+                                         0.0f,
+                                         1.0f);
 };
 
 /**
  * @class Mesh
- * @brief Representa una malla compuesta por múltiples submeshes.
+ * @brief Representa una malla compuesta por mÃºltiples submeshes.
  *
- * Permite gestionar geometría compleja dividiéndola en submeshes,
+ * Permite gestionar geometrÃ­a compleja dividiÃ©ndola en submeshes,
  * cada uno con su propio material y buffers.
  */
-class
-Mesh {
+class Mesh {
 public:
-  /** @brief Configura los límites locales usados por el culling espacial. */
+  /** @brief Configura los lÃ­mites locales usados por el culling espacial. */
   void
-  setLocalBounds(const EU::Vector3& minimum, const EU::Vector3& maximum) {
+  setLocalBounds(const EU::Vector3 &minimum, const EU::Vector3 &maximum) {
     m_localBoundsMin = minimum;
     m_localBoundsMax = maximum;
     m_hasLocalBounds = true;
   }
 
-  /** @brief Indica si la malla tiene límites locales válidos. */
+  /** @brief Indica si la malla tiene lÃ­mites locales vÃ¡lidos. */
   bool
-  hasLocalBounds() const { return m_hasLocalBounds; }
+  hasLocalBounds() const {
+    return m_hasLocalBounds;
+  }
 
-  /** @brief Devuelve la esquina mínima de los límites locales. */
-  const EU::Vector3&
-  getLocalBoundsMin() const { return m_localBoundsMin; }
+  /** @brief Devuelve la esquina mÃ­nima de los lÃ­mites locales. */
+  const EU::Vector3 &
+  getLocalBoundsMin() const {
+    return m_localBoundsMin;
+  }
 
-  /** @brief Devuelve la esquina máxima de los límites locales. */
-  const EU::Vector3&
-  getLocalBoundsMax() const { return m_localBoundsMax; }
+  /** @brief Devuelve la esquina mÃ¡xima de los lÃ­mites locales. */
+  const EU::Vector3 &
+  getLocalBoundsMax() const {
+    return m_localBoundsMax;
+  }
 
   /**
    * @brief Obtiene la lista de submeshes (mutable).
    * @return Referencia al vector de Submesh.
    */
-  std::vector<Submesh>&
-  getSubmeshes() { return m_submeshes; }
+  std::vector<Submesh> &
+  getSubmeshes() {
+    return m_submeshes;
+  }
 
   /**
    * @brief Obtiene la lista de submeshes (const).
    * @return Referencia constante al vector de Submesh.
    */
-  const 
-  /** @brief Declara o ejecuta getSubmeshes. */
-  std::vector<Submesh>&
-  getSubmeshes() const { return m_submeshes; }
+  const
+      /** @brief Declara o ejecuta getSubmeshes. */
+      std::vector<Submesh> &
+      getSubmeshes() const {
+    return m_submeshes;
+  }
 
   /**
    * @brief Libera los recursos de todos los submeshes.
    *
-   * Destruye los buffers de vértices e índices y limpia la lista.
+   * Destruye los buffers de vÃ©rtices e Ã­ndices y limpia la lista.
    */
   void
-    destroy() {
-    for (Submesh& submesh : m_submeshes) {
+  destroy() {
+    for (Submesh &submesh : m_submeshes) {
       submesh.vertexBuffer.destroy();
       submesh.indexBuffer.destroy();
     }

@@ -42,3 +42,13 @@
  * @defgroup structures Structures
  * @brief Contenedores auxiliares usados por la base del motor.
  */
+
+/**
+ * @defgroup audio Audio
+ * @brief Componentes y servicios de reproducción espacial mediante DirectXTK.
+ */
+
+/**
+ * @defgroup editor Editor
+ * @brief Herramientas y paneles de edición de escenas.
+ */

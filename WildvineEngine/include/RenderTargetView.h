@@ -1,39 +1,37 @@
-/**
+﻿/**
  * @file RenderTargetView.h
- * @brief Declara la API pública de RenderTargetView dentro de WildvineEngine.
+ * @brief Declara la API pÃºblica de RenderTargetView dentro de WildvineEngine.
  */
 #pragma once
 #include "Prerequisites.h"
 
-//Forward Declarations
+// Forward Declarations
 /** @brief Declara class Device. */
-class 
-Device;
+class Device;
 
 /** @brief Declara class DeviceContext. */
-class 
-DeviceContext;
+class DeviceContext;
 
 /** @brief Declara class Texture. */
-class 
-Texture;
+class Texture;
 
 /** @brief Declara class DepthStencilView. */
-class
-DepthStencilView;
-
+class DepthStencilView;
 
 /**
  * @class RenderTargetView
  * @brief Encapsula un Render Target View (RTV) de DirectX 11.
  *
- * Esta clase administra la creación, uso y destrucción de un
+ * Esta clase administra la creaciÃ³n, uso y destrucciÃ³n de un
  * ID3D11RenderTargetView, el cual se utiliza para renderizar
- * gráficos en una textura o en el back buffer.
+ * grÃ¡ficos en una textura o en el back buffer.
  */
-class
-RenderTargetView {
+class RenderTargetView {
 public:
+  ID3D11RenderTargetView *
+  getNativeView() const {
+    return m_renderTargetView;
+  }
 
   /**
    * @brief Constructor por defecto.
@@ -50,70 +48,68 @@ public:
    *
    * @param device Referencia al dispositivo de DirectX.
    * @param backBuffer Textura del back buffer.
-   * @param format Formato de la textura (DXGI_FORMAT).
-   * @return HRESULT Código de resultado (S_OK si se inicializó correctamente).
+   * @param Format Formato de la textura (DXGI_FORMAT).
+   * @return HRESULT CÃ³digo de
+   * resultado (S_OK si se inicializÃ³ correctamente).
    */
   HRESULT
-  init(Device& device, Texture& backBuffer, DXGI_FORMAT Format);
+  init(Device &device, Texture &backBuffer, DXGI_FORMAT Format);
 
   /**
    * @brief Inicializa el Render Target View con una textura personalizada.
    *
    * @param device Referencia al dispositivo de DirectX.
    * @param inTex Textura de entrada.
-   * @param viewDimension Dimensión del RTV (por ejemplo, TEXTURE2D, TEXTURE2DARRAY,
+   * @param ViewDimension DimensiÃ³n del RTV (por ejemplo, TEXTURE2D, TEXTURE2DARRAY,
+   *
    * etc.).
-   * @param format Formato de la textura (DXGI_FORMAT).
-   * @return HRESULT Código de resultado (S_OK si se inicializó correctamente).
+   * @param Format Formato de la textura (DXGI_FORMAT).
+   * @return HRESULT CÃ³digo de
+   * resultado (S_OK si se inicializÃ³ correctamente).
    */
   HRESULT
-  init(Device& device,
-      Texture& inTex,
-      D3D11_RTV_DIMENSION ViewDimension,
-      DXGI_FORMAT Format);
+  init(Device &device,
+       Texture &inTex,
+       D3D11_RTV_DIMENSION ViewDimension,
+       DXGI_FORMAT Format);
 
   /**
    * @brief Actualiza el estado del Render Target View.
    *
-   * Función placeholder que puede usarse para lógica de actualización
+   * FunciÃ³n placeholder que puede usarse para lÃ³gica de actualizaciÃ³n
    * relacionada al render target.
    */
-  void
-  update();
+  void update();
 
   /**
    * @brief Renderiza utilizando este Render Target View y un DepthStencilView.
    *
    * @param deviceContext Contexto del dispositivo para emitir comandos de render.
    * @param depthStencilView Referencia al DepthStencilView asociado.
-   * @param numViews Número de vistas a aplicar.
-   * @param clearColor Color con el que se limpia el render target (RGBA, 4 componentes).
+   * @param numViews NÃºmero de vistas a aplicar.
+   * @param ClearColor Color con el que se limpia el render target (RGBA).
    */
-  void
-  render(DeviceContext& deviceContext,
-        DepthStencilView& depthStencilView,
-        unsigned int numViews,
-        const float ClearColor[4]);
+  void render(DeviceContext &deviceContext,
+              DepthStencilView &depthStencilView,
+              unsigned int numViews,
+              const float ClearColor[4]);
 
   /**
    * @brief Renderiza utilizando este Render Target View sin un DepthStencilView.
    *
    * @param deviceContext Contexto del dispositivo.
-   * @param numViews Número de vistas a aplicar.
+   * @param numViews NÃºmero de vistas a aplicar.
    */
-  void
-  render(DeviceContext& deviceContext,
-        unsigned int numViews);
+  void render(DeviceContext &deviceContext, unsigned int numViews);
 
   /**
    * @brief Libera los recursos asociados al Render Target View.
    */
-  void
-  destroy();
+  void destroy();
 
 private:
   /**
    * @brief Puntero al objeto ID3D11RenderTargetView de DirectX 11.
    */
-  ID3D11RenderTargetView* m_renderTargetView = nullptr;
+  ID3D11RenderTargetView *m_renderTargetView = nullptr;
 };

@@ -3,7 +3,7 @@
 #include "DeviceContext.h"
 
 HRESULT
-SamplerState::init(Device& device) {
+SamplerState::init(Device &device) {
   if (!device.m_device) {
     ERROR("SamplerState", "init", "Device is nullptr");
     return E_POINTER;
@@ -26,16 +26,15 @@ SamplerState::init(Device& device) {
   }
 
   return S_OK;
-
-}
-
-void 
-SamplerState::update() {
-  //No hay logica de actualizacion 
 }
 
 void
-SamplerState::render(DeviceContext& deviceContext,
+SamplerState::update() {
+  // No hay logica de actualizacion
+}
+
+void
+SamplerState::render(DeviceContext &deviceContext,
                      unsigned int StartSlot,
                      unsigned int NumSamplers) {
 

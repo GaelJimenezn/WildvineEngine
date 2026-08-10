@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file AudioSystem.cpp
  * @brief Implementa el audio espacial mediante DirectXTK.
  */
@@ -20,19 +20,20 @@
 namespace {
 
 std::wstring
-toWideString(const std::string& value) {
+toWideString(const std::string &value) {
   return std::wstring(value.begin(), value.end());
 }
 
 DirectX::XMFLOAT3
-toAudioFloat3(const EU::Vector3& value) {
+toAudioFloat3(const EU::Vector3 &value) {
   return DirectX::XMFLOAT3(value.x, value.z, value.y);
 }
 
-}
+} // namespace
 
 struct
-AudioSystem::State {
+
+    AudioSystem::State {
   struct SourceState {
     std::unique_ptr<DirectX::SoundEffect> effect;
     std::unique_ptr<DirectX::SoundEffectInstance> instance;
@@ -41,7 +42,7 @@ AudioSystem::State {
 
   std::unique_ptr<DirectX::AudioEngine> engine;
   DirectX::AudioListener listener;
-  std::unordered_map<AudioSourceComponent*, SourceState> sources;
+  std::unordered_map<AudioSourceComponent *, SourceState> sources;
   bool paused = false;
 };
 
@@ -62,8 +63,7 @@ AudioSystem::init() {
     m_state->engine = std::make_unique<DirectX::AudioEngine>();
     MESSAGE("AudioSystem", "init", "DirectXTK AudioEngine inicializado");
     return true;
-  }
-  catch (const std::exception& exception) {
+  } catch (const std::exception &exception) {
     m_state.reset();
     ERROR("AudioSystem", "init", exception.what());
     return false;
@@ -71,7 +71,7 @@ AudioSystem::init() {
 }
 
 void
-AudioSystem::update(const Camera& camera) {
+AudioSystem::update(const Camera &camera) {
   if (!m_state || !m_state->engine || m_state->paused) {
     return;
   }
@@ -82,33 +82,30 @@ AudioSystem::update(const Camera& camera) {
 
   const EU::Vector3 position = camera.getPosition();
   m_state->listener.SetPosition(toAudioFloat3(position));
-  m_state->listener.SetOrientation(
-    toAudioFloat3(camera.GetForward()),
-    toAudioFloat3(camera.GetUp()));
+  m_state->listener.SetOrientation(toAudioFloat3(camera.GetForward()),
+                                   toAudioFloat3(camera.GetUp()));
 
-  for (AudioSourceComponent* source : m_sources) {
+  for (AudioSourceComponent *source : m_sources) {
     if (!source || source->m_audioPath.empty()) {
       continue;
     }
 
-    State::SourceState& state = m_state->sources[source];
+    State::SourceState &state = m_state->sources[source];
     if (source->m_assetDirty || state.loadedPath != source->m_audioPath) {
       state.instance.reset();
       state.effect.reset();
 
       try {
         const std::wstring path = toWideString(source->m_audioPath);
-        state.effect = std::make_unique<DirectX::SoundEffect>(
-          m_state->engine.get(),
-          path.c_str());
-        const DirectX::SOUND_EFFECT_INSTANCE_FLAGS instanceFlags = source->m_spatial ?
-          DirectX::SoundEffectInstance_Use3D :
-          DirectX::SoundEffectInstance_Default;
+        state.effect =
+            std::make_unique<DirectX::SoundEffect>(m_state->engine.get(), path.c_str());
+        const DirectX::SOUND_EFFECT_INSTANCE_FLAGS instanceFlags =
+            source->m_spatial ? DirectX::SoundEffectInstance_Use3D
+                              : DirectX::SoundEffectInstance_Default;
         state.instance = state.effect->CreateInstance(instanceFlags);
         state.loadedPath = source->m_audioPath;
         source->m_assetDirty = false;
-      }
-      catch (const std::exception& exception) {
+      } catch (const std::exception &exception) {
         ERROR("AudioSystem", "update", exception.what());
         state.loadedPath.clear();
         source->m_assetDirty = false;
@@ -126,15 +123,13 @@ AudioSystem::update(const Camera& camera) {
       const float deltaX = emitterPosition.x - position.x;
       const float deltaY = emitterPosition.y - position.y;
       const float deltaZ = emitterPosition.z - position.z;
-      const float distance = std::sqrt(
-        deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+      const float distance =
+          std::sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
       if (distance >= source->m_maxDistance) {
         outputVolume = 0.0f;
-      }
-      else if (distance > source->m_minDistance) {
+      } else if (distance > source->m_minDistance) {
         const float range = source->m_maxDistance - source->m_minDistance;
-        const float attenuation = 1.0f -
-          ((distance - source->m_minDistance) / range);
+        const float attenuation = 1.0f - ((distance - source->m_minDistance) / range);
         outputVolume *= attenuation;
       }
 
@@ -167,7 +162,7 @@ AudioSystem::destroy() {
     return;
   }
 
-  for (auto& entry : m_state->sources) {
+  for (auto &entry : m_state->sources) {
     if (entry.second.instance) {
       entry.second.instance->Stop();
     }
@@ -178,9 +173,9 @@ AudioSystem::destroy() {
 }
 
 void
-AudioSystem::registerSource(AudioSourceComponent* source) {
-  if (!source || std::find(m_sources.begin(), m_sources.end(), source) !=
-    m_sources.end()) {
+AudioSystem::registerSource(AudioSourceComponent *source) {
+  if (!source ||
+      std::find(m_sources.begin(), m_sources.end(), source) != m_sources.end()) {
     return;
   }
 
@@ -188,10 +183,9 @@ AudioSystem::registerSource(AudioSourceComponent* source) {
 }
 
 void
-AudioSystem::unregisterSource(AudioSourceComponent* source) {
-  m_sources.erase(
-    std::remove(m_sources.begin(), m_sources.end(), source),
-    m_sources.end());
+AudioSystem::unregisterSource(AudioSourceComponent *source) {
+  m_sources.erase(std::remove(m_sources.begin(), m_sources.end(), source),
+                  m_sources.end());
 
   if (m_state) {
     m_state->sources.erase(source);
@@ -204,8 +198,7 @@ AudioSystem::setMasterVolume(float volume) {
     return;
   }
 
-  const float clampedVolume =
-    volume < 0.0f ? 0.0f : (volume > 1.0f ? 1.0f : volume);
+  const float clampedVolume = volume < 0.0f ? 0.0f : (volume > 1.0f ? 1.0f : volume);
   m_state->engine->SetMasterVolume(clampedVolume);
 }
 
@@ -240,13 +233,13 @@ AudioSystem::stopAll() {
     m_state->paused = false;
   }
 
-  for (auto& entry : m_state->sources) {
+  for (auto &entry : m_state->sources) {
     if (entry.second.instance) {
       entry.second.instance->Stop();
     }
   }
 
-  for (AudioSourceComponent* source : m_sources) {
+  for (AudioSourceComponent *source : m_sources) {
     if (!source) {
       continue;
     }

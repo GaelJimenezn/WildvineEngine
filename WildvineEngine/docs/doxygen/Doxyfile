@@ -3,7 +3,7 @@ PROJECT_BRIEF          = "Referencia Doxygen del codigo propio de Wildvine Engin
 OUTPUT_DIRECTORY       = docs/generated
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = YES
-OUTPUT_LANGUAGE        = Spanish
+OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = NO
 ALWAYS_DETAILED_SEC    = NO
@@ -32,9 +32,9 @@ HIDE_IN_BODY_DOCS      = NO
 INTERNAL_DOCS          = NO
 CASE_SENSE_NAMES       = YES
 WARNINGS               = YES
-WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
-WARN_NO_PARAMDOC       = NO
+WARN_NO_PARAMDOC       = YES
 INPUT                  = WildvineEngine.cpp \
                          include \
                          source \
@@ -51,6 +51,9 @@ EXCLUDE                = DXUT \
                          Imgui \
                          include/fbx \
                          include/stb_image.h \
+                         include/cgltf.h \
+                         include/Utilities/OBJ_Loader.h \
+                         include/ECS/Legacy \
                          lib \
                          bin \
                          intermediate \

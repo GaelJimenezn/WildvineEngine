@@ -437,6 +437,7 @@
     <ClCompile Include="Imgui\ImGuizmo\ImGuizmo.cpp" />
     <ClCompile Include="source\BaseApp.cpp" />
     <ClCompile Include="source\ECS\AudioSystem.cpp" />
+    <ClCompile Include="source\ECS\ParticleEmitterComponent.cpp" />
     <ClCompile Include="source\Buffer.cpp" />
     <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\DepthStencilState.cpp" />
@@ -495,6 +496,7 @@
     <ClInclude Include="include\ECS\LightComponent.h" />
     <ClInclude Include="include\ECS\MeshRendererComponent.h" />
     <ClInclude Include="include\ECS\RuntimeBehaviorComponent.h" />
+    <ClInclude Include="include\ECS\ParticleEmitterComponent.h" />
     <ClInclude Include="include\ECS\Entity.h" />
     <ClInclude Include="include\ECS\Transform.h" />
     <ClInclude Include="include\EngineUtilities\GUI\GUI.h" />

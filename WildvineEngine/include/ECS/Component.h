@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Component.h
  * @brief Declara la API de Component dentro del sistema de entidades.
  */
@@ -7,24 +7,21 @@
 
 /**
  * @class DeviceContext
- * @brief Declaración adelantada del contexto de dispositivo usado para operaciones de
+ * @brief DeclaraciÃ³n adelantada del contexto de dispositivo usado para operaciones de
  * render.
  */
-class
-DeviceContext;
+class DeviceContext;
 
 /**
  * @class Component
  * @brief Clase base abstracta para todos los componentes del motor.
  *
  * Define la interfaz fundamental que todos los componentes deben implementar:
- * inicialización, actualización, renderizado y destrucción.
+ * inicializaciÃ³n, actualizaciÃ³n, renderizado y destrucciÃ³n.
  * Cada componente posee un tipo definido por ComponentType.
  */
-class
-Component {
+class Component {
 public:
-
   /**
    * @brief Constructor por defecto.
    */
@@ -32,49 +29,48 @@ public:
 
   /**
    * @brief Constructor que asigna un tipo de componente.
-   * @param type Tipo del componente según ComponentType.
+   * @param type Tipo del componente segÃºn ComponentType.
    */
-  Component(const ComponentType type) : m_type(type) {}
+  Component(const ComponentType type)
+      : m_type(type) {
+  }
 
   /**
    * @brief Destructor virtual por defecto.
    */
-  virtual
-  ~Component() = default;
+  virtual ~Component() = default;
 
   /**
    * @brief Inicializa el componente. Debe ser implementada por las clases derivadas.
    */
-  virtual void
-  init() = 0;
+  virtual void init() = 0;
 
   /**
    * @brief Actualiza el componente en cada frame.
    * @param deltaTime Tiempo transcurrido entre frames.
    */
-  virtual void
-  update(float deltaTime) = 0;
+  virtual void update(float deltaTime) = 0;
 
   /**
    * @brief Renderiza el componente.
-   * @param deviceContext Contexto del dispositivo para operaciones gráficas.
+   * @param deviceContext Contexto del dispositivo para operaciones grÃ¡ficas.
    */
-  virtual void
-  render(DeviceContext& deviceContext) = 0;
+  virtual void render(DeviceContext &deviceContext) = 0;
 
   /**
    * @brief Libera los recursos internos del componente.
    */
-  virtual void
-  destroy() = 0;
+  virtual void destroy() = 0;
 
   /**
    * @brief Obtiene el tipo del componente.
    * @return Tipo del componente.
    */
   ComponentType
-  getType() const { return m_type; }
+  getType() const {
+    return m_type;
+  }
 
 protected:
-  ComponentType m_type;  ///< Tipo del componente definido por ComponentType.
+  ComponentType m_type; ///< Tipo del componente definido por ComponentType.
 };

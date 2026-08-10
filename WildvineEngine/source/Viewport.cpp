@@ -3,7 +3,7 @@
 #include "DeviceContext.h"
 
 HRESULT
-Viewport::init(const Window& window) {
+Viewport::init(const Window &window) {
   if (!window.m_hWnd) {
     ERROR("Viewport", "init", "Window handle (m_hWnd) is nullptr");
     return E_POINTER;
@@ -25,7 +25,7 @@ Viewport::init(const Window& window) {
 
 HRESULT
 Viewport::init(unsigned int width, unsigned int height) {
-  if(width == 0 || height == 0) {
+  if (width == 0 || height == 0) {
     ERROR("Viewport", "init", "Window dimensions are zero");
     return E_INVALIDARG;
   }
@@ -37,15 +37,14 @@ Viewport::init(unsigned int width, unsigned int height) {
   m_viewport.TopLeftX = 0;
   m_viewport.TopLeftY = 0;
 
-
   return S_OK;
 }
 
 void
-Viewport::render(DeviceContext& deviceContext) {
-  if (!deviceContext.m_deviceContext){
+Viewport::render(DeviceContext &deviceContext) {
+  if (!deviceContext.m_deviceContext) {
     ERROR("Viewport", "render", "Device context is not set");
     return;
-}
-deviceContext.RSSetViewports(1, &m_viewport);
+  }
+  deviceContext.RSSetViewports(1, &m_viewport);
 }

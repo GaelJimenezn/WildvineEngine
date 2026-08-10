@@ -1,23 +1,21 @@
-/**
+﻿/**
  * @file Window.h
- * @brief Declara la API pública de Window dentro de WildvineEngine.
+ * @brief Declara la API pÃºblica de Window dentro de WildvineEngine.
  */
 #pragma once
 #include "Prerequisites.h"
 
 /** @brief Declara class BaseApp. */
-class
-BaseApp;
+class BaseApp;
 
 /**
  * @class Window
- * @brief Representa una ventana de aplicación en Windows.
+ * @brief Representa una ventana de aplicaciÃ³n en Windows.
  *
- * Esta clase encapsula la creación, gestión, actualización y destrucción
+ * Esta clase encapsula la creaciÃ³n, gestiÃ³n, actualizaciÃ³n y destrucciÃ³n
  * de una ventana Win32, utilizada como superficie de renderizado para DirectX.
  */
-class
-Window {
+class Window {
 public:
   /**
    * @brief Constructor por defecto.
@@ -29,39 +27,38 @@ public:
    */
   ~Window() = default;
 
-
   /**
-   * @brief Inicializa y crea la ventana de la aplicación.
+   * @brief Inicializa y crea la ventana de la aplicaciÃ³n.
    *
-   * @param hInstance Manejador de la instancia de la aplicación.
-   * @param nCmdShow Parámetro que indica cómo se mostrará la ventana.
-   * @param wndproc Función de procedimiento de ventana (callback de mensajes).
-   * @return HRESULT Código de resultado (S_OK si se creó correctamente).
+   * @param hInstance Manejador de la instancia de la aplicaciÃ³n.
+   * @param nCmdShow ParÃ¡metro que indica cÃ³mo se mostrarÃ¡ la ventana.
+   * @param wndproc FunciÃ³n de procedimiento de ventana (callback de mensajes).
+   *
+   * @param app AplicaciÃ³n propietaria que recibe los eventos de ventana.
+   * @return
+   * HRESULT CÃ³digo de resultado (S_OK si se creÃ³ correctamente).
    */
   HRESULT
-  init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc, BaseApp* app);
+  init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc, BaseApp *app);
 
   /**
    * @brief Actualiza el estado de la ventana.
    *
-   * Normalmente procesa eventos o lógica asociada al ciclo de vida de la ventana.
+   * Normalmente procesa eventos o lÃ³gica asociada al ciclo de vida de la ventana.
    */
-  void
-  update();
+  void update();
 
   /**
    * @brief Renderiza el contenido de la ventana.
    *
-   * Generalmente se usa junto con el contexto gráfico (DirectX/OpenGL).
+   * Generalmente se usa junto con el contexto grÃ¡fico (DirectX/OpenGL).
    */
-  void
-  render();
+  void render();
 
   /**
    * @brief Libera los recursos y destruye la ventana.
    */
-  void
-  destroy();
+  void destroy();
 
 public:
   /**
@@ -81,12 +78,12 @@ public:
 
 private:
   /**
-   * @brief Handle de la instancia de la aplicación.
+   * @brief Handle de la instancia de la aplicaciÃ³n.
    */
   HINSTANCE m_hInst = nullptr;
 
   /**
-   * @brief Rectángulo que define las dimensiones de la ventana.
+   * @brief RectÃ¡ngulo que define las dimensiones de la ventana.
    */
   RECT m_rect;
 

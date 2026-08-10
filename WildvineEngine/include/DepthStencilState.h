@@ -1,29 +1,24 @@
-/**
+﻿/**
  * @file DepthStencilState.h
- * @brief Declara la API pública de DepthStencilState dentro de WildvineEngine.
+ * @brief Declara la API pÃºblica de DepthStencilState dentro de WildvineEngine.
  */
 #pragma once
 #include "Prerequisites.h"
 
 /** @brief Declara class Device. */
-class
-Device;
+class Device;
 /** @brief Declara class DeviceContext. */
-class
-DeviceContext;
-
+class DeviceContext;
 
 /**
  * @class DepthStencilState
- * @brief Gestiona el estado de profundidad y stencil en el pipeline gráfico.
+ * @brief Gestiona el estado de profundidad y stencil en el pipeline grÃ¡fico.
  *
- * Permite configurar cómo se manejan las pruebas de profundidad y las operaciones
+ * Permite configurar cÃ³mo se manejan las pruebas de profundidad y las operaciones
  * de stencil durante el renderizado.
  */
-class
-DepthStencilState {
+class DepthStencilState {
 public:
-
   /**
    * @brief Constructor por defecto.
    */
@@ -34,28 +29,25 @@ public:
    */
   ~DepthStencilState() = default;
 
-
   /**
    * @brief Inicializa el estado de profundidad y stencil.
    *
-   * @param device Referencia al dispositivo gráfico.
+   * @param device Referencia al dispositivo grÃ¡fico.
    * @param depthEnable Habilita o deshabilita la prueba de profundidad.
-   * @param writeMask Máscara de escritura de profundidad.
-   * @param depthFunc Función de comparación de profundidad.
-   * @return HRESULT Resultado de la operación.
+   * @param writeMask MÃ¡scara de escritura de profundidad.
+   * @param depthFunc FunciÃ³n de comparaciÃ³n de profundidad.
+   * @return HRESULT Resultado de la operaciÃ³n.
    */
   HRESULT
-  init(Device& device,
-        bool depthEnable,
-        D3D11_DEPTH_WRITE_MASK writeMask,
-        D3D11_COMPARISON_FUNC depthFunc);
-
+  init(Device &device,
+       bool depthEnable,
+       D3D11_DEPTH_WRITE_MASK writeMask,
+       D3D11_COMPARISON_FUNC depthFunc);
 
   /**
    * @brief Actualiza el estado de profundidad y stencil si es necesario.
    */
-  void
-  update();
+  void update();
 
   /**
    * @brief Aplica el estado al contexto de renderizado.
@@ -65,18 +57,16 @@ public:
    * @param reset Indica si se debe restaurar el estado por defecto.
    */
   void
-  render(DeviceContext& deviceContext, unsigned int stencilRef = 0, bool reset = false);
-
+  render(DeviceContext &deviceContext, unsigned int stencilRef = 0, bool reset = false);
 
   /**
    * @brief Libera los recursos asociados al estado de profundidad y stencil.
    */
-  void
-  destroy();
+  void destroy();
 
 private:
   /**
    * @brief Puntero al estado de profundidad y stencil de Direct3D.
    */
-  ID3D11DepthStencilState* m_depthStencilState = nullptr;
+  ID3D11DepthStencilState *m_depthStencilState = nullptr;
 };

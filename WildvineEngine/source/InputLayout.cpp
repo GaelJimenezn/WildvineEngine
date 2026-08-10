@@ -3,11 +3,10 @@
 #include "DeviceContext.h"
 
 HRESULT
-InputLayout::init(Device& device,
-                  const D3D11_INPUT_ELEMENT_DESC* layoutDesc,
+InputLayout::init(Device &device,
+                  const D3D11_INPUT_ELEMENT_DESC *layoutDesc,
                   UINT layoutCount,
-                  ID3DBlob* vertexShaderData)
-{
+                  ID3DBlob *vertexShaderData) {
   if (!layoutDesc || layoutCount == 0) {
     ERROR("InputLayout", "init", "Layout descriptor is empty.");
     return E_INVALIDARG;
@@ -18,14 +17,16 @@ InputLayout::init(Device& device,
     return E_POINTER;
   }
 
-  HRESULT hr = device.CreateInputLayout(layoutDesc, layoutCount,
-    vertexShaderData->GetBufferPointer(),
-    vertexShaderData->GetBufferSize(),
-    &m_inputLayout);
+  HRESULT hr = device.CreateInputLayout(layoutDesc,
+                                        layoutCount,
+                                        vertexShaderData->GetBufferPointer(),
+                                        vertexShaderData->GetBufferSize(),
+                                        &m_inputLayout);
 
   if (FAILED(hr)) {
-    ERROR("InputLayout", "init",
-      ("Failed to create InputLayout. HRESULT: " + std::to_string(hr)).c_str());
+    ERROR("InputLayout",
+          "init",
+          ("Failed to create InputLayout. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
 
@@ -38,7 +39,7 @@ InputLayout::update() {
 }
 
 void
-InputLayout::render(DeviceContext& deviceContext) {
+InputLayout::render(DeviceContext &deviceContext) {
   if (!m_inputLayout) {
     ERROR("InputLayout", "render", "InputLayout is nullptr");
     return;

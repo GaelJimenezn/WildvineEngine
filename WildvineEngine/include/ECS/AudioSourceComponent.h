@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file AudioSourceComponent.h
  * @brief Declara la fuente de sonido espacial del sistema ECS.
  * @ingroup audio
@@ -14,25 +14,23 @@ class Transform;
 
 /**
  * @class AudioSourceComponent
- * @brief Representa un archivo WAV reproducible desde la posición de un actor.
+ * @brief Representa un archivo WAV reproducible desde la posiciÃ³n de un actor.
  *
  * AudioSystem resuelve el archivo, crea la voz de DirectXTK y aplica el audio
  * 3D usando el Transform asociado como emisor.
  */
-class
-AudioSourceComponent : public Component {
+class AudioSourceComponent : public Component {
 public:
   /**
    * @brief Construye una fuente enlazada a un Transform.
-   * @param transform Transform que define la posición del emisor.
+   * @param transform Transform que define la posiciÃ³n del emisor.
    */
-  explicit
-  AudioSourceComponent(Transform* transform)
-    : Component(ComponentType::AUDIO),
-      m_transform(transform) {
+  explicit AudioSourceComponent(Transform *transform)
+      : Component(ComponentType::AUDIO)
+      , m_transform(transform) {
   }
 
-  /** @brief No requiere inicialización adicional. */
+  /** @brief No requiere inicializaciÃ³n adicional. */
   void
   init() override {
   }
@@ -45,7 +43,7 @@ public:
 
   /** @brief No genera render directo. */
   void
-  render(DeviceContext& deviceContext) override {
+  render(DeviceContext &deviceContext) override {
     (void)deviceContext;
   }
 
@@ -56,25 +54,25 @@ public:
   }
 
   /**
-   * @brief Asigna el archivo WAV que reproducirá la fuente.
+   * @brief Asigna el archivo WAV que reproducirÃ¡ la fuente.
    * @param path Ruta relativa o absoluta a un archivo WAV PCM compatible.
    */
   void
-  setAudioPath(const std::string& path) {
+  setAudioPath(const std::string &path) {
     if (m_audioPath != path) {
       m_audioPath = path;
       m_assetDirty = true;
     }
   }
 
-  /** @brief Solicita comenzar la reproducción en la próxima actualización. */
+  /** @brief Solicita comenzar la reproducciÃ³n en la prÃ³xima actualizaciÃ³n. */
   void
   play() {
     m_playRequested = true;
     m_stopRequested = false;
   }
 
-  /** @brief Solicita detener inmediatamente la reproducción actual. */
+  /** @brief Solicita detener inmediatamente la reproducciÃ³n actual. */
   void
   stop() {
     m_stopRequested = true;
@@ -91,7 +89,7 @@ public:
   }
 
   /**
-   * @brief Ajusta el tono de reproducción en semitonos normalizados.
+   * @brief Ajusta el tono de reproducciÃ³n en semitonos normalizados.
    * @param pitch Valor entre -1.0 y 1.0; 0.0 conserva el tono original.
    */
   void
@@ -100,7 +98,7 @@ public:
   }
 
   /**
-   * @brief Activa o desactiva la repetición continua del sonido.
+   * @brief Activa o desactiva la repeticiÃ³n continua del sonido.
    * @param loop true para reiniciar el sonido al llegar a su final.
    */
   void
@@ -109,7 +107,7 @@ public:
   }
 
   /**
-   * @brief Define si esta fuente inicia automáticamente al entrar a Play.
+   * @brief Define si esta fuente inicia automÃ¡ticamente al entrar a Play.
    * @param autoActivate true para comenzar durante el modo Play.
    */
   void
@@ -127,20 +125,19 @@ public:
   }
 
   /**
-   * @brief Ajusta el rango audible de la atenuación espacial 3D.
+   * @brief Ajusta el rango audible de la atenuaciÃ³n espacial 3D.
    * @param minDistance Distancia con volumen completo.
-   * @param maxDistance Distancia a partir de la cual deja de oírse.
+   * @param maxDistance Distancia a partir de la cual deja de oÃ­rse.
    */
   void
   setAttenuation(float minDistance, float maxDistance) {
     m_minDistance = minDistance < 0.0f ? 0.0f : minDistance;
-    m_maxDistance = maxDistance > m_minDistance ? maxDistance :
-      m_minDistance + 0.01f;
+    m_maxDistance = maxDistance > m_minDistance ? maxDistance : m_minDistance + 0.01f;
   }
 
   /**
-   * @brief Activa o desactiva la atenuación espacial 3D de la fuente.
-   * @param spatial true para ubicar el sonido en la posición del actor.
+   * @brief Activa o desactiva la atenuaciÃ³n espacial 3D de la fuente.
+   * @param spatial true para ubicar el sonido en la posiciÃ³n del actor.
    */
   void
   setSpatial(bool spatial) {
@@ -151,7 +148,7 @@ public:
   }
 
   /**
-   * @brief Indica si la fuente usa atenuación espacial 3D.
+   * @brief Indica si la fuente usa atenuaciÃ³n espacial 3D.
    * @return true cuando el audio se posiciona usando el Transform del actor.
    */
   bool
@@ -177,7 +174,7 @@ public:
     return m_autoActivate;
   }
 
-  /** @brief Indica si la fuente está silenciada. */
+  /** @brief Indica si la fuente estÃ¡ silenciada. */
   bool
   isMuted() const {
     return m_muted;
@@ -189,7 +186,7 @@ public:
     return m_minDistance;
   }
 
-  /** @brief Devuelve la distancia máxima audible. */
+  /** @brief Devuelve la distancia mÃ¡xima audible. */
   float
   getMaxDistance() const {
     return m_maxDistance;
@@ -199,7 +196,7 @@ public:
    * @brief Devuelve la ruta de audio configurada.
    * @return Ruta del archivo WAV.
    */
-  const std::string&
+  const std::string &
   getAudioPath() const {
     return m_audioPath;
   }
@@ -216,7 +213,7 @@ public:
 private:
   friend class AudioSystem;
 
-  Transform* m_transform = nullptr;
+  Transform *m_transform = nullptr;
   std::string m_audioPath;
   float m_volume = 1.0f;
   float m_pitch = 0.0f;

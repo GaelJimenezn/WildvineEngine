@@ -7,11 +7,11 @@
 
 void
 RenderScene::clear() {
-	opaqueObjects.clear();
-	transparentObjects.clear();
-	directionalLights.clear();
-	pointLights.clear();
-	spotLights.clear();
-	rectLights.clear();
-	skybox = nullptr;
+  opaqueObjects.clear();
+  transparentObjects.clear();
+  directionalLights.clear();
+  pointLights.clear();
+  spotLights.clear();
+  rectLights.clear();
+  skybox = nullptr;
 }
