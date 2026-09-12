@@ -1,0 +1,305 @@
+{"kind":"deck","id":"pr/s5twln","name":"Deck"}
+{"kind":"layout","layoutId":"d7a89a7d-9b01-4bce-8000-91d86490d98c","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"00b44899-2eb7-43ad-8219-5fbf3b452b1d","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/fmgnid","slide":1,"title":"WILDVINE ENGINE","textShapes":3}
+{"kind":"textbox","id":"sh/hk3qxsbu","slide":1,"text":"WILDVINE ENGINE","textPreview":"WILDVINE ENGINE","textChars":15,"textLines":1,"bbox":[42,42,500,40]}
+{"kind":"textbox","id":"sh/uxcr2ds3","slide":1,"text":"Arquitectura técnica\nde cuatro sistemas","textPreview":"Arquitectura técnica | de cuatro sistemas","textChars":39,"textLines":2,"bbox":[42,178,880,220]}
+{"kind":"textbox","id":"sh/fil8vito","slide":1,"text":"Play/Stop · audio espacial · partículas · culling y Octree","textPreview":"Play/Stop · audio espacial · partículas · culling y Octree","textChars":58,"textLines":1,"bbox":[42,490,1000,72]}
+{"kind":"shape","id":"sh/4ne987al","slide":1,"bbox":[1100,0,180,720]}
+{"kind":"notes","id":"nt/fmgnid","slide":1,"text":"Abrir explicando que se seleccionaron cuatro herramientas completas de la tabla y que cada una se integró al editor, al ciclo del frame y a los subsistemas del motor.\n\n[Sources]\n- Repositorio local de WildvineEngine"}
+{"kind":"slide","id":"sl/8ssvv2","slide":2,"title":"El alcance cubre cuatro áreas distintas del motor","textShapes":6}
+{"kind":"textbox","id":"sh/y9ozedwn","slide":2,"text":"El alcance cubre cuatro áreas distintas del motor","textPreview":"El alcance cubre cuatro áreas distintas del motor","textChars":49,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/lwzy9sfe","slide":2,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/kv6hgnet","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/6x8zidwj","slide":2,"bbox":[742,198,12,12]}
+{"kind":"textbox","id":"sh/t0zidsfa","slide":2,"text":"Runtime: Play/Stop y comportamiento","textPreview":"Runtime: Play/Stop y comportamiento","textChars":35,"textLines":1,"bbox":[770,190,442,78]}
+{"kind":"shape","id":"sh/8zqhknep","slide":2,"bbox":[742,280,12,12]}
+{"kind":"textbox","id":"sh/n2dgzyx0","slide":2,"text":"Sonido: fuente y listener espacial","textPreview":"Sonido: fuente y listener espacial","textChars":34,"textLines":1,"bbox":[770,272,442,78]}
+{"kind":"shape","id":"sh/m14z6twf","slide":2,"bbox":[742,362,12,12]}
+{"kind":"textbox","id":"sh/cry5wfax","slide":2,"text":"VFX: emisión, simulación y billboards","textPreview":"VFX: emisión, simulación y billboards","textChars":37,"textLines":1,"bbox":[770,354,442,78]}
+{"kind":"shape","id":"sh/xs7m5kri","slide":2,"bbox":[742,444,12,12]}
+{"kind":"textbox","id":"sh/apwnupsr","slide":2,"text":"Optimización: frustum, Octree y métricas","textPreview":"Optimización: frustum, Octree y métricas","textChars":40,"textLines":1,"bbox":[770,436,442,78]}
+{"kind":"image","id":"im/u9k7a1cv","slide":2,"name":"","geometry":"roundRect","alt":"Tabla original de herramientas propuestas","bbox":[42,170,650,430]}
+{"kind":"notes","id":"nt/8ssvv2","slide":2,"text":"No afirmar que se implementaron todas las opciones. Explicar que se priorizó completar cuatro recorridos de extremo a extremo.\n\n[Sources]\n- C:/Users/carlo/AppData/Local/Temp/codex-clipboard-060f4be0-a4ca-468d-8900-74b1c3f80274.png"}
+{"kind":"slide","id":"sl/ic97d2","slide":3,"title":"BaseApp coordina datos, actualización y render","textShapes":8}
+{"kind":"textbox","id":"sh/0zuxsjmd","slide":3,"text":"BaseApp coordina datos, actualización y render","textPreview":"BaseApp coordina datos, actualización y render","textChars":46,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/fylwzels","slide":3,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/excfq947","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/p4ny5o3u","slide":3,"bbox":[235,290,105,0]}
+{"kind":"shape","id":"sh/o3exwjmp","slide":3,"bbox":[530,290,105,0]}
+{"kind":"shape","id":"sh/n25g3el4","slide":3,"bbox":[825,290,105,0]}
+{"kind":"shape","id":"sh/21wfu94j","slide":3,"bbox":[42,235,190,110]}
+{"kind":"textbox","id":"sh/xs7y9836","slide":3,"text":"GUI\nsolicitudes","textPreview":"GUI | solicitudes","textChars":15,"textLines":2,"bbox":[54,245,166,90]}
+{"kind":"shape","id":"sh/crex03ml","slide":3,"bbox":[342,220,185,140]}
+{"kind":"textbox","id":"sh/q9kjmdwn","slide":3,"text":"BaseApp\ncoordinador","textPreview":"BaseApp | coordinador","textChars":19,"textLines":2,"bbox":[354,230,161,120]}
+{"kind":"shape","id":"sh/bat0vix8","slide":3,"bbox":[637,235,185,110]}
+{"kind":"textbox","id":"sh/cb21onet","slide":3,"text":"Actores +\ncomponentes","textPreview":"Actores + | componentes","textChars":21,"textLines":2,"bbox":[649,245,161,90]}
+{"kind":"shape","id":"sh/dcb2xsfe","slide":3,"bbox":[932,235,230,110]}
+{"kind":"textbox","id":"sh/yd4jqxwz","slide":3,"text":"RenderScene +\nsubsistemas","textPreview":"RenderScene + | subsistemas","textChars":25,"textLines":2,"bbox":[944,245,206,90]}
+{"kind":"textbox","id":"sh/zedkzix4","slide":3,"text":"La GUI publica intenciones. BaseApp conserva la propiedad de Device, escena, cámara, audio y pipeline.","textPreview":"La GUI publica intenciones. BaseApp conserva la propiedad de Device, escena, cámara, audio y pipeline.","textChars":102,"textLines":1,"bbox":[42,435,1120,100]}
+{"kind":"shape","id":"sh/kzm1snep","slide":3,"bbox":[170,555,940,70]}
+{"kind":"textbox","id":"sh/l0v21sfa","slide":3,"text":"update(deltaTime)  ->  culling  ->  render  ->  GUI  ->  Present","textPreview":"update(deltaTime)  ->  culling  ->  render  ->  GUI  ->  Present","textChars":64,"textLines":1,"bbox":[190,573,900,34]}
+{"kind":"notes","id":"nt/ic97d2","slide":3,"text":"Explicar el desacoplamiento por solicitudes y por qué el orden del frame evita usar transformaciones o límites del frame anterior.\n\n[Sources]\n- A:/Proyectos/WildvineEngine/WildvineEngine/include/BaseApp.h\n- A:/Proyectos/WildvineEngine/WildvineEngine/source/BaseApp.cpp"}
+{"kind":"slide","id":"sl/eufu7a","slide":4,"title":"Play/Stop separa edición y ejecución","textShapes":10}
+{"kind":"textbox","id":"sh/n2tsny1w","slide":4,"text":"Play/Stop separa edición y ejecución","textPreview":"Play/Stop separa edición y ejecución","textChars":36,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/o32tg3i1","slide":4,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/94bap8jm","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/ed0rat0z","slide":4,"bbox":[245,280,100,0]}
+{"kind":"shape","id":"sh/ze9sjy1k","slide":4,"bbox":[540,280,100,0]}
+{"kind":"shape","id":"sh/0f29c3i5","slide":4,"bbox":[835,280,100,0]}
+{"kind":"shape","id":"sh/1gbal8jq","slide":4,"bbox":[42,230,200,100]}
+{"kind":"textbox","id":"sh/y94bmx0j","slide":4,"text":"Estado editable","textPreview":"Estado editable","textChars":15,"textLines":1,"bbox":[54,240,176,80]}
+{"kind":"shape","id":"sh/jadsv21o","slide":4,"bbox":[347,230,190,100]}
+{"kind":"textbox","id":"sh/3ehkry1g","slide":4,"text":"Captura TRS","textPreview":"Captura TRS","textChars":11,"textLines":1,"bbox":[359,240,166,80]}
+{"kind":"shape","id":"sh/2d83yd0b","slide":4,"bbox":[642,230,190,100]}
+{"kind":"textbox","id":"sh/pgzmt8jm","slide":4,"text":"Runtime update","textPreview":"Runtime update","textChars":14,"textLines":1,"bbox":[654,240,166,80]}
+{"kind":"shape","id":"sh/4fql03i1","slide":4,"bbox":[937,230,220,100]}
+{"kind":"textbox","id":"sh/ri14vi1s","slide":4,"text":"Stop: restaurar","textPreview":"Stop: restaurar","textChars":15,"textLines":1,"bbox":[949,240,196,80]}
+{"kind":"shape","id":"sh/qhs32d07","slide":4,"bbox":[42,405,570,130]}
+{"kind":"textbox","id":"sh/d4jmxsjy","slide":4,"text":"position += velocity * deltaTime;\nrotation += angularVelocity * deltaTime;","textPreview":"position += velocity * deltaTime; | rotation += angularVelocity * deltaTime;","textChars":74,"textLines":2,"bbox":[62,423,530,94]}
+{"kind":"shape","id":"sh/cjal4nid","slide":4,"bbox":[665,405,12,12]}
+{"kind":"textbox","id":"sh/z614zi1o","slide":4,"text":"Play activa RuntimeBehaviorComponent","textPreview":"Play activa RuntimeBehaviorComponent","textChars":36,"textLines":1,"bbox":[693,397,482,61]}
+{"kind":"shape","id":"sh/e5s36x03","slide":4,"bbox":[665,470,12,12]}
+{"kind":"textbox","id":"sh/a1wnyhkb","slide":4,"text":"Stop recupera posición, rotación y escala","textPreview":"Stop recupera posición, rotación y escala","textChars":41,"textLines":1,"bbox":[693,462,482,61]}
+{"kind":"shape","id":"sh/v25o7mlw","slide":4,"bbox":[665,535,12,12]}
+{"kind":"textbox","id":"sh/w3ep0r2h","slide":4,"text":"deltaTime elimina dependencia directa de FPS","textPreview":"deltaTime elimina dependencia directa de FPS","textChars":44,"textLines":1,"bbox":[693,527,482,61]}
+{"kind":"notes","id":"nt/eufu7a","slide":4,"text":"Demostrar con un actor: enseñar TRS original, pulsar Play, dejar que se mueva y pulsar Stop para recuperar el estado.\n\n[Sources]\n- A:/Proyectos/WildvineEngine/WildvineEngine/include/ECS/RuntimeBehaviorComponent.h\n- A:/Proyectos/WildvineEngine/WildvineEngine/source/BaseApp.cpp"}
+{"kind":"slide","id":"sl/nlxgin","slide":5,"title":"Play/Stop cumple por estado, tiempo y restauración","textShapes":10}
+{"kind":"textbox","id":"sh/mlgzmtsr","slide":5,"text":"Play/Stop cumple por estado, tiempo y restauración","textPreview":"Play/Stop cumple por estado, tiempo y restauración","textChars":50,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/9orih8r2","slide":5,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/8ni1o3qh","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"textbox","id":"sh/vq90ji98","slide":5,"text":"Decisión técnica","textPreview":"Decisión técnica","textChars":16,"textLines":1,"bbox":[42,175,430,42]}
+{"kind":"textbox","id":"sh/ap0jqd8n","slide":5,"text":"La captura permanece en memoria porque su uso es temporal; el archivo de escena se reserva para persistencia permanente.","textPreview":"La captura permanece en memoria porque su uso es temporal; el archivo de escena se reserva para persistencia permanente.","textChars":120,"textLines":1,"bbox":[42,235,520,145]}
+{"kind":"textbox","id":"sh/xsril8re","slide":5,"text":"Criterio verificable","textPreview":"Criterio verificable","textChars":20,"textLines":1,"bbox":[650,175,500,42]}
+{"kind":"shape","id":"sh/wri1snqt","slide":5,"bbox":[650,243,12,12]}
+{"kind":"textbox","id":"sh/jut0ni9k","slide":5,"text":"Play inicia la lógica runtime","textPreview":"Play inicia la lógica runtime","textChars":29,"textLines":1,"bbox":[678,235,492,61]}
+{"kind":"shape","id":"sh/itkjud8z","slide":5,"bbox":[650,308,12,12]}
+{"kind":"textbox","id":"sh/0z69krql","slide":5,"text":"Stop restaura el estado capturado","textPreview":"Stop restaura el estado capturado","textChars":33,"textLines":1,"bbox":[678,300,492,61]}
+{"kind":"shape","id":"sh/l0fadw7q","slide":5,"bbox":[650,373,12,12]}
+{"kind":"textbox","id":"sh/yxorih8f","slide":5,"text":"La simulación usa unidades por segundo","textPreview":"La simulación usa unidades por segundo","textChars":38,"textLines":1,"bbox":[678,365,492,61]}
+{"kind":"shape","id":"sh/zyxsbmp0","slide":5,"bbox":[42,440,1120,0]}
+{"kind":"textbox","id":"sh/8369obqh","slide":5,"text":"Pregunta: ¿es Lua o C#?","textPreview":"Pregunta: ¿es Lua o C#?","textChars":23,"textLines":1,"bbox":[42,475,400,40]}
+{"kind":"textbox","id":"sh/94zahw72","slide":5,"text":"No. El concepto de scripting se implementó con componentes runtime nativos en C++; no se integró una máquina virtual externa.","textPreview":"No. El concepto de scripting se implementó con componentes runtime nativos en C++; no se integró una máquina virtual externa.","textChars":125,"textLines":1,"bbox":[42,530,1080,90]}
+{"kind":"notes","id":"nt/nlxgin","slide":5,"text":"Usar esta diapositiva como defensa del alcance real.\n\n[Sources]\n- Repositorio local de WildvineEngine"}
+{"kind":"slide","id":"sl/dv703o","slide":6,"title":"Audio separa el servicio global de cada fuente","textShapes":8}
+{"kind":"textbox","id":"sh/f6pkv69g","slide":6,"text":"Audio separa el servicio global de cada fuente","textPreview":"Audio separa el servicio global de cada fuente","textChars":46,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/g7y1obql","slide":6,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/1872xgr6","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/61wji1sj","slide":6,"bbox":[390,300,155,0]}
+{"kind":"shape","id":"sh/r2pkr694","slide":6,"bbox":[735,300,155,0]}
+{"kind":"shape","id":"sh/s3y1kbap","slide":6,"bbox":[95,245,290,110]}
+{"kind":"textbox","id":"sh/t472twra","slide":6,"text":"Cámara\nlistener","textPreview":"Cámara | listener","textChars":15,"textLines":2,"bbox":[107,255,266,90]}
+{"kind":"shape","id":"sh/qx03ul83","slide":6,"bbox":[550,225,180,150]}
+{"kind":"textbox","id":"sh/by9k3q98","slide":6,"text":"AudioSystem\nDirectXTK","textPreview":"AudioSystem | DirectXTK","textChars":21,"textLines":2,"bbox":[562,235,156,130]}
+{"kind":"shape","id":"sh/vq14vmpw","slide":6,"bbox":[895,245,290,110]}
+{"kind":"textbox","id":"sh/ups32h8b","slide":6,"text":"AudioSourceComponent\nemisor + Transform","textPreview":"AudioSourceComponent | emisor + Transform","textChars":39,"textLines":2,"bbox":[907,255,266,90]}
+{"kind":"shape","id":"sh/hs3mxc72","slide":6,"bbox":[170,448,12,12]}
+{"kind":"textbox","id":"sh/wrul47qh","slide":6,"text":"Sistema global: motor, listener y volumen maestro","textPreview":"Sistema global: motor, listener y volumen maestro","textChars":49,"textLines":1,"bbox":[198,440,892,58]}
+{"kind":"shape","id":"sh/jul4zmps","slide":6,"bbox":[170,510,12,12]}
+{"kind":"textbox","id":"sh/itc36h87","slide":6,"text":"Componente: WAV, volumen, pitch, loop y distancias","textPreview":"Componente: WAV, volumen, pitch, loop y distancias","textChars":50,"textLines":1,"bbox":[198,502,892,58]}
+{"kind":"shape","id":"sh/5g3m1w7y","slide":6,"bbox":[170,572,12,12]}
+{"kind":"textbox","id":"sh/4ful8rqd","slide":6,"text":"Transform del actor define la posición espacial","textPreview":"Transform del actor define la posición espacial","textChars":47,"textLines":1,"bbox":[198,564,892,58]}
+{"kind":"notes","id":"nt/dv703o","slide":6,"text":"Explicar por qué existe un solo AudioSystem pero múltiples fuentes. DirectXTK resuelve reproducción; el motor integra ECS, GUI y escena.\n\n[Sources]\n- A:/Proyectos/WildvineEngine/WildvineEngine/include/Utilities/AudioSystem.h\n- A:/Proyectos/WildvineEngine/WildvineEngine/include/ECS/AudioSourceComponent.h"}
+{"kind":"slide","id":"sl/rk7vir","slide":7,"title":"La posición relativa controla la experiencia sonora","textShapes":11}
+{"kind":"textbox","id":"sh/t0na94rq","slide":7,"text":"La posición relativa controla la experiencia sonora","textPreview":"La posición relativa controla la experiencia sonora","textChars":51,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/6dcryp8z","slide":7,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/rels7u9k","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/4bu9wfq9","slide":7,"bbox":[42,175,550,135]}
+{"kind":"textbox","id":"sh/5c3a5kru","slide":7,"text":"difference = sourcePosition - listenerPosition;\ndistance   = length(difference);","textPreview":"difference = sourcePosition - listenerPosition; | distance   = length(difference);","textChars":80,"textLines":2,"bbox":[62,193,510,99]}
+{"kind":"textbox","id":"sh/i9crup83","slide":7,"text":"Atenuación","textPreview":"Atenuación","textChars":10,"textLines":1,"bbox":[665,175,450,40]}
+{"kind":"shape","id":"sh/jals3a9o","slide":7,"bbox":[665,233,12,12]}
+{"kind":"textbox","id":"sh/w7u98fqx","slide":7,"text":"Antes de Min Distance: intensidad alta","textPreview":"Antes de Min Distance: intensidad alta","textChars":38,"textLines":1,"bbox":[693,225,472,56]}
+{"kind":"shape","id":"sh/h83a1kri","slide":7,"bbox":[665,293,12,12]}
+{"kind":"textbox","id":"sh/dore5cva","slide":7,"text":"Entre Min y Max: atenuación progresiva","textPreview":"Entre Min y Max: atenuación progresiva","textChars":38,"textLines":1,"bbox":[693,285,472,56]}
+{"kind":"shape","id":"sh/cnidc7ep","slide":7,"bbox":[665,353,12,12]}
+{"kind":"textbox","id":"sh/r29w32d4","slide":7,"text":"Después de Max: contribución mínima","textPreview":"Después de Max: contribución mínima","textChars":35,"textLines":1,"bbox":[693,345,472,56]}
+{"kind":"shape","id":"sh/q10vaxwj","slide":7,"bbox":[42,395,1120,0]}
+{"kind":"textbox","id":"sh/p0re1svy","slide":7,"text":"Persistencia","textPreview":"Persistencia","textChars":12,"textLines":1,"bbox":[42,430,300,40]}
+{"kind":"textbox","id":"sh/4zid8ned","slide":7,"text":"Ruta WAV · volumen · pitch · Spatial 3D · loop · mute · activación · distancias mínima y máxima","textPreview":"Ruta WAV · volumen · pitch · Spatial 3D · loop · mute · activación · distancias mínima y máxima","textChars":95,"textLines":1,"bbox":[42,485,560,115]}
+{"kind":"textbox","id":"sh/3y9wz2ds","slide":7,"text":"Respuesta técnica","textPreview":"Respuesta técnica","textChars":17,"textLines":1,"bbox":[665,430,400,40]}
+{"kind":"textbox","id":"sh/2xgv6xwn","slide":7,"text":"Cumple fuente + listener + atenuación espacial. No pretende sustituir FMOD/Wwise ni incluye reverb u oclusión acústica.","textPreview":"Cumple fuente + listener + atenuación espacial. No pretende sustituir FMOD/Wwise ni incluye reverb u oclusión acústica.","textChars":119,"textLines":1,"bbox":[665,485,500,115]}
+{"kind":"notes","id":"nt/rk7vir","slide":7,"text":"Mover la cámara durante la demostración y comparar el sonido.\n\n[Sources]\n- Repositorio local de WildvineEngine"}
+{"kind":"slide","id":"sl/5v9jnw","slide":8,"title":"Partículas integra ECS, CPU, GPU y editor","textShapes":8}
+{"kind":"textbox","id":"sh/7upw3et0","slide":8,"text":"Partículas integra ECS, CPU, GPU y editor","textPreview":"Partículas integra ECS, CPU, GPU y editor","textChars":41,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/8vidcjul","slide":8,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/twre5ob6","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/y5gv69cj","slide":8,"bbox":[230,290,85,0]}
+{"kind":"shape","id":"sh/j6pwzet4","slide":8,"bbox":[505,290,85,0]}
+{"kind":"shape","id":"sh/k7yd8jup","slide":8,"bbox":[780,290,85,0]}
+{"kind":"shape","id":"sh/ls7e1obu","slide":8,"bbox":[42,240,185,100]}
+{"kind":"textbox","id":"sh/i10fitcn","slide":8,"text":"GUI\nrequest","textPreview":"GUI | request","textChars":11,"textLines":2,"bbox":[54,250,161,80]}
+{"kind":"shape","id":"sh/329wbyt8","slide":8,"bbox":[317,240,185,100]}
+{"kind":"textbox","id":"sh/jupcny1c","slide":8,"text":"Actor + Transform","textPreview":"Actor + Transform","textChars":17,"textLines":1,"bbox":[329,250,161,80]}
+{"kind":"shape","id":"sh/itwvut0r","slide":8,"bbox":[592,240,185,100]}
+{"kind":"textbox","id":"sh/5w7upoji","slide":8,"text":"CPU\nsimulación","textPreview":"CPU | simulación","textChars":14,"textLines":2,"bbox":[604,250,161,80]}
+{"kind":"shape","id":"sh/kvydw3ix","slide":8,"bbox":[867,240,230,100]}
+{"kind":"textbox","id":"sh/7ypwry18","slide":8,"text":"D3D11\nbillboards","textPreview":"D3D11 | billboards","textChars":16,"textLines":2,"bbox":[879,250,206,80]}
+{"kind":"textbox","id":"sh/6xgvyt03","slide":8,"text":"ParticleEmitterSettings concentra configuración serializable; cada Particle conserva solamente posición, velocidad, edad y lifetime.","textPreview":"ParticleEmitterSettings concentra configuración serializable; cada Particle conserva solamente posición, velocidad, edad y lifetime.","textChars":132,"textLines":1,"bbox":[110,410,1000,95]}
+{"kind":"shape","id":"sh/tk7et8je","slide":8,"bbox":[280,545,720,70]}
+{"kind":"textbox","id":"sh/sjyd03it","slide":8,"text":"Particle { position, velocity, age, lifetime }","textPreview":"Particle { position, velocity, age, lifetime }","textChars":46,"textLines":1,"bbox":[300,563,680,34]}
+{"kind":"notes","id":"nt/5v9jnw","slide":8,"text":"Subrayar que no se crea un actor por partícula: todas pertenecen al componente emisor para reducir overhead.\n\n[Sources]\n- A:/Proyectos/WildvineEngine/WildvineEngine/include/ECS/ParticleEmitterComponent.h\n- A:/Proyectos/WildvineEngine/WildvineEngine/source/ECS/ParticleEmitterComponent.cpp"}
+{"kind":"slide","id":"sl/35bnx5","slide":9,"title":"Cuatro formas comparten la misma simulación","textShapes":12}
+{"kind":"textbox","id":"sh/naxoj210","slide":9,"text":"Cuatro formas comparten la misma simulación","textPreview":"Cuatro formas comparten la misma simulación","textChars":43,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/ov6pc7il","slide":9,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/pwf6lcz6","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"textbox","id":"sh/e5476x0j","slide":9,"text":"POINT","textPreview":"POINT","textChars":5,"textLines":1,"bbox":[42,180,250,40]}
+{"kind":"textbox","id":"sh/f6dof214","slide":9,"text":"Origen + dispersión","textPreview":"Origen + dispersión","textChars":19,"textLines":1,"bbox":[42,235,250,90]}
+{"kind":"textbox","id":"sh/g7mp87ip","slide":9,"text":"BOX","textPreview":"BOX","textChars":3,"textLines":1,"bbox":[338,180,250,40]}
+{"kind":"textbox","id":"sh/18v6hcju","slide":9,"text":"Aleatorio dentro de extents","textPreview":"Aleatorio dentro de extents","textChars":27,"textLines":1,"bbox":[338,235,250,90]}
+{"kind":"textbox","id":"sh/y187i10n","slide":9,"text":"SPHERE","textPreview":"SPHERE","textChars":6,"textLines":1,"bbox":[634,180,250,40]}
+{"kind":"textbox","id":"sh/z2h8r6h8","slide":9,"text":"Volumen + dirección radial","textPreview":"Volumen + dirección radial","textChars":26,"textLines":1,"bbox":[634,235,250,90]}
+{"kind":"textbox","id":"sh/fmd4ral8","slide":9,"text":"CONE","textPreview":"CONE","textChars":4,"textLines":1,"bbox":[930,180,250,40]}
+{"kind":"textbox","id":"sh/el4ni5kn","slide":9,"text":"Base tangente + ángulo","textPreview":"Base tangente + ángulo","textChars":22,"textLines":1,"bbox":[930,235,250,90]}
+{"kind":"shape","id":"sh/1ovmtk3e","slide":9,"bbox":[160,375,960,190]}
+{"kind":"textbox","id":"sh/0nm5kf2t","slide":9,"text":"speed    = lerp(minSpeed, maxSpeed, random);\nvelocity = direction * speed;\nvelocity += gravity * deltaTime;\nposition += velocity * deltaTime;","textPreview":"speed    = lerp(minSpeed, maxSpeed, random); | velocity = direction * speed; | velocity += gravity * deltaTime; | position += velocity * ...","textChars":141,"textLines":4,"bbox":[180,393,920,154]}
+{"kind":"textbox","id":"sh/nqdovul4","slide":9,"text":"Límite de seguridad: 1024 partículas vivas","textPreview":"Límite de seguridad: 1024 partículas vivas","textChars":42,"textLines":1,"bbox":[340,600,600,40]}
+{"kind":"notes","id":"nt/35bnx5","slide":9,"text":"Explicar que cambiar la forma solo cambia el muestreo inicial; vida, fuerzas, interpolación y render siguen siendo comunes.\n\n[Sources]\n- Repositorio local de WildvineEngine"}
+{"kind":"slide","id":"sl/vo0yc5","slide":10,"title":"Billboards dinámicos conectan CPU y DirectX 11","textShapes":11}
+{"kind":"textbox","id":"sh/6xk3qhsb","slide":10,"text":"Billboards dinámicos conectan CPU y DirectX 11","textPreview":"Billboards dinámicos conectan CPU y DirectX 11","textChars":46,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/t0bm1cb2","slide":10,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/8z2ls7ah","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/f2t43mt8","slide":10,"bbox":[270,260,100,0]}
+{"kind":"shape","id":"sh/u1k3uhsn","slide":10,"bbox":[590,260,100,0]}
+{"kind":"shape","id":"sh/h4bmpwby","slide":10,"bbox":[910,260,100,0]}
+{"kind":"shape","id":"sh/g325wrad","slide":10,"bbox":[42,210,225,100]}
+{"kind":"textbox","id":"sh/36d4rmt4","slide":10,"text":"6 vértices\npor partícula","textPreview":"6 vértices | por partícula","textChars":24,"textLines":2,"bbox":[54,220,201,80]}
+{"kind":"shape","id":"sh/254ny1sj","slide":10,"bbox":[372,210,215,100]}
+{"kind":"textbox","id":"sh/4b69ojip","slide":10,"text":"Map\nWRITE_DISCARD","textPreview":"Map | WRITE_DISCARD","textChars":17,"textLines":2,"bbox":[384,220,191,80]}
+{"kind":"shape","id":"sh/5cfaxoja","slide":10,"bbox":[692,210,215,100]}
+{"kind":"textbox","id":"sh/i9ormt0z","slide":10,"text":"Particle.hlsl\nViewProjection","textPreview":"Particle.hlsl | ViewProjection","textChars":28,"textLines":2,"bbox":[704,220,191,80]}
+{"kind":"shape","id":"sh/3axsvy1k","slide":10,"bbox":[1012,210,210,100]}
+{"kind":"textbox","id":"sh/sfq9s3i1","slide":10,"text":"Draw +\nBlend State","textPreview":"Draw + | Blend State","textChars":18,"textLines":2,"bbox":[1024,220,186,80]}
+{"kind":"shape","id":"sh/d0za18zm","slide":10,"bbox":[42,380,600,120]}
+{"kind":"textbox","id":"sh/qdorqt0v","slide":10,"text":"world = center + cameraRight * corner.x * size\n               + cameraUp    * corner.y * size;","textPreview":"world = center + cameraRight * corner.x * size |                + cameraUp    * corner.y * size;","textChars":94,"textLines":2,"bbox":[62,398,560,84]}
+{"kind":"textbox","id":"sh/rexszyhg","slide":10,"text":"Additive","textPreview":"Additive","textChars":8,"textLines":1,"bbox":[705,380,200,36]}
+{"kind":"textbox","id":"sh/03q9w3ix","slide":10,"text":"Fuego, energía y chispas","textPreview":"Fuego, energía y chispas","textChars":24,"textLines":1,"bbox":[705,425,420,45]}
+{"kind":"textbox","id":"sh/14za58zi","slide":10,"text":"Alpha","textPreview":"Alpha","textChars":5,"textLines":1,"bbox":[705,495,200,36]}
+{"kind":"textbox","id":"sh/9kva98rm","slide":10,"text":"Humo, lluvia y polvo","textPreview":"Humo, lluvia y polvo","textChars":20,"textLines":1,"bbox":[705,540,420,45]}
+{"kind":"notes","id":"nt/vo0yc5","slide":10,"text":"WRITE_DISCARD sustituye todo el contenido porque los vértices cambian cada frame. Right y Up hacen que cada quad mire a cámara.\n\n[Sources]\n- A:/Proyectos/WildvineEngine/WildvineEngine/bin/Particle.hlsl"}
+{"kind":"slide","id":"sl/2974eg","slide":11,"title":"Presets y escena v3 convierten el emisor en herramienta","textShapes":7}
+{"kind":"textbox","id":"sh/cba9s7il","slide":11,"text":"Presets y escena v3 convierten el emisor en herramienta","textPreview":"Presets y escena v3 convierten el emisor en herramienta","textChars":55,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/rahsj2h0","slide":11,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/q98rqx0f","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/47q9oni9","slide":11,"bbox":[750,178,12,12]}
+{"kind":"textbox","id":"sh/36hsfiho","slide":11,"text":"Fire: Point + Continuous + Additive","textPreview":"Fire: Point + Continuous + Additive","textChars":35,"textLines":1,"bbox":[778,170,437,66]}
+{"kind":"shape","id":"sh/2l8rmd0j","slide":11,"bbox":[750,248,12,12]}
+{"kind":"textbox","id":"sh/hkzad8zy","slide":11,"text":"Smoke: Sphere + Alpha","textPreview":"Smoke: Sphere + Alpha","textChars":21,"textLines":1,"bbox":[778,240,437,66]}
+{"kind":"shape","id":"sh/gj69knid","slide":11,"bbox":[750,318,12,12]}
+{"kind":"textbox","id":"sh/y18ja9wv","slide":11,"text":"Sparks: Cone + Burst + gravedad","textPreview":"Sparks: Cone + Burst + gravedad","textChars":31,"textLines":1,"bbox":[778,310,437,66]}
+{"kind":"shape","id":"sh/z2h0jex0","slide":11,"bbox":[750,388,12,12]}
+{"kind":"textbox","id":"sh/k3q1czel","slide":11,"text":"Rain: Box + caída continua","textPreview":"Rain: Box + caída continua","textChars":26,"textLines":1,"bbox":[778,380,437,66]}
+{"kind":"shape","id":"sh/l4jil4f6","slide":11,"bbox":[750,458,12,12]}
+{"kind":"textbox","id":"sh/ax8j6pwj","slide":11,"text":"Escenas v1, v2 y v3 siguen cargando","textPreview":"Escenas v1, v2 y v3 siguen cargando","textChars":35,"textLines":1,"bbox":[778,450,437,66]}
+{"kind":"image","id":"im/szmpwjet","slide":11,"name":"","geometry":"roundRect","alt":"Inspector del Particle Emitter dentro de WildvineEngine","bbox":[42,170,660,430]}
+{"kind":"notes","id":"nt/2974eg","slide":11,"text":"Aplicar Sparks, pulsar Trigger Burst y después guardar. Reiniciar el motor y demostrar que la configuración se restauró.\n\n[Sources]\n- C:/Users/carlo/AppData/Local/Temp/codex-clipboard-e3d540f6-a083-41fa-afe2-868590ceec1d.png"}
+{"kind":"slide","id":"sl/vq58y1","slide":12,"title":"Frustum y Octree eliminan trabajo antes del Draw","textShapes":9}
+{"kind":"textbox","id":"sh/k32x8jil","slide":12,"text":"Frustum y Octree eliminan trabajo antes del Draw","textPreview":"Frustum y Octree eliminan trabajo antes del Draw","textChars":48,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/z2tgfyh0","slide":12,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/y1kf6t0f","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/xgbydozu","slide":12,"bbox":[250,280,95,0]}
+{"kind":"shape","id":"sh/cf2x4jip","slide":12,"bbox":[545,280,95,0]}
+{"kind":"shape","id":"sh/betgbeh4","slide":12,"bbox":[840,280,95,0]}
+{"kind":"shape","id":"sh/adkf290j","slide":12,"bbox":[42,225,205,110]}
+{"kind":"textbox","id":"sh/pcbe94zy","slide":12,"text":"RenderObjects\n+ AABB","textPreview":"RenderObjects | + AABB","textChars":20,"textLines":2,"bbox":[54,235,181,90]}
+{"kind":"shape","id":"sh/obix0zid","slide":12,"bbox":[347,225,195,110]}
+{"kind":"textbox","id":"sh/e9wba1sz","slide":12,"text":"Octree\nparticiona","textPreview":"Octree | particiona","textChars":17,"textLines":2,"bbox":[359,235,171,90]}
+{"kind":"shape","id":"sh/fa5sj6tk","slide":12,"bbox":[642,225,195,110]}
+{"kind":"textbox","id":"sh/gbetcba5","slide":12,"text":"Frustum\nconsulta","textPreview":"Frustum | consulta","textChars":16,"textLines":2,"bbox":[654,235,171,90]}
+{"kind":"shape","id":"sh/1cnalgba","slide":12,"bbox":[937,225,220,110]}
+{"kind":"textbox","id":"sh/65cr61sn","slide":12,"text":"Solo visibles\nal pipeline","textPreview":"Solo visibles | al pipeline","textChars":25,"textLines":2,"bbox":[949,235,196,90]}
+{"kind":"shape","id":"sh/r6lsf6t8","slide":12,"bbox":[150,428,12,12]}
+{"kind":"textbox","id":"sh/s7u98bat","slide":12,"text":"Las ocho esquinas del AABB se transforman a mundo","textPreview":"Las ocho esquinas del AABB se transforman a mundo","textChars":49,"textLines":1,"bbox":[178,420,972,60]}
+{"kind":"shape","id":"sh/t8nahgbe","slide":12,"bbox":[150,492,12,12]}
+{"kind":"textbox","id":"sh/ihcr2hsr","slide":12,"text":"Un nodo fuera del frustum descarta toda su región","textPreview":"Un nodo fuera del frustum descarta toda su región","textChars":49,"textLines":1,"bbox":[178,484,972,60]}
+{"kind":"shape","id":"sh/jilsbmtc","slide":12,"bbox":[150,556,12,12]}
+{"kind":"textbox","id":"sh/nmh8ji94","slide":12,"text":"El objeto descartado no llega a DrawIndexed","textPreview":"El objeto descartado no llega a DrawIndexed","textChars":43,"textLines":1,"bbox":[178,548,972,60]}
+{"kind":"notes","id":"nt/vq58y1","slide":12,"text":"Aclarar: Octree organiza el espacio; frustum decide visibilidad. No es occlusion culling porque no detecta objetos tapados.\n\n[Sources]\n- A:/Proyectos/WildvineEngine/WildvineEngine/include/SceneGraph/Octree.h\n- A:/Proyectos/WildvineEngine/WildvineEngine/source/SceneGraph/Octree.cpp"}
+{"kind":"slide","id":"sl/kni05x","slide":13,"title":"El profiler vuelve observable la optimización","textShapes":8}
+{"kind":"textbox","id":"sh/5gzetgvm","slide":13,"text":"El profiler vuelve observable la optimización","textPreview":"El profiler vuelve observable la optimización","textChars":45,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/idovi1cb","slide":13,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/jehcr6dg","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"textbox","id":"sh/hcfupwvq","slide":13,"text":"Métricas","textPreview":"Métricas","textChars":8,"textLines":1,"bbox":[790,175,380,40]}
+{"kind":"shape","id":"sh/u9ove1cz","slide":13,"bbox":[790,243,12,12]}
+{"kind":"textbox","id":"sh/vaxcn6dk","slide":13,"text":"FPS y frame time","textPreview":"FPS y frame time","textChars":16,"textLines":1,"bbox":[818,235,362,54]}
+{"kind":"shape","id":"sh/07adsvu9","slide":13,"bbox":[790,301,12,12]}
+{"kind":"textbox","id":"sh/18je10vu","slide":13,"text":"Draw calls","textPreview":"Draw calls","textChars":10,"textLines":1,"bbox":[818,293,362,54]}
+{"kind":"shape","id":"sh/1wzmd4ni","slide":13,"bbox":[790,359,12,12]}
+{"kind":"textbox","id":"sh/gvq5kzmx","slide":13,"text":"Objetos totales y visibles","textPreview":"Objetos totales y visibles","textChars":26,"textLines":1,"bbox":[818,351,362,54]}
+{"kind":"shape","id":"sh/fuh4bu5s","slide":13,"bbox":[790,417,12,12]}
+{"kind":"textbox","id":"sh/et8nip47","slide":13,"text":"Frustum culled","textPreview":"Frustum culled","textChars":14,"textLines":1,"bbox":[818,409,362,54]}
+{"kind":"shape","id":"sh/tsfm9knm","slide":13,"bbox":[790,475,12,12]}
+{"kind":"textbox","id":"sh/sr65gzm1","slide":13,"text":"Nodos del Octree","textPreview":"Nodos del Octree","textChars":16,"textLines":1,"bbox":[818,467,362,54]}
+{"kind":"image","id":"im/1svyhgr6","slide":13,"name":"","geometry":"roundRect","alt":"Viewport del motor con panel de rendimiento","bbox":[42,170,700,435]}
+{"kind":"notes","id":"nt/kni05x","slide":13,"text":"Girar la cámara. Comparar objetos visibles y descartados. No prometer un porcentaje sin una prueba controlada con la misma escena.\n\n[Sources]\n- C:/Users/carlo/AppData/Local/Temp/codex-clipboard-34eff98a-ab3b-4bdb-98b1-3d4e14f14d47.png"}
+{"kind":"slide","id":"sl/fmfjie","slide":14,"title":"Cada herramienta tiene evidencia verificable","textShapes":23}
+{"kind":"textbox","id":"sh/zu9g7ypw","slide":14,"text":"Cada herramienta tiene evidencia verificable","textPreview":"Cada herramienta tiene evidencia verificable","textChars":44,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/0vixg3qh","slide":14,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/lwry9872","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"shape","id":"sh/mx0fid8n","slide":14,"bbox":[42,175,220,74]}
+{"kind":"textbox","id":"sh/7y9gbyp8","slide":14,"text":"Herramienta","textPreview":"Herramienta","textChars":11,"textLines":1,"bbox":[54,188,196,48]}
+{"kind":"shape","id":"sh/8z2xk3qd","slide":14,"bbox":[262,175,390,74]}
+{"kind":"textbox","id":"sh/90byd87y","slide":14,"text":"Núcleo técnico","textPreview":"Núcleo técnico","textChars":14,"textLines":1,"bbox":[274,188,366,48]}
+{"kind":"shape","id":"sh/21gf6983","slide":14,"bbox":[652,175,390,74]}
+{"kind":"textbox","id":"sh/32pwzepo","slide":14,"text":"Demostración","textPreview":"Demostración","textChars":12,"textLines":1,"bbox":[664,188,366,48]}
+{"kind":"shape","id":"sh/fy5gfixo","slide":14,"bbox":[1042,175,196,74]}
+{"kind":"textbox","id":"sh/exwz6dg3","slide":14,"text":"Cumple","textPreview":"Cumple","textChars":6,"textLines":1,"bbox":[1054,188,172,48]}
+{"kind":"shape","id":"sh/1knyhsfu","slide":14,"bbox":[42,249,220,74]}
+{"kind":"textbox","id":"sh/0jeh8ny9","slide":14,"text":"Play/Stop","textPreview":"Play/Stop","textChars":9,"textLines":1,"bbox":[54,262,196,48]}
+{"kind":"shape","id":"sh/rulgbixs","slide":14,"bbox":[262,249,390,74]}
+{"kind":"textbox","id":"sh/qtcz2dg7","slide":14,"text":"Captura TRS + deltaTime","textPreview":"Captura TRS + deltaTime","textChars":23,"textLines":1,"bbox":[274,262,366,48]}
+{"kind":"shape","id":"sh/dwnyd8fi","slide":14,"bbox":[652,249,390,74]}
+{"kind":"textbox","id":"sh/svuh43yx","slide":14,"text":"Mover y restaurar","textPreview":"Mover y restaurar","textChars":17,"textLines":1,"bbox":[664,262,366,48]}
+{"kind":"shape","id":"sh/jqlg7yxg","slide":14,"bbox":[1042,249,196,74]}
+{"kind":"textbox","id":"sh/ipczytgv","slide":14,"text":"Sí","textPreview":"Sí","textChars":2,"textLines":1,"bbox":[1054,262,172,48]}
+{"kind":"shape","id":"sh/m1szqt0n","slide":14,"bbox":[42,323,220,74]}
+{"kind":"textbox","id":"sh/7m10jy18","slide":14,"text":"Audio 3D","textPreview":"Audio 3D","textChars":8,"textLines":1,"bbox":[54,336,196,48]}
+{"kind":"shape","id":"sh/8nahs3it","slide":14,"bbox":[262,323,390,74]}
+{"kind":"textbox","id":"sh/9ojil8je","slide":14,"text":"Fuente + listener","textPreview":"Fuente + listener","textChars":17,"textLines":1,"bbox":[274,336,366,48]}
+{"kind":"shape","id":"sh/upczud0z","slide":14,"bbox":[652,323,390,74]}
+{"kind":"textbox","id":"sh/vql0ny1k","slide":14,"text":"Alejar cámara","textPreview":"Alejar cámara","textChars":13,"textLines":1,"bbox":[664,336,366,48]}
+{"kind":"shape","id":"sh/wruhw3i5","slide":14,"bbox":[1042,323,196,74]}
+{"kind":"textbox","id":"sh/hs3ip8ja","slide":14,"text":"Sí","textPreview":"Sí","textChars":2,"textLines":1,"bbox":[1054,336,172,48]}
+{"kind":"shape","id":"sh/itcjyd0v","slide":14,"bbox":[42,397,220,74]}
+{"kind":"textbox","id":"sh/3ul0ri1g","slide":14,"text":"Partículas","textPreview":"Partículas","textChars":10,"textLines":1,"bbox":[54,410,196,48]}
+{"kind":"shape","id":"sh/do72hc3i","slide":14,"bbox":[262,397,390,74]}
+{"kind":"textbox","id":"sh/snelo72d","slide":14,"text":"CPU + billboard + blend","textPreview":"CPU + billboard + blend","textChars":23,"textLines":1,"bbox":[274,410,366,48]}
+{"kind":"shape","id":"sh/rm5kf2ls","slide":14,"bbox":[652,397,390,74]}
+{"kind":"textbox","id":"sh/qlw3mxk7","slide":14,"text":"Presets y Burst","textPreview":"Presets y Burst","textChars":15,"textLines":1,"bbox":[664,410,366,48]}
+{"kind":"shape","id":"sh/1c72lw3u","slide":14,"bbox":[1042,397,196,74]}
+{"kind":"textbox","id":"sh/0rylsr29","slide":14,"text":"Sí","textPreview":"Sí","textChars":2,"textLines":1,"bbox":[1054,410,172,48]}
+{"kind":"shape","id":"sh/fqpkjmlo","slide":14,"bbox":[42,471,220,74]}
+{"kind":"textbox","id":"sh/epg3qhk3","slide":14,"text":"Culling","textPreview":"Culling","textChars":7,"textLines":1,"bbox":[54,484,196,48]}
+{"kind":"shape","id":"sh/pgrmpw3q","slide":14,"bbox":[262,471,390,74]}
+{"kind":"textbox","id":"sh/ofylwr25","slide":14,"text":"AABB + Octree + frustum","textPreview":"AABB + Octree + frustum","textChars":23,"textLines":1,"bbox":[274,484,366,48]}
+{"kind":"shape","id":"sh/kb25ovmd","slide":14,"bbox":[652,471,390,74]}
+{"kind":"textbox","id":"sh/lcb6h0ny","slide":14,"text":"Visible vs culled","textPreview":"Visible vs culled","textChars":17,"textLines":1,"bbox":[664,484,366,48]}
+{"kind":"shape","id":"sh/y9knml4n","slide":14,"bbox":[1042,471,196,74]}
+{"kind":"textbox","id":"sh/zatofq58","slide":14,"text":"Sí","textPreview":"Sí","textChars":2,"textLines":1,"bbox":[1054,484,172,48]}
+{"kind":"textbox","id":"sh/c7i5kvmh","slide":14,"text":"El alcance seleccionado está completo; no se afirma equivalencia con middleware o motores comerciales.","textPreview":"El alcance seleccionado está completo; no se afirma equivalencia con middleware o motores comerciales.","textChars":102,"textLines":1,"bbox":[120,585,1040,50]}
+{"kind":"notes","id":"nt/fmfjie","slide":14,"text":"Usar esta tabla para cerrar la relación con el DoD original.\n\n[Sources]\n- Repositorio local de WildvineEngine"}
+{"kind":"slide","id":"sl/73281y","slide":15,"title":"Preguntas técnicas que conviene responder con precisión","textShapes":12}
+{"kind":"textbox","id":"sh/cvid432l","slide":15,"text":"Preguntas técnicas que conviene responder con precisión","textPreview":"Preguntas técnicas que conviene responder con precisión","textChars":55,"textLines":1,"bbox":[42,34,1140,72]}
+{"kind":"shape","id":"sh/bu9wbyl0","slide":15,"bbox":[42,126,1196,0]}
+{"kind":"textbox","id":"sh/qt0v2tkf","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1185,662,54,22]}
+{"kind":"textbox","id":"sh/lkbeh832","slide":15,"text":"¿Lua/C#?","textPreview":"¿Lua/C#?","textChars":8,"textLines":1,"bbox":[42,165,300,48]}
+{"kind":"textbox","id":"sh/0j2d832h","slide":15,"text":"Comportamientos nativos C++; sin VM externa","textPreview":"Comportamientos nativos C++; sin VM externa","textChars":43,"textLines":1,"bbox":[370,165,820,55]}
+{"kind":"shape","id":"sh/zitwfylw","slide":15,"bbox":[42,231,1148,0]}
+{"kind":"textbox","id":"sh/yhkv6tkb","slide":15,"text":"¿Audio profesional?","textPreview":"¿Audio profesional?","textChars":19,"textLines":1,"bbox":[42,257,300,48]}
+{"kind":"textbox","id":"sh/9ovel83y","slide":15,"text":"Núcleo 3D sobre DirectXTK; no FMOD/Wwise","textPreview":"Núcleo 3D sobre DirectXTK; no FMOD/Wwise","textChars":40,"textLines":1,"bbox":[370,257,820,55]}
+{"kind":"shape","id":"sh/8nmdcn2t","slide":15,"bbox":[42,323,1148,0]}
+{"kind":"textbox","id":"sh/el4j2p0f","slide":15,"text":"¿Partículas GPU?","textPreview":"¿Partículas GPU?","textChars":16,"textLines":1,"bbox":[42,349,300,48]}
+{"kind":"textbox","id":"sh/fmdkbuhk","slide":15,"text":"CPU hasta 1024; GPU sería la siguiente escala","textPreview":"CPU hasta 1024; GPU sería la siguiente escala","textChars":45,"textLines":1,"bbox":[370,349,820,55]}
+{"kind":"shape","id":"sh/0n614zi5","slide":15,"bbox":[42,415,1148,0]}
+{"kind":"textbox","id":"sh/1of2d4zq","slide":15,"text":"¿Curvas avanzadas?","textPreview":"¿Curvas avanzadas?","textChars":18,"textLines":1,"bbox":[42,441,300,48]}
+{"kind":"textbox","id":"sh/2poj690b","slide":15,"text":"Interpolación lineal por vida normalizada","textPreview":"Interpolación lineal por vida normalizada","textChars":41,"textLines":1,"bbox":[370,441,820,55]}
+{"kind":"shape","id":"sh/nqxkfehw","slide":15,"bbox":[42,507,1148,0]}
+{"kind":"textbox","id":"sh/or618zih","slide":15,"text":"¿Occlusion culling?","textPreview":"¿Occlusion culling?","textChars":19,"textLines":1,"bbox":[42,533,300,48]}
+{"kind":"textbox","id":"sh/psf2h4z2","slide":15,"text":"No; frustum + partición espacial","textPreview":"No; frustum + partición espacial","textChars":32,"textLines":1,"bbox":[370,533,820,55]}
+{"kind":"notes","id":"nt/73281y","slide":15,"text":"Responder con alcance exacto. Una limitación reconocida y explicada es más defendible que atribuir al sistema capacidades inexistentes.\n\n[Sources]\n- Repositorio local de WildvineEngine"}
+{"kind":"slide","id":"sl/vp8fit","slide":16,"title":"RESULTADO","textShapes":4}
+{"kind":"textbox","id":"sh/x87q5gb2","slide":16,"text":"RESULTADO","textPreview":"RESULTADO","textChars":9,"textLines":1,"bbox":[42,42,300,40]}
+{"kind":"textbox","id":"sh/a5g7ulsr","slide":16,"text":"Cuatro sistemas completos,\nconectados al mismo frame","textPreview":"Cuatro sistemas completos, | conectados al mismo frame","textChars":52,"textLines":2,"bbox":[42,170,1000,180]}
+{"kind":"textbox","id":"sh/b6p836tw","slide":16,"text":"Runtime · sonido · VFX · optimización","textPreview":"Runtime · sonido · VFX · optimización","textChars":37,"textLines":1,"bbox":[42,430,850,60]}
+{"kind":"shape","id":"sh/ojepsbal","slide":16,"bbox":[42,555,1196,6]}
+{"kind":"textbox","id":"sh/p47q1gb6","slide":16,"text":"Código propio: 71/71 headers documentados · Doxygen 0 warnings · compilación 0 errores","textPreview":"Código propio: 71/71 headers documentados · Doxygen 0 warnings · compilación 0 errores","textChars":86,"textLines":1,"bbox":[42,595,1150,50]}
+{"kind":"notes","id":"nt/vp8fit","slide":16,"text":"Cerrar conectando el resultado con la decisión inicial: profundidad en cuatro sistemas en lugar de ocho implementaciones superficiales.\n\n[Sources]\n- Repositorio local de WildvineEngine"}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0"
+         xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DirectXTKRoot>$(MSBuildThisFileDirectory)third_party\DirectXTK\</DirectXTKRoot>
+    <DirectXTKOutput>$(DirectXTKRoot)Bin\Desktop_2022\$(Platform)\$(Configuration)\</DirectXTKOutput>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+        $(DirectXTKRoot)Inc;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>
+        _WIN32_WINNT=0x0A00;WINVER=0x0A00;%(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>
+        $(DirectXTKOutput);%(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        DirectXTK.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

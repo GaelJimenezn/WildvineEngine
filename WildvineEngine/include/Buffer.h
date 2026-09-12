@@ -1,164 +1,116 @@
+/**
+ * @file Buffer.h
+ * @brief Declara la API p√É¬∫blica de Buffer dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "MeshComponent.h"
 
+/**
+ * @brief Declaraci√É¬≥n adelantada de la clase Device.
+ */
 class Device;
+
+/**
+ * @brief Declaraci√É¬≥n adelantada de la clase DeviceContext.
+ */
 class DeviceContext;
 
 /**
  * @class Buffer
- * @brief Encapsula un @c ID3D11Buffer para vÈrtices, Ìndices o constantes, incluyendo creaciÛn, actualizaciÛn y enlace.
- *
- * Esta clase administra la vida de un ˙nico buffer de D3D11 y su uso en etapa de render.
- * Soporta:
- * - CreaciÛn como Vertex/Index buffer a partir de un @c MeshComponent.
- * - CreaciÛn como Constant buffer a partir de un tamaÒo (ByteWidth).
- * - ActualizaciÛn de datos (p. ej. @c UpdateSubresource).
- * - Enlace del buffer a la etapa correspondiente del pipeline.
- *
- * @note La instancia gestiona un solo @c ID3D11Buffer a la vez; el tipo efectivo se deduce de @c m_bindFlag.
- * @warning No copia el recurso; si se aÒade sem·ntica de copia, manejar correctamente referencias COM.
+ * @brief Clase encargada de manejar la creaci√É¬≥n, actualizaci√É¬≥n, renderizado
+ *        y destrucci√É¬≥n de buffers utilizados en DirectX.
  */
-class 
+class
 Buffer {
 public:
   /**
-   * @brief Constructor por defecto (no crea recursos).
+   * @brief Constructor por defecto de la clase Buffer.
    */
-  Buffer()  = default;
+  Buffer() = default;
 
   /**
-   * @brief Destructor por defecto.
-   * @details No libera autom·ticamente; llamar a destroy() para liberar el recurso COM.
+   * @brief Destructor por defecto de la clase Buffer.
    */
   ~Buffer() = default;
 
   /**
-   * @brief Inicializa el buffer como Vertex o Index Buffer usando un @c MeshComponent.
-   *
-   * Crea internamente un @c ID3D11Buffer con los datos del mesh (vÈrtices/Ìndices) seg˙n @p bindFlag.
-   * Debe usarse @c D3D11_BIND_VERTEX_BUFFER o @c D3D11_BIND_INDEX_BUFFER.
-   *
-   * @param device     Dispositivo con el que se crear· el recurso.
-   * @param mesh       Fuente de datos (vÈrtices/Ìndices) para poblar el buffer.
-   * @param bindFlag   Bandera de enlace (p. ej. @c D3D11_BIND_VERTEX_BUFFER o @c D3D11_BIND_INDEX_BUFFER).
-   * @return @c S_OK si la creaciÛn fue exitosa; cÛdigo @c HRESULT en caso contrario.
-   *
-   * @post Si retorna @c S_OK, @c m_buffer != nullptr y @c m_bindFlag == bindFlag.
-   * @sa createBuffer(), render()
+   * @brief Inicializa el buffer utilizando los datos de un componente de malla.
+   * @param device Referencia al dispositivo de renderizado.
+   * @param mesh Referencia al componente de malla que contiene los datos del modelo.
+   * @param bindFlag Indicador de tipo de enlace (por ejemplo, v√É¬©rtices o √É¬≠ndices).
+   * @return HRESULT que indica el resultado de la operaci√É¬≥n.
    */
-  HRESULT 
-  init(Device& device, const MeshComponent& mesh, unsigned int bindFlag);
+  HRESULT
+  init(Device &device, const MeshComponent &mesh, unsigned int bindFlag);
 
   /**
-   * @brief Inicializa el buffer como Constant Buffer.
-   *
-   * Crea un @c ID3D11Buffer con @c D3D11_BIND_CONSTANT_BUFFER y tamaÒo @p ByteWidth (m˙ltiplo de 16 bytes recomendado).
-   *
-   * @param device     Dispositivo con el que se crear· el recurso.
-   * @param ByteWidth  TamaÒo del buffer en bytes (alinear a 16 para constantes).
-   * @return @c S_OK si la creaciÛn fue exitosa; cÛdigo @c HRESULT en caso contrario.
-   *
-   * @post Si retorna @c S_OK, @c m_buffer != nullptr y @c m_bindFlag == D3D11_BIND_CONSTANT_BUFFER.
-   * @sa update(), render()
+   * @brief Inicializa un buffer vac√É¬≠o con un tama√É¬±o en bytes determinado.
+   * @param device Referencia al dispositivo de renderizado.
+   * @param ByteWidth Tama√É¬±o del buffer en bytes.
+   * @return HRESULT que indica el resultado de la creaci√É¬≥n.
    */
-  HRESULT 
-  init(Device& device, unsigned int ByteWidth);
+  HRESULT
+  init(Device &device, unsigned int ByteWidth);
 
   /**
-   * @brief Actualiza el contenido del buffer (tÌpicamente mediante @c UpdateSubresource).
-   *
-   * ⁄til para escribir datos de constantes por cuadro, o para subir datos de vÈrtices/Ìndices si corresponde.
-   *
-   * @param deviceContext  Contexto donde se realizar· la actualizaciÛn.
-   * @param pDstResource   Recurso destino (tÌpicamente @c m_buffer). Se permite pasar otro recurso compatible.
-   * @param DstSubresource Õndice de subrecurso destino (normalmente 0 para buffers).
-   * @param pDstBox        RegiÛn destino (puede ser @c nullptr para sobrescribir completo).
-   * @param pSrcData       Puntero a los datos de origen.
-   * @param SrcRowPitch    Paso por fila (no aplica a buffers; se ignora por D3D11 para buffers).
-   * @param SrcDepthPitch  Paso por profundidad (no aplica a buffers; se ignora por D3D11 para buffers).
-   *
-   * @pre @c pDstResource debe ser un buffer v·lido creado en este dispositivo.
-   * @note Para constantes din·micas alternativamente podrÌa usarse @c Map/@c Unmap con @c D3D11_USAGE_DYNAMIC.
+   * @brief Actualiza el contenido del buffer con nuevos datos.
+   * @param deviceContext Contexto del dispositivo para la actualizaci√É¬≥n.
+   * @param pDstResource Recurso de destino a actualizar.
+   * @param DstSubresource √É¬çndice del subrecurso de destino.
+   * @param pDstBox Caja que define el √É¬°rea del recurso a actualizar.
+   * @param pSrcData Puntero a los datos fuente.
+   * @param SrcRowPitch Tama√É¬±o de la fila de datos fuente.
+   * @param SrcDepthPitch Tama√É¬±o de la profundidad de los datos fuente.
    */
-  void 
-  update(DeviceContext& deviceContext,
-         ID3D11Resource* pDstResource,
-         unsigned int    DstSubresource,
-         const D3D11_BOX* pDstBox,
-         const void*     pSrcData,
-         unsigned int    SrcRowPitch,
-         unsigned int    SrcDepthPitch);
+  void update(DeviceContext &deviceContext,
+              ID3D11Resource *pDstResource,
+              unsigned int DstSubresource,
+              const D3D11_BOX *pDstBox,
+              const void *pSrcData,
+              unsigned int SrcRowPitch,
+              unsigned int SrcDepthPitch);
 
   /**
-   * @brief Enlaza el buffer a la etapa correspondiente del pipeline para el frame de render.
-   *
-   * El comportamiento depende de @c m_bindFlag:
-   * - @c D3D11_BIND_VERTEX_BUFFER: Llama a @c IASetVertexBuffers con @p StartSlot y @p NumBuffers (stride/offset internos).
-   * - @c D3D11_BIND_INDEX_BUFFER:  Llama a @c IASetIndexBuffer con @p format.
-   * - @c D3D11_BIND_CONSTANT_BUFFER: Enlaza a VS/PS seg˙n @p setPixelShader, usando @p StartSlot y @p NumBuffers.
-   *
-   * @param deviceContext   Contexto donde se enlazar· el buffer.
-   * @param StartSlot       Primer slot de enlace (IA o VS/PS seg˙n tipo).
-   * @param NumBuffers      N˙mero de buffers a enlazar (tÌpicamente 1 para esta clase).
-   * @param setPixelShader  Si es @c true y el buffer es de constantes, tambiÈn se enlaza a PS (adem·s de VS).
-   * @param format          Formato del Ìndice (@c DXGI_FORMAT_R16_UINT o @c DXGI_FORMAT_R32_UINT) cuando es Index Buffer.
-   *
-   * @pre @c m_buffer debe estar creado y @c m_bindFlag configurado correctamente.
-   * @sa init()
+   * @brief Asocia el buffer al pipeline para su renderizado.
+   * @param deviceContext Contexto del dispositivo para el renderizado.
+   * @param StartSlot Posici√É¬≥n inicial del buffer en el pipeline.
+   * @param NumBuffers N√É¬∫mero de buffers a establecer.
+   * @param setPixelShader Indica si el buffer se usa tambi√É¬©n en el pixel shader.
+   * @param format Formato DXGI utilizado por el buffer (opcional).
    */
-  void 
-  render(DeviceContext& deviceContext,
-         unsigned int   StartSlot,
-         unsigned int   NumBuffers,
-         bool           setPixelShader = false,
-         DXGI_FORMAT    format = DXGI_FORMAT_UNKNOWN);
+  void render(DeviceContext &deviceContext,
+              unsigned int StartSlot,
+              unsigned int NumBuffers,
+              bool setPixelShader = false,
+              DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
 
   /**
-   * @brief Libera el @c ID3D11Buffer y resetea los metadatos internos.
-   *
-   * Idempotente.
-   *
-   * @post @c m_buffer == nullptr, @c m_stride == 0, @c m_offset == 0 y @c m_bindFlag == 0.
+   * @brief Libera los recursos asociados al buffer.
    */
-  void 
-  destroy();
+  void destroy();
 
   /**
-   * @brief Crea un buffer genÈrico con una @c D3D11_BUFFER_DESC y datos iniciales opcionales.
-   *
-   * MÈtodo de ayuda para factorizar la creaciÛn. Normalmente invocado por @c init().
-   *
-   * @param device   Dispositivo con el que se crear· el recurso.
-   * @param desc     Descriptor del buffer (uso, bind flags, tamaÒo, etc.).
-   * @param initData Datos iniciales (puede ser @c nullptr para buffer sin inicializar).
-   * @return @c S_OK si la creaciÛn fue exitosa; cÛdigo @c HRESULT en caso contrario.
+   * @brief Crea un buffer con la descripci√É¬≥n y los datos iniciales proporcionados.
+   * @param device Referencia al dispositivo de renderizado.
+   * @param desc Descripci√É¬≥n del buffer (tipo, tama√É¬±o, uso, etc.).
+   * @param initData Datos iniciales para llenar el buffer (puede ser nullptr).
+   * @return HRESULT que indica el resultado de la operaci√É¬≥n.
    */
-  HRESULT 
-  createBuffer(Device& device,
-               D3D11_BUFFER_DESC& desc,
-               D3D11_SUBRESOURCE_DATA* initData);
+  HRESULT
+  createBuffer(Device &device, D3D11_BUFFER_DESC &desc, D3D11_SUBRESOURCE_DATA *initData);
+
+public:
+  /** @brief Puntero al buffer de Direct3D. */
+  ID3D11Buffer *m_buffer = nullptr;
 
 private:
-  /**
-   * @brief Recurso COM de D3D11 administrado por la clase.
-   */
-  ID3D11Buffer* m_buffer = nullptr;
-
-  /**
-   * @brief TamaÒo de un elemento en bytes (para Vertex Buffer).
-   * @details Usado en @c IASetVertexBuffers. Cero cuando no aplica.
-   */
+  /** @brief Tama√É¬±o en bytes de cada elemento del buffer (stride). */
   unsigned int m_stride = 0;
 
-  /**
-   * @brief Desplazamiento inicial en bytes (para Vertex Buffer).
-   * @details Usado en @c IASetVertexBuffers. Cero cuando no aplica.
-   */
+  /** @brief Desplazamiento en bytes desde el inicio del buffer. */
   unsigned int m_offset = 0;
 
-  /**
-   * @brief Bandera de enlace (@c D3D11_BIND_* ) que define el rol del buffer.
-   */
+  /** @brief Bandera que indica el tipo de enlace (bind flag) del buffer. */
   unsigned int m_bindFlag = 0;
 };

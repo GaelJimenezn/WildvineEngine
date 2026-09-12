@@ -1,100 +1,82 @@
+/**
+ * @file MeshComponent.h
+ * @brief Declara la API p√É¬∫blica de MeshComponent dentro de WildvineEngine.
+ */
 #pragma once
 #include "Prerequisites.h"
-//#include "ECS\Component.h"
+#include "ECS\Component.h"
+
+/**
+ * @brief Declaraci√É¬≥n adelantada de la clase DeviceContext.
+ */
 class DeviceContext;
+
 /**
  * @class MeshComponent
- * @brief Componente ECS que almacena la informaciÛn de geometrÌa (malla) de un actor.
- *
- * Un @c MeshComponent contiene los vÈrtices e Ìndices que describen la geometrÌa de un objeto.
- * Forma parte del sistema ECS y se asocia a entidades como @c Actor.
- *
- * La malla incluye:
- * - Lista de vÈrtices (posiciÛn, normal, UV, etc.).
- * - Lista de Ìndices que definen las primitivas (tri·ngulos, lÌneas).
- * - Contadores de vÈrtices e Ìndices.
+ * @brief Clase encargada de almacenar y manejar los datos de una malla,
+ *        incluyendo sus v√É¬©rtices e √É¬≠ndices, as√É¬≠ como su inicializaci√É¬≥n,
+ *        actualizaci√É¬≥n y renderizado.
  */
-class 
-MeshComponent /*: public Component*/ {
+class
+MeshComponent : public Component {
 public:
   /**
-   * @brief Constructor por defecto.
-   *
-   * Inicializa el componente de malla con cero vÈrtices e Ìndices
-   * y lo registra como tipo @c MESH en el sistema ECS.
+   * @brief Constructor por defecto de MeshComponent.
+   *        Inicializa el n√É¬∫mero de v√É¬©rtices e √É¬≠ndices en cero.
    */
-  MeshComponent() : m_numVertex(0), m_numIndex(0)/*, Component(ComponentType::MESH)*/ {}
-
+  MeshComponent()
+      : m_numVertex(0)
+      , m_numIndex(0)
+      , Component(ComponentType::MESH) {
+  }
   /**
    * @brief Destructor virtual por defecto.
    */
-  virtual 
-  ~MeshComponent() = default;
+  virtual ~MeshComponent() = default;
 
   /**
-   * @brief Inicializa el componente de malla.
-   *
-   * MÈtodo heredado de @c Component.
-   * Puede usarse para reservar memoria o cargar datos en mallas derivadas.
+   * @brief Inicializa los recursos o configuraciones necesarias de la malla.
    */
-  void 
-  init() /*override {}*/;
+  void init() override {};
 
   /**
-   * @brief Actualiza la malla.
-   *
-   * MÈtodo heredado de @c Component.
-   * ⁄til para actualizar animaciones de vÈrtices, morphing u otros procesos relacionados.
-   *
-   * @param deltaTime Tiempo transcurrido desde la ˙ltima actualizaciÛn.
+   * @brief Actualiza el estado de la malla seg√É¬∫n el tiempo transcurrido.
+   * @param deltaTime Tiempo en segundos desde el √É¬∫ltimo frame.
    */
-  void 
-  update(float deltaTime)/* override {}*/;
+  void update(float deltaTime) override {};
 
   /**
-   * @brief Renderiza la malla.
-   *
-   * MÈtodo heredado de @c Component.
-   * Normalmente se usarÌa junto con @c DeviceContext para dibujar buffers
-   * asociados a la malla.
-   *
-   * @param deviceContext Contexto del dispositivo para operaciones gr·ficas.
+   * @brief Renderiza la malla utilizando el contexto del dispositivo.
+   * @param deviceContext Contexto del dispositivo utilizado para dibujar.
    */
-  void 
-  render(DeviceContext& deviceContext) /*override {}*/;
+  void render(DeviceContext &deviceContext) override {};
 
   /**
-   * @brief Libera los recursos asociados al componente de malla.
-   *
-   * MÈtodo heredado de @c Component.
-   * En implementaciones m·s complejas, puede liberar buffers de GPU.
+   * @brief Libera los recursos asociados a la malla.
    */
-  void
-  destroy() /*override {}*/;
+  void destroy() override {};
 
 public:
-  /**
-   * @brief Nombre de la malla.
-   */
+  /** @brief Nombre identificador de la malla. */
   std::string m_name;
 
-  /**
-   * @brief Lista de vÈrtices de la malla.
-   */
+  /** @brief Vector que contiene los v√É¬©rtices de la malla. */
   std::vector<SimpleVertex> m_vertex;
+  std::vector<SkyboxVertex> m_skyVertex;
 
-  /**
-   * @brief Lista de Ìndices que definen las primitivas de la malla.
-   */
+  /** @brief Vector que contiene los √É¬≠ndices de la malla. */
   std::vector<unsigned int> m_index;
 
-  /**
-   * @brief N˙mero total de vÈrtices en la malla.
-   */
+  /** @brief N√É¬∫mero total de v√É¬©rtices de la malla. */
   int m_numVertex;
 
-  /**
-   * @brief N˙mero total de Ìndices en la malla.
-   */
+  /** @brief N√É¬∫mero total de √É¬≠ndices de la malla. */
   int m_numIndex;
+
+  /** @brief √É¬çndice de material usado por esta malla. */
+  int m_materialIndex = 0;
+
+  /** @brief Transform local original del nodo. */
+  XMFLOAT4X4 m_localTransform =
+      XMFLOAT4X4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 };

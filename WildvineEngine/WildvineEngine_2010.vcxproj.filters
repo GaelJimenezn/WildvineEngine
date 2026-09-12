@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns:atg="http://atg.xbox.com" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Resource Files">
@@ -18,6 +18,51 @@
     <Filter Include="source">
       <UniqueIdentifier>{e9cebe96-30a0-43cb-8b8f-0da5709a4290}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Patterns">
+      <UniqueIdentifier>{879cd574-d1b0-4916-85fc-5b83070fbbc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Utilities">
+      <UniqueIdentifier>{b0959de9-691b-4627-b014-66a2960f8209}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\ECS">
+      <UniqueIdentifier>{0f4fbcd6-e266-4ed5-a948-ea0a207e485c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Utilities\Memory">
+      <UniqueIdentifier>{759a5de3-beae-4458-a20d-b7f5d81d0fa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Utilities\Vector">
+      <UniqueIdentifier>{5228384e-570a-4737-836f-626ba3f1f6f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\ECS">
+      <UniqueIdentifier>{1b1555f7-210e-4cdd-9ec0-bdb785b4d710}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\ECS\Legacy">
+      <UniqueIdentifier>{a49e9e3d-90f9-4bb1-ae0f-73f5b82cce0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Utilities">
+      <UniqueIdentifier>{56aef06f-9d96-41d7-997b-a8bb00a8b905}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{31617e8d-26f5-44ec-9445-10c4297bae00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui\include">
+      <UniqueIdentifier>{6d3ce91f-a80e-4bc0-8eff-e438f7a72b05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui\source">
+      <UniqueIdentifier>{566a4c35-d234-491b-b7f1-a77bbe20c916}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\SceneGraph">
+      <UniqueIdentifier>{1757c5b9-74b3-4a7c-aca8-304e46bba2f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\SceneGraph">
+      <UniqueIdentifier>{06b326ef-b6ff-47b3-99e4-ce6542eb8955}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Rendering">
+      <UniqueIdentifier>{f2f67de8-3f16-4ed8-9a11-a1be28b12210}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Rendering">
+      <UniqueIdentifier>{8fffa7c6-e8ff-4f2e-9f93-f8176baf9f5f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WildvineEngine.cpp">
@@ -25,6 +70,15 @@
     </ClCompile>
     <ClCompile Include="source\Window.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ECS\AudioSystem.cpp">
+      <Filter>source\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Utilities\ModelLoader.cpp">
+      <Filter>source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Utilities\ParserOBJ.cpp">
+      <Filter>source\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="source\Device.cpp">
       <Filter>source</Filter>
@@ -62,9 +116,81 @@
     <ClCompile Include="source\BaseApp.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\Model3D.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ECS\Actor.cpp">
+      <Filter>source\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GUI\GUI.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\DeferredRenderer.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\ForwardRenderer.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\MaterialInstance.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\RenderPipeline.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\RenderScene.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_demo.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_draw.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_tables.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\imgui_widgets.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\backends\imgui_impl_dx11.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui-docking-znly-docking\backends\imgui_impl_win32.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\ImGuizmo\ImGuizmo.cpp">
+      <Filter>imgui\source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\SceneGraph\SceneGraph.cpp">
+      <Filter>source\SceneGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="source\SceneGraph\Octree.cpp">
+      <Filter>source\SceneGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Camera.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Skybox.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\RasterizerState.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DepthStencilState.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EditorViewportPass.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="WildvineEngine.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\Skybox.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -76,9 +202,6 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
     <ClInclude Include="include\Window.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Prerequisites.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\Device.h">
@@ -111,19 +234,179 @@
     <ClInclude Include="include\Buffer.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\MeshComponent.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\SamplerState.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\BaseApp.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\IResource.h">
+      <Filter>include\Patterns</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ResourceManager.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Component.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\LightComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\MeshRendererComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\RuntimeBehaviorComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Entity.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
     <ClInclude Include="include\stb_image.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshComponent.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Prerequisites.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Model3D.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Memory\TSharedPointer.h">
+      <Filter>include\Utilities\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Memory\TStaticPtr.h">
+      <Filter>include\Utilities\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Memory\TUniquePtr.h">
+      <Filter>include\Utilities\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Memory\TWeakPointer.h">
+      <Filter>include\Utilities\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Vectors\Vector2.h">
+      <Filter>include\Utilities\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Vectors\Vector3.h">
+      <Filter>include\Utilities\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Vectors\Vector4.h">
+      <Filter>include\Utilities\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\EngineMath.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Actor.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\AudioSourceComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\AudioSystem.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Legacy\Actor.h">
+      <Filter>include\ECS\Legacy</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\GUI.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\ModelLoader.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\OBJ_Loader.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utilities\ParserOBJ.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Transform.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\GUI\GUI.h">
       <Filter>include</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\imconfig.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\imgui.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\imgui_internal.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\imstb_rectpack.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\imstb_textedit.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\imstb_truetype.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\backends\imgui_impl_dx11.h">
+      <Filter>imgui\source</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui-docking-znly-docking\backends\imgui_impl_win32.h">
+      <Filter>imgui\source</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\ImGuizmo\ImGuizmo.h">
+      <Filter>imgui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneGraph\HierarchyComponent.h">
+      <Filter>include\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneGraph\SceneGraph.h">
+      <Filter>include\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneGraph\Octree.h">
+      <Filter>include\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\Camera.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\Skybox.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RasterizerState.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DepthStencilState.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\LayoutBuilder.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\EditorViewportPass.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\DeferredRenderer.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\ForwardRenderer.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\ISceneRenderer.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\Material.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\MaterialInstance.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\Mesh.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\RenderPipeline.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\RenderScene.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Rendering\RenderTypes.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
